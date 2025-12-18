@@ -1,0 +1,1 @@
+// This file is duplicate. Please use pages/TermsPage.tsx instead.

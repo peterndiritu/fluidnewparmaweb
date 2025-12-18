@@ -1,0 +1,1 @@
+// This file is duplicate. Please use pages/Wallet.tsx instead.

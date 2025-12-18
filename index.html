@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Fluid - Crypto, Fiat & Hosting</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      // Polyfill process for browser environment if missing
+      if (typeof process === 'undefined') {
+        window.process = { env: {} };
+      }
+      
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              slate: {
+                850: '#151e32',
+                950: '#020617',
+              }
+            },
+            animation: {
+              'fade-in-up': 'fadeInUp 0.5s ease-out',
+              'bounce-slow': 'bounce 3s infinite',
+            },
+            keyframes: {
+              fadeInUp: {
+                '0%': { opacity: '0', transform: 'translateY(10px)' },
+                '100%': { opacity: '1', transform: 'translateY(0)' },
+              }
+            }
+          }
+        }
+      }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+      body {
+        font-family: 'Inter', sans-serif;
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+      /* Custom Scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #0f172a;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #334155;
+        border-radius: 4px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #475569;
+      }
+      
+      /* Tech/Hosting Background Pattern */
+      .bg-tech-grid {
+        background-size: 50px 50px;
+        background-image: 
+          linear-gradient(to right, rgba(99, 102, 241, 0.05) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(99, 102, 241, 0.05) 1px, transparent 1px);
+      }
+      .dark .bg-tech-grid {
+        background-image: 
+          linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      }
+
+      /* Scroll Animation Classes */
+      .scroll-card {
+        opacity: 0;
+        transform: translateY(30px) scale(0.95);
+        transition: opacity 0.6s cubic-bezier(0.16, 1, 0.3, 1), transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        will-change: opacity, transform;
+      }
+
+      .scroll-card.in-view {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    </style>
+  <script type="importmap">
+{
+  "imports": {
+    "react": "https://esm.sh/react@18.3.1",
+    "react/": "https://esm.sh/react@18.3.1/",
+    "react-dom": "https://esm.sh/react-dom@18.3.1",
+    "react-dom/": "https://esm.sh/react-dom@18.3.1/",
+    "lucide-react": "https://esm.sh/lucide-react@0.344.0?deps=react@18.3.1",
+    "ethers": "https://esm.sh/ethers@6.11.1",
+    "@google/genai": "https://esm.sh/@google/genai@^1.33.0",
+    "recharts": "https://esm.sh/recharts@2.12.7?deps=react@18.3.1,react-dom@18.3.1",
+    "thirdweb": "https://esm.sh/thirdweb@5.54.0?deps=react@18.3.1,react-dom@18.3.1",
+    "thirdweb/": "https://esm.sh/thirdweb@5.54.0/?deps=react@18.3.1,react-dom@18.3.1",
+    "thirdweb/react": "https://esm.sh/thirdweb@5.54.0/react?deps=react@18.3.1,react-dom@18.3.1",
+    "thirdweb/wallets": "https://esm.sh/thirdweb@5.54.0/wallets?deps=react@18.3.1,react-dom@18.3.1",
+    "thirdweb/chains": "https://esm.sh/thirdweb@5.54.0/chains?deps=react@18.3.1,react-dom@18.3.1",
+    "thirdweb/utils": "https://esm.sh/thirdweb@5.54.0/utils?deps=react@18.3.1,react-dom@18.3.1",
+    "canvas-confetti": "https://esm.sh/canvas-confetti@1.9.2"
+  }
+}
+</script>
+</head>
+  <body class="bg-gray-50 text-slate-900 dark:bg-slate-950 dark:text-white">
+    <div id="root"></div>
+    <script type="module" src="./index.tsx"></script>
+    <script>
+      // Intersection Observer for scroll animations
+      document.addEventListener('DOMContentLoaded', () => {
+        const observerOptions = {
+          root: null,
+          rootMargin: '0px',
+          threshold: 0.15
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+          entries.forEach(entry => {
+            if (entry.isIntersecting) {
+              entry.target.classList.add('in-view');
+            } else {
+              // Elements fade out when scrolled off
+              entry.target.classList.remove('in-view'); 
+            }
+          });
+        }, observerOptions);
+
+        // Function to attach observer to new elements (useful if React renders them later)
+        const observeElements = () => {
+          const elements = document.querySelectorAll('.scroll-card');
+          elements.forEach(el => observer.observe(el));
+        };
+
+        // Observe initially
+        observeElements();
+
+        // Re-observe periodically to catch dynamic content (simple hack for React apps without MutationObserver complexity)
+        setInterval(observeElements, 1000);
+      });
+    </script>
+  </body>
+</html>
