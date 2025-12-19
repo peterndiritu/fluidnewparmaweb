@@ -144,8 +144,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
           </div>
         </section>
 
-        {/* Compact Pillar Sections - Reordered to: Hosting, Economy, Wallet, Blockchain */}
-        <div className="max-w-7xl mx-auto px-4 grid md:grid-cols-2 xl:grid-cols-4 gap-6 mb-8">
+        {/* Vertical Layout of Main Components */}
+        <div className="max-w-2xl mx-auto px-4 flex flex-col gap-8 mb-12">
             
             {/* 1. Hosting Snippet */}
             <div onClick={() => onNavigate('host')} className="group cursor-pointer bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-white/20 dark:border-slate-800/50 rounded-[2rem] p-6 shadow-xl hover:scale-[1.01] transition-all overflow-hidden flex flex-col relative">
@@ -155,7 +155,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                 </div>
                 
                 {/* Micro Sharding Visual */}
-                <div className="flex-grow flex flex-col items-center justify-center py-4 bg-black/5 dark:bg-black/20 rounded-2xl relative">
+                <div className="flex-grow flex flex-col items-center justify-center py-4 bg-black/5 dark:bg-black/20 rounded-2xl relative min-h-[160px]">
                     <div className="flex flex-col items-center gap-2">
                         <div className="w-10 h-10 bg-white dark:bg-slate-800 rounded-lg border border-white/10 flex items-center justify-center text-blue-500 shadow-lg">
                             <Database size={16} />
@@ -191,7 +191,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                 </div>
 
                 {/* Micro Economy Visual */}
-                <div className="flex-grow flex flex-col items-center justify-center py-4 bg-black/5 dark:bg-black/20 rounded-2xl relative">
+                <div className="flex-grow flex flex-col items-center justify-center py-4 bg-black/5 dark:bg-black/20 rounded-2xl relative min-h-[160px]">
                     <div className="relative flex items-center justify-center">
                         <div className="absolute inset-0 bg-amber-500/10 blur-xl rounded-full"></div>
                         <div className="w-12 h-12 bg-slate-900 border border-amber-500/30 rounded-full flex items-center justify-center text-amber-500 relative z-10">
@@ -396,10 +396,10 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             </div>
         </div>
 
-        {/* Core Tech Grid */}
+        {/* Core Tech Vertical Stack */}
         <section className="py-4 bg-transparent relative">
-          <div className="max-w-7xl mx-auto px-4">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="max-w-2xl mx-auto px-4">
+            <div className="flex flex-col gap-4">
               {revolutionaryFeatures.map((feature, idx) => (
                 <div key={idx} className="scroll-card p-5 bg-slate-50/30 dark:bg-slate-900/20 backdrop-blur-xl rounded-[1.5rem] border border-slate-200 dark:border-slate-800/50 hover:border-blue-500/20 transition-all group relative overflow-hidden">
                   <div className="absolute top-0 right-0 p-4">
@@ -420,10 +420,10 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
           </div>
         </section>
 
-        {/* Compact Blockchain Features Stats */}
+        {/* Blockchain Features Stats Vertical Stack */}
         <section className="py-4 bg-transparent relative mb-4">
-           <div className="max-w-7xl mx-auto px-4">
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+           <div className="max-w-2xl mx-auto px-4">
+              <div className="flex flex-col gap-3">
                  {blockchainFeatures.map((stat, i) => (
                     <div key={i} className="scroll-card bg-white/20 dark:bg-slate-900/20 backdrop-blur-xl rounded-[1rem] p-4 border border-slate-200/50 dark:border-slate-800/50 hover:border-blue-500/30 transition-all group shadow-sm">
                         <p className="text-slate-500 dark:text-slate-400 text-[8px] mb-1 font-black uppercase tracking-widest">{stat.label}</p>

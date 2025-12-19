@@ -20,39 +20,50 @@ const HostPage: React.FC = () => {
     <div className="min-h-screen pt-28 pb-16 flex flex-col lg:flex-row max-w-7xl mx-auto px-4 gap-8">
       
       {/* Left Sidebar Dropdown Navigation */}
-      <aside className="lg:w-64 flex-shrink-0">
-        <div className="sticky top-32 space-y-2 bg-white/5 dark:bg-slate-900/40 backdrop-blur-xl p-4 rounded-[2rem] border border-white/10">
-           <div className="px-2 py-2 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5 mb-4 flex items-center justify-between">
-              <span>Hosting Menu</span>
-              <Cloud size={12} className="text-indigo-500" />
-           </div>
-           {menuItems.map((item) => (
-             <div key={item.id} className="group">
-                <button 
-                  onClick={() => setOpenDropdown(openDropdown === item.id ? null : item.id)}
-                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 ${openDropdown === item.id ? 'bg-indigo-600/10 text-indigo-500 border border-indigo-600/20' : 'text-slate-400 hover:bg-white/5 hover:text-white border border-transparent'}`}
-                >
-                   <div className="flex items-center gap-3">
-                      <item.icon size={16} />
-                      <span className="text-xs font-bold uppercase tracking-wider">{item.label}</span>
-                   </div>
-                   <ChevronDown size={14} className={`transition-transform duration-300 ${openDropdown === item.id ? 'rotate-180' : ''}`} />
-                </button>
-                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openDropdown === item.id ? 'max-h-96 opacity-100 mt-1' : 'max-h-0 opacity-0 pointer-events-none'}`}>
-                   <div className="pl-11 pr-4 py-2 space-y-2">
-                      {item.children.map((child) => (
+      <aside className="lg:w-64 flex-shrink-0 hidden lg:block">
+        <div className="sticky top-32 w-full">
+            <div className="bg-[#0F1115] border border-white/5 rounded-2xl p-2 shadow-2xl overflow-hidden">
+               <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between mb-2">
+                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Hosting</span>
+                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-500 shadow-[0_0_10px_rgba(99,102,241,0.5)]"></div>
+               </div>
+               
+               <div className="flex flex-col gap-1">
+                   {menuItems.map((item) => (
+                     <div key={item.id} className="group">
                         <button 
-                          key={child}
-                          className="block text-[10px] font-bold text-slate-500 hover:text-indigo-400 transition-colors uppercase tracking-widest text-left w-full"
-                          onClick={() => scrollTo(item.id)}
+                          onClick={() => setOpenDropdown(openDropdown === item.id ? null : item.id)}
+                          className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 border ${
+                             openDropdown === item.id 
+                             ? 'bg-indigo-500/10 border-indigo-500/20 text-indigo-400' 
+                             : 'bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                          }`}
                         >
-                           {child}
+                           <div className="flex items-center gap-3">
+                              <item.icon size={16} className={openDropdown === item.id ? 'text-indigo-500' : 'text-slate-500 group-hover:text-slate-400'} />
+                              <span className="text-xs font-bold tracking-wide">{item.label}</span>
+                           </div>
+                           <ChevronDown size={14} className={`transition-transform duration-200 ${openDropdown === item.id ? 'rotate-180 text-indigo-500' : 'text-slate-600'}`} />
                         </button>
-                      ))}
-                   </div>
-                </div>
-             </div>
-           ))}
+                        
+                        {openDropdown === item.id && (
+                           <div className="mt-1 mb-2 ml-3 pl-3 border-l border-white/5 space-y-0.5 animate-fade-in-up">
+                              {item.children.map((child) => (
+                                <button 
+                                  key={child}
+                                  onClick={() => scrollTo(item.id)}
+                                  className="w-full text-left px-3 py-2 rounded-lg text-[11px] font-medium text-slate-500 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-2"
+                                >
+                                   <div className="w-1 h-1 rounded-full bg-slate-700 group-hover:bg-indigo-500 transition-colors"></div>
+                                   {child}
+                                </button>
+                              ))}
+                           </div>
+                        )}
+                     </div>
+                   ))}
+               </div>
+            </div>
         </div>
       </aside>
 

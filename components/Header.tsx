@@ -111,6 +111,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
           }`}
         >
           
+          {/* Logo Section - Left */}
           <div className="flex-shrink-0 flex items-center cursor-pointer group" onClick={() => handleLinkClick('home')}>
             <FluidLogo className="w-10 h-10 mr-2 transition-transform duration-300 group-hover:scale-110 text-slate-900 dark:text-white" />
             <span className="font-black text-xl tracking-tighter text-slate-900 dark:text-white transition-colors">
@@ -118,68 +119,75 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
             </span>
           </div>
 
-          <div className="hidden xl:flex items-center space-x-1">
-            {navStructure.map((item, index) => (
-              <div key={index} className="relative group">
-                {item.children ? (
-                  <button className="flex items-center gap-1 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-cyan-400 font-bold text-sm px-3 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all">
-                    {item.label} <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-200" />
-                  </button>
-                ) : (
-                  <button 
-                    onClick={item.action} 
-                    className="text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-cyan-400 font-bold text-sm px-3 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all"
-                  >
-                    {item.label}
-                  </button>
-                )}
+          {/* Right Section Container */}
+          <div className="flex items-center gap-4 md:gap-6">
+            
+            {/* Navigation Links - Desktop Only */}
+            <div className="hidden xl:flex items-center space-x-1">
+              {navStructure.map((item, index) => (
+                <div key={index} className="relative group">
+                  {item.children ? (
+                    <button className="flex items-center gap-1 text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-cyan-400 font-bold text-sm px-3 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all">
+                      {item.label} <ChevronDown size={14} className="group-hover:rotate-180 transition-transform duration-200" />
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={item.action} 
+                      className="text-slate-700 dark:text-slate-300 hover:text-blue-600 dark:hover:text-cyan-400 font-bold text-sm px-3 py-2 rounded-lg hover:bg-black/5 dark:hover:bg-white/5 transition-all"
+                    >
+                      {item.label}
+                    </button>
+                  )}
 
-                {item.children && (
-                  <div className="absolute left-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform group-hover:translate-y-0 translate-y-2">
-                    <div className="w-56 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden p-2">
-                      {item.children.map((child, cIndex) => (
-                        <button
-                          key={cIndex}
-                          onClick={child.action}
-                          className="block w-full text-left px-4 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-cyan-400 transition-colors font-medium"
-                        >
-                          {child.label}
-                        </button>
-                      ))}
+                  {item.children && (
+                    <div className="absolute right-0 top-full pt-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform group-hover:translate-y-0 translate-y-2">
+                      <div className="w-56 bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-slate-200 dark:border-slate-800 overflow-hidden p-2">
+                        {item.children.map((child, cIndex) => (
+                          <button
+                            key={cIndex}
+                            onClick={child.action}
+                            className="block w-full text-left px-4 py-2 rounded-lg text-sm text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-cyan-400 transition-colors font-medium"
+                          >
+                            {child.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+                  )}
+                </div>
+              ))}
+            </div>
 
-          <div className="hidden md:flex items-center gap-2">
-            <button 
-              onClick={toggleTheme}
-              className="p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
-            >
-              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-            </button>
-            <ConnectButton 
-                client={client} 
-                wallets={wallets}
-                theme={theme}
-            />
-          </div>
-
-          <div className="-mr-2 flex xl:hidden items-center gap-4">
-            <button 
+            {/* Actions (Theme & Connect) - Tablet/Desktop */}
+            <div className="hidden md:flex items-center gap-2">
+              <button 
                 onClick={toggleTheme}
-                className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 md:hidden"
+                className="p-1.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
               >
-                {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="inline-flex items-center justify-center p-2 rounded-md text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 focus:outline-none"
-            >
-              {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
-            </button>
+                {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+              </button>
+              <ConnectButton 
+                  client={client} 
+                  wallets={wallets}
+                  theme={theme}
+              />
+            </div>
+
+            {/* Mobile/Tablet Menu Controls */}
+            <div className="flex xl:hidden items-center gap-4">
+              <button 
+                  onClick={toggleTheme}
+                  className="p-2 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 md:hidden"
+                >
+                  {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+              </button>
+              <button
+                onClick={() => setIsMenuOpen(!isMenuOpen)}
+                className="inline-flex items-center justify-center p-2 rounded-md text-slate-600 dark:text-gray-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-slate-800 focus:outline-none"
+              >
+                {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+              </button>
+            </div>
           </div>
         </div>
       </div>

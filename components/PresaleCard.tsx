@@ -13,8 +13,7 @@ import {
   prepareContractCall, 
   defineChain,
   toWei,
-  toUnits,
-  readContract
+  toUnits
 } from "thirdweb";
 import { client, wallets } from "../client";
 
@@ -80,21 +79,38 @@ const PresaleCard: React.FC = () => {
   const fluidAmount = usdAmount ? parseFloat(usdAmount) / fluidPrice : 0;
 
   // --- Contract Hooks ---
+  
+  // 1. Define a dummy contract for safe fallbacks
+  const dummyContract = useMemo(() => getContract({
+    client,
+    chain: defineChain(1), // Mainnet as placeholder
+    address: "0x0000000000000000000000000000000000000000"
+  }), []);
+
   const tokenContract = useMemo(() => {
-    if (selectedPayment.isNative || !selectedPayment.address) return null;
-    return getContract({
-      client,
-      chain: defineChain(selectedPayment.chainId),
-      address: selectedPayment.address
-    });
+    if (selectedPayment.isNative || !selectedPayment.address || selectedPayment.chainId <= 0) {
+      return undefined;
+    }
+    try {
+      return getContract({
+        client,
+        chain: defineChain(selectedPayment.chainId),
+        address: selectedPayment.address
+      });
+    } catch (e) {
+      console.error("Failed to create contract instance", e);
+      return undefined;
+    }
   }, [selectedPayment]);
 
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
-    contract: tokenContract!,
+    // Use dummyContract if tokenContract is undefined to prevent "reading 'chain' of undefined" error
+    contract: tokenContract || dummyContract, 
     method: "function allowance(address owner, address spender) view returns (uint256)",
     params: [account?.address || "", PRESALE_CONTRACT_ADDRESS],
     queryOptions: {
-      enabled: !!account && !!tokenContract
+      // Only enable the query if we have a valid tokenContract (not the dummy one)
+      enabled: !!account && !!tokenContract && !selectedPayment.isNative
     }
   });
 
@@ -178,11 +194,11 @@ const PresaleCard: React.FC = () => {
     setStatus('PENDING');
 
     try {
-      if (selectedPayment.chainId !== -1 && chainId !== selectedPayment.chainId) {
+      if (selectedPayment.chainId > 0 && chainId !== selectedPayment.chainId) {
          await switchChain(defineChain(selectedPayment.chainId));
       }
 
-      if (selectedPayment.chainId === -1) {
+      if (selectedPayment.chainId <= 0) {
           alert("Solana support coming soon. Please use EVM chains.");
           setStatus('IDLE');
           return;
