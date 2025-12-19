@@ -3,7 +3,8 @@ import {
   Play, Apple, Box, ArrowDownUp, ChevronDown, RefreshCw, 
   Wallet as WalletIcon, Layers, Shield, Globe, Zap, 
   Lock, Smartphone, CreditCard, Check, X, ArrowRight,
-  Fingerprint, Eye, Activity, Key, ChevronRight, Landmark
+  Fingerprint, Eye, Activity, Key, ChevronRight, Landmark,
+  Coins, Monitor, Terminal, Command
 } from 'lucide-react';
 
 const FluidLogo = ({ className }: { className?: string }) => (
@@ -79,308 +80,131 @@ const WalletPage: React.FC = () => {
             Seamlessly bridge the gap between DeFi, Fiat, and the Real World.
          </p>
          
-         <div className="flex flex-col sm:flex-row gap-4 justify-center mb-20 animate-fade-in-up delay-100">
-             <button className="flex items-center gap-3 bg-white text-slate-900 font-bold rounded-2xl px-6 py-4 hover:scale-105 transition-transform shadow-xl shadow-white/10">
-                <Apple size={24} />
-                <div className="text-left">
-                   <div className="text-[10px] uppercase font-black text-slate-500 tracking-wider">Download on</div>
-                   <div className="text-lg font-black leading-none tracking-tight">App Store</div>
+         <div className="flex flex-col items-center animate-fade-in-up delay-100">
+             <div className="flex flex-col sm:flex-row gap-4 justify-center mb-12">
+                 <button className="flex items-center gap-3 bg-white text-slate-900 font-bold rounded-2xl px-6 py-4 hover:scale-105 transition-transform shadow-xl shadow-white/10 group">
+                    <Apple size={24} className="group-hover:fill-current transition-all" />
+                    <div className="text-left">
+                       <div className="text-[10px] uppercase font-black text-slate-500 tracking-wider">Download on</div>
+                       <div className="text-lg font-black leading-none tracking-tight">App Store</div>
+                    </div>
+                 </button>
+                 <button className="flex items-center gap-3 bg-slate-900 text-white border border-slate-700 rounded-2xl px-6 py-4 hover:scale-105 transition-transform shadow-xl group">
+                    <Play size={24} className="fill-white group-hover:fill-emerald-400 transition-colors" />
+                    <div className="text-left">
+                       <div className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Get it on</div>
+                       <div className="text-lg font-black leading-none tracking-tight">Google Play</div>
+                    </div>
+                 </button>
+             </div>
+
+             <div className="flex flex-col items-center">
+                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-6 flex items-center gap-2">
+                   <Monitor size={12} /> Also Available on Desktop
+                </span>
+                <div className="flex flex-wrap justify-center gap-4">
+                   <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900/50 border border-slate-800 hover:bg-slate-800 hover:border-blue-500/50 transition-all group">
+                      <Monitor size={18} className="text-blue-500" />
+                      <span className="text-sm font-bold text-white">Windows</span>
+                   </button>
+                   <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900/50 border border-slate-800 hover:bg-slate-800 hover:border-slate-200/50 transition-all group">
+                      <Command size={18} className="text-white" />
+                      <span className="text-sm font-bold text-white">macOS</span>
+                   </button>
+                   <button className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-slate-900/50 border border-slate-800 hover:bg-slate-800 hover:border-orange-500/50 transition-all group">
+                      <Terminal size={18} className="text-orange-500" />
+                      <span className="text-sm font-bold text-white">Linux</span>
+                   </button>
                 </div>
-             </button>
-             <button className="flex items-center gap-3 bg-slate-900 text-white border border-slate-700 rounded-2xl px-6 py-4 hover:scale-105 transition-transform shadow-xl">
-                <Play size={24} className="fill-white" />
-                <div className="text-left">
-                   <div className="text-[10px] uppercase font-black text-slate-400 tracking-wider">Get it on</div>
-                   <div className="text-lg font-black leading-none tracking-tight">Google Play</div>
-                </div>
-             </button>
+             </div>
          </div>
 
          {/* Hero Visual */}
-         <div className="relative max-w-5xl mx-auto">
-            <div className="absolute inset-0 bg-gradient-to-t from-gray-50 dark:from-slate-950 to-transparent z-20 h-full w-full pointer-events-none"></div>
-            <img 
-              src="https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=2832&auto=format&fit=crop" 
-              alt="App Interface" 
-              className="rounded-[3rem] border-8 border-slate-900/50 shadow-2xl mx-auto opacity-80"
-            />
-         </div>
-      </section>
-
-      {/* Deep Dive Section 1: The Interface */}
-      <section className="max-w-7xl mx-auto px-4 mb-32">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
-          
-          {/* Interactive Phone Mockup */}
-          <div className="relative order-2 lg:order-1">
-             <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/30 to-blue-600/30 rounded-[3rem] blur-3xl opacity-50"></div>
-             <div className="bg-slate-900 border-4 border-slate-800 rounded-[2.5rem] shadow-2xl overflow-hidden relative min-h-[600px] flex flex-col z-10 max-w-sm mx-auto transform rotate-[-2deg] hover:rotate-0 transition-transform duration-500">
-                
-                {/* Dynamic Notch */}
-                <div className="absolute top-0 inset-x-0 h-7 bg-black z-20 flex justify-center pt-2">
-                   <div className="w-20 h-4 bg-slate-900 rounded-full"></div>
-                </div>
-
-                {/* Mockup Header */}
-                <div className="p-6 pt-12 bg-slate-900">
-                   <div className="flex justify-between items-center mb-6">
-                      <div>
-                         <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Balance</div>
-                         <div className="text-3xl font-black text-white tracking-tight">$12,458.00</div>
-                      </div>
-                      <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                         <span className="text-white font-black text-xl">F</span>
-                      </div>
-                   </div>
-                   
-                   {/* Toggles */}
-                   <div className="flex gap-4 mb-4 bg-black/40 p-1 rounded-xl border border-white/5">
-                      <button 
-                        onClick={() => setMockupView('assets')}
-                        className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all ${mockupView === 'assets' ? 'bg-white/10 text-white shadow' : 'text-slate-500'}`}
-                      >
-                        Assets
-                      </button>
-                      <button 
-                        onClick={() => setMockupView('swap')}
-                        className={`flex-1 py-2 rounded-lg text-[10px] font-bold transition-all ${mockupView === 'swap' ? 'bg-white/10 text-white shadow' : 'text-slate-500'}`}
-                      >
-                        DEX
-                      </button>
-                   </div>
-                </div>
-                
-                {/* Mockup Body */}
-                <div className="flex-grow bg-[#020617] p-4 overflow-y-auto no-scrollbar">
-                  {mockupView === 'assets' ? (
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-4 gap-2 mb-6">
-                         {['Send', 'Receive', 'Buy', 'Swap'].map(action => (
-                            <div key={action} className="flex flex-col items-center gap-1">
-                               <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-white border border-white/5">
-                                  <div className="w-4 h-4 bg-current opacity-50 rounded-sm"></div>
-                               </div>
-                               <span className="text-[8px] font-bold text-slate-500 uppercase">{action}</span>
-                            </div>
-                         ))}
-                      </div>
-                      {coins.map(coin => (
-                         <div key={coin.symbol} className="flex items-center justify-between p-3 rounded-xl bg-white/5 border border-white/5">
-                            <div className="flex items-center gap-3">
-                               <div className={`w-8 h-8 rounded-lg ${coin.color} flex items-center justify-center text-white font-bold`}>
-                                  {coin.symbol[0]}
-                               </div>
-                               <div>
-                                  <div className="text-xs font-bold text-white">{coin.name}</div>
-                                  <div className="text-[9px] text-slate-500 font-bold">{coin.amount} {coin.symbol}</div>
-                               </div>
-                            </div>
-                            <div className="text-right">
-                               <div className="text-xs font-bold text-white">{coin.value}</div>
-                               <div className="text-[9px] text-emerald-500 font-bold">+2.4%</div>
-                            </div>
-                         </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="space-y-4 pt-4">
-                       <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                          <label className="text-[9px] font-bold text-slate-500 uppercase mb-2 block">You Pay</label>
-                          <div className="flex justify-between items-center">
-                             <div className="text-xl font-bold text-white">1.50</div>
-                             <div className="flex items-center gap-2 bg-slate-800 px-2 py-1 rounded border border-white/10">
-                                <span className="text-[10px] font-bold text-white">ETH</span>
-                             </div>
-                          </div>
-                       </div>
-                       <div className="flex justify-center -my-3 relative z-10">
-                          <div className="bg-slate-800 p-2 rounded-lg border border-slate-700 text-emerald-400">
-                             <ArrowDownUp size={14} />
-                          </div>
-                       </div>
-                       <div className="bg-white/5 p-4 rounded-2xl border border-white/5">
-                          <label className="text-[9px] font-bold text-slate-500 uppercase mb-2 block">You Receive</label>
-                          <div className="flex justify-between items-center">
-                             <div className="text-xl font-bold text-emerald-400">8,420</div>
-                             <div className="flex items-center gap-2 bg-slate-800 px-2 py-1 rounded border border-white/10">
-                                <span className="text-[10px] font-bold text-white">FLD</span>
-                             </div>
-                          </div>
-                       </div>
-                       <button className="w-full py-3 bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-900 font-black rounded-xl uppercase tracking-wider text-xs">
-                          Confirm Swap
-                       </button>
-                    </div>
-                  )}
-                </div>
-             </div>
-          </div>
-
-          {/* Text Content */}
-          <div className="order-1 lg:order-2">
-             <div className="inline-block px-3 py-1 rounded-lg bg-blue-500/10 text-blue-500 font-bold text-xs uppercase tracking-widest mb-6 border border-blue-500/20">
-                User Experience
-             </div>
-             <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-6">
-                Complex Tech. <br/>
-                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-400">Simple Feel.</span>
-             </h2>
-             <p className="text-lg text-slate-600 dark:text-slate-400 mb-8 leading-relaxed font-medium">
-                We abstracted away the complexities of blockchain. No more confusing gas fees, hex addresses, or network switching. Fluid Wallet handles the routing, bridging, and security in the background.
-             </p>
-             
-             <div className="space-y-6">
-                {features.map((feature, idx) => (
-                   <div 
-                      key={idx} 
-                      className={`p-6 rounded-2xl border transition-all duration-500 ${activeFeature === idx ? 'bg-white dark:bg-slate-900 border-emerald-500 shadow-xl scale-105' : 'bg-transparent border-transparent opacity-60'}`}
-                   >
-                      <div className="flex items-start gap-4">
-                         <div className={`p-3 rounded-xl ${activeFeature === idx ? 'bg-emerald-500 text-white' : 'bg-slate-800 text-slate-500'}`}>
-                            <feature.icon size={24} />
-                         </div>
-                         <div>
-                            <h3 className={`text-lg font-bold mb-1 ${activeFeature === idx ? 'text-slate-900 dark:text-white' : 'text-slate-500'}`}>{feature.title}</h3>
-                            <p className="text-sm text-slate-500 leading-relaxed">
-                               {feature.desc}
-                            </p>
-                         </div>
-                      </div>
-                   </div>
-                ))}
-             </div>
-          </div>
-
-        </div>
-      </section>
-
-      {/* Security Architecture (Bento Grid) */}
-      <section className="max-w-7xl mx-auto px-4 mb-32">
-         <div className="text-center mb-16">
-            <h2 className="text-3xl md:text-5xl font-black text-slate-900 dark:text-white mb-4">Fort Knox in Your Pocket</h2>
-            <p className="text-slate-500 max-w-2xl mx-auto">Our multi-layered security approach ensures your assets are protected against every vector of attack.</p>
-         </div>
-
-         <div className="grid md:grid-cols-3 gap-6 auto-rows-[250px]">
-            {/* Card 1: Non-Custodial */}
-            <div className="md:col-span-2 bg-slate-900 border border-slate-800 rounded-[2.5rem] p-8 relative overflow-hidden group">
-               <div className="absolute top-0 right-0 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-emerald-500/20 transition-all"></div>
-               <div className="relative z-10 h-full flex flex-col justify-between">
-                  <div className="w-12 h-12 bg-emerald-500/20 rounded-2xl flex items-center justify-center text-emerald-500 mb-4">
-                     <Shield size={24} />
+         <div className="relative max-w-5xl mx-auto mt-24">
+            <div className="absolute inset-0 bg-gradient-to-t from-gray-50 dark:from-slate-950 to-transparent z-10 h-full w-full pointer-events-none"></div>
+            
+            {/* Main App Mockup */}
+            <div className="relative z-0 mx-auto w-full max-w-[320px] sm:max-w-[380px]">
+               <div className="aspect-[9/19.5] bg-slate-950 rounded-[3rem] border-[8px] border-slate-900 shadow-2xl overflow-hidden relative ring-1 ring-white/10">
+                  <div className="absolute top-0 inset-x-0 h-7 bg-black z-20 flex justify-center">
+                     <div className="w-32 h-6 bg-black rounded-b-2xl"></div>
                   </div>
-                  <div>
-                     <h3 className="text-2xl font-bold text-white mb-2">True Non-Custodial Architecture</h3>
-                     <p className="text-slate-400 max-w-md">Your private keys are encrypted locally on your device's Secure Enclave. We cannot freeze your funds, reverse transactions, or access your wallet.</p>
-                  </div>
-               </div>
-            </div>
-
-            {/* Card 2: Biometrics */}
-            <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-[2.5rem] p-8 flex flex-col items-center justify-center text-center relative overflow-hidden hover:scale-[1.02] transition-transform">
-               <Fingerprint size={64} className="text-blue-500 mb-4 opacity-80" />
-               <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-1">Bio-Auth</h3>
-               <p className="text-xs text-slate-500 font-bold uppercase tracking-widest">FaceID & TouchID Ready</p>
-            </div>
-
-            {/* Card 3: Privacy */}
-            <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-[2.5rem] p-8 flex flex-col justify-between group">
-               <div className="flex justify-between items-start">
-                  <div className="p-3 bg-slate-100 dark:bg-slate-800 rounded-xl text-slate-900 dark:text-white"><Eye size={24} /></div>
-                  <div className="px-2 py-1 bg-red-500/10 text-red-500 text-[10px] font-bold uppercase rounded">No KYC</div>
-               </div>
-               <div>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Anonymous</h3>
-                  <p className="text-sm text-slate-500">No account required. No email. No phone number.</p>
-               </div>
-            </div>
-
-            {/* Card 4: Audit */}
-            <div className="md:col-span-2 bg-gradient-to-br from-blue-600 to-cyan-500 rounded-[2.5rem] p-8 text-white relative overflow-hidden">
-               <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
-               <div className="relative z-10 flex flex-col md:flex-row items-center gap-8 h-full">
-                  <div className="flex-1">
-                     <div className="flex items-center gap-2 mb-4 opacity-80">
-                        <Check className="w-5 h-5" />
-                        <span className="text-xs font-bold uppercase tracking-widest">Audited by CertiK</span>
-                     </div>
-                     <h3 className="text-3xl font-black mb-2">Open Source</h3>
-                     <p className="text-blue-100">Our codebase is public and verifiable. Trust, but verify.</p>
-                  </div>
-                  <div className="h-32 w-32 bg-white/20 backdrop-blur-md rounded-2xl flex items-center justify-center border border-white/30 rotate-6">
-                     <Lock size={40} className="text-white" />
-                  </div>
-               </div>
-            </div>
-         </div>
-      </section>
-
-      {/* Fiat Rails Section */}
-      <section className="bg-slate-50 dark:bg-slate-900/50 py-24 border-y border-slate-200 dark:border-slate-800">
-         <div className="max-w-7xl mx-auto px-4">
-            <div className="flex flex-col md:flex-row gap-12 items-center">
-               <div className="flex-1">
-                  <span className="text-emerald-500 font-bold uppercase tracking-widest text-sm mb-2 block">Fiat Gateway</span>
-                  <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-6">
-                     Your Bank Account <br/>
-                     <span className="text-slate-400">Just Got Upgraded.</span>
-                  </h2>
-                  <p className="text-lg text-slate-600 dark:text-slate-400 mb-8 leading-relaxed font-medium">
-                     Directly link your bank account to buy crypto instantly with 0% fees on your first $1,000. Sell crypto back to fiat and withdraw to your bank in seconds.
-                  </p>
                   
-                  <ul className="space-y-4 mb-8">
-                     {[
-                        'Instant ACH & SEPA Transfers',
-                        'Apple Pay & Google Pay Integration',
-                        'Virtual Debit Cards for Online Spending',
-                        'Auto-DCA (Dollar Cost Averaging)'
-                     ].map((item, i) => (
-                        <li key={i} className="flex items-center gap-3">
-                           <div className="w-6 h-6 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500">
-                              <Check size={14} />
-                           </div>
-                           <span className="text-slate-700 dark:text-slate-300 font-bold">{item}</span>
-                        </li>
-                     ))}
-                  </ul>
+                  {/* Internal App Content Simulation */}
+                  <div className="h-full bg-slate-900 flex flex-col pt-12 p-6">
+                     <div className="flex justify-between items-center mb-8">
+                        <div className="flex items-center gap-2">
+                           <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-emerald-400 to-cyan-500"></div>
+                           <span className="font-bold text-white">Hello, Alex</span>
+                        </div>
+                        <div className="p-2 bg-slate-800 rounded-full text-slate-400"><Activity size={20}/></div>
+                     </div>
 
-                  <button className="flex items-center gap-2 text-emerald-500 font-black uppercase tracking-widest hover:gap-4 transition-all">
-                     View Limits & Fees <ArrowRight size={18} />
-                  </button>
+                     <div className="mb-8">
+                        <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Total Balance</span>
+                        <div className="text-4xl font-black text-white mt-1">$42,593.00</div>
+                        <div className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-500/10 rounded-lg mt-2">
+                           <Activity size={12} className="text-emerald-500" />
+                           <span className="text-xs font-bold text-emerald-500">+2.4% today</span>
+                        </div>
+                     </div>
+
+                     <div className="grid grid-cols-4 gap-4 mb-8">
+                        {['Send', 'Receive', 'Buy', 'Swap'].map((action, i) => (
+                           <div key={action} className="flex flex-col items-center gap-2">
+                              <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center text-white border border-slate-700 shadow-lg">
+                                 {i === 0 && <ArrowRight size={20} className="-rotate-45" />}
+                                 {i === 1 && <ArrowRight size={20} className="rotate-[135deg]" />}
+                                 {i === 2 && <CreditCard size={20} />}
+                                 {i === 3 && <RefreshCw size={20} />}
+                              </div>
+                              <span className="text-[10px] font-bold text-slate-400">{action}</span>
+                           </div>
+                        ))}
+                     </div>
+
+                     <div className="flex-grow space-y-4">
+                        <div className="flex justify-between items-center">
+                           <span className="text-sm font-bold text-white">Assets</span>
+                           <span className="text-xs font-bold text-blue-500">See All</span>
+                        </div>
+                        {coins.map((coin) => (
+                           <div key={coin.symbol} className="flex items-center justify-between p-3 rounded-2xl bg-slate-800/50 border border-slate-700/50">
+                              <div className="flex items-center gap-3">
+                                 <div className={`w-10 h-10 rounded-xl ${coin.color} flex items-center justify-center text-white font-bold`}>
+                                    {coin.symbol === 'FLD' ? <FluidLogo className="w-6 h-6" /> : <Coins size={20} />}
+                                 </div>
+                                 <div>
+                                    <div className="font-bold text-white text-sm">{coin.name}</div>
+                                    <div className="text-xs text-slate-500">{coin.amount} {coin.symbol}</div>
+                                 </div>
+                              </div>
+                              <div className="text-right">
+                                 <div className="font-bold text-white text-sm">{coin.value}</div>
+                              </div>
+                           </div>
+                        ))}
+                     </div>
+                  </div>
                </div>
                
-               <div className="flex-1 relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/20 to-blue-500/20 rounded-full blur-[80px]"></div>
-                  <div className="relative bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 p-8 rounded-[2.5rem] shadow-2xl">
-                     <div className="flex justify-between items-center mb-8">
-                        <h3 className="text-xl font-bold text-slate-900 dark:text-white">Buying Power</h3>
-                        <Landmark className="text-slate-400" />
+               {/* Floating Elements */}
+               <div className="absolute top-1/4 -right-12 p-4 bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-slate-700 shadow-xl z-20 animate-bounce-slow">
+                  <div className="flex items-center gap-3">
+                     <div className="p-2 bg-emerald-500/20 text-emerald-500 rounded-xl"><Check size={20} /></div>
+                     <div>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase">Received</div>
+                        <div className="text-sm font-black text-white">+ 4.20 ETH</div>
                      </div>
-                     <div className="space-y-4">
-                        <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center gap-4">
-                           <div className="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold">C</div>
-                           <div className="flex-1">
-                              <div className="text-sm font-bold text-slate-900 dark:text-white">Chase Bank</div>
-                              <div className="text-xs text-slate-500">**** 4492</div>
-                           </div>
-                           <span className="text-emerald-500 text-xs font-bold uppercase bg-emerald-500/10 px-2 py-1 rounded">Linked</span>
-                        </div>
-                        <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 flex items-center gap-4">
-                           <div className="w-10 h-10 bg-black rounded-full flex items-center justify-center text-white font-bold"><Apple size={16}/></div>
-                           <div className="flex-1">
-                              <div className="text-sm font-bold text-slate-900 dark:text-white">Apple Pay</div>
-                              <div className="text-xs text-slate-500">Instant</div>
-                           </div>
-                           <ChevronRight size={16} className="text-slate-400" />
-                        </div>
-                     </div>
-                     <div className="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 flex justify-between items-end">
-                        <div>
-                           <span className="text-xs text-slate-500 font-bold uppercase">Weekly Limit</span>
-                           <div className="text-2xl font-black text-slate-900 dark:text-white">$50,000</div>
-                        </div>
-                        <button className="bg-emerald-500 text-white px-6 py-2 rounded-xl font-bold text-sm shadow-lg shadow-emerald-500/20">Increase</button>
+                  </div>
+               </div>
+
+               <div className="absolute bottom-1/4 -left-12 p-4 bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-slate-700 shadow-xl z-20 animate-bounce-slow delay-700">
+                  <div className="flex items-center gap-3">
+                     <div className="p-2 bg-blue-500/20 text-blue-500 rounded-xl"><Globe size={20} /></div>
+                     <div>
+                        <div className="text-[10px] font-bold text-slate-400 uppercase">Connected</div>
+                        <div className="text-sm font-black text-white">Fluid DEX</div>
                      </div>
                   </div>
                </div>
@@ -388,70 +212,41 @@ const WalletPage: React.FC = () => {
          </div>
       </section>
 
-      {/* Comparison Table */}
-      <section className="max-w-5xl mx-auto px-4 mt-24">
-         <h2 className="text-3xl font-black text-center text-slate-900 dark:text-white mb-16">The Fluid Advantage</h2>
-         
-         <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-               <thead>
-                  <tr>
-                     <th className="p-4 text-sm text-slate-500 font-bold uppercase tracking-widest border-b border-slate-200 dark:border-slate-800">Feature</th>
-                     <th className="p-4 text-center border-b border-slate-200 dark:border-slate-800 bg-emerald-500/5 rounded-t-2xl">
-                        <div className="flex flex-col items-center">
-                           <FluidLogo className="w-8 h-8 text-emerald-500 mb-2" />
-                           <span className="font-black text-slate-900 dark:text-white">Fluid</span>
-                        </div>
-                     </th>
-                     <th className="p-4 text-center border-b border-slate-200 dark:border-slate-800">
-                        <span className="font-bold text-slate-500">Metamask</span>
-                     </th>
-                     <th className="p-4 text-center border-b border-slate-200 dark:border-slate-800">
-                        <span className="font-bold text-slate-500">Coinbase</span>
-                     </th>
-                  </tr>
-               </thead>
-               <tbody className="text-sm font-medium">
-                  {[
-                     { feature: 'Non-Custodial', fluid: true, mm: true, cb: false },
-                     { feature: 'Cross-Chain Swaps', fluid: true, mm: false, cb: false },
-                     { feature: 'Gas-Less Mode', fluid: true, mm: false, cb: false },
-                     { feature: 'Fiat Off-Ramp', fluid: true, mm: true, cb: true },
-                     { feature: 'Debit Card', fluid: true, mm: true, cb: true },
-                     { feature: 'Privacy Focused', fluid: true, mm: false, cb: false },
-                  ].map((row, i) => (
-                     <tr key={i} className="hover:bg-slate-50/50 dark:hover:bg-slate-900/50 transition-colors">
-                        <td className="p-4 border-b border-slate-100 dark:border-slate-800 text-slate-700 dark:text-slate-300 font-bold">{row.feature}</td>
-                        <td className="p-4 border-b border-slate-100 dark:border-slate-800 text-center bg-emerald-500/5">
-                           {row.fluid ? <Check size={20} className="mx-auto text-emerald-500" /> : <X size={20} className="mx-auto text-slate-300" />}
-                        </td>
-                        <td className="p-4 border-b border-slate-100 dark:border-slate-800 text-center">
-                           {row.mm ? <Check size={20} className="mx-auto text-slate-500" /> : <X size={20} className="mx-auto text-slate-300" />}
-                        </td>
-                        <td className="p-4 border-b border-slate-100 dark:border-slate-800 text-center">
-                           {row.cb ? <Check size={20} className="mx-auto text-slate-500" /> : <X size={20} className="mx-auto text-slate-300" />}
-                        </td>
-                     </tr>
-                  ))}
-               </tbody>
-            </table>
+      {/* Features Grid */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
+         <div className="grid md:grid-cols-3 gap-8">
+            {features.map((feature, i) => (
+               <div 
+                  key={i} 
+                  className={`p-8 rounded-[2rem] border transition-all duration-500 cursor-default ${
+                     activeFeature === i 
+                     ? 'bg-slate-900 border-blue-500/50 shadow-2xl scale-105' 
+                     : 'bg-slate-950/50 border-slate-800 hover:border-slate-700'
+                  }`}
+                  onMouseEnter={() => setActiveFeature(i)}
+               >
+                  <div className={`w-14 h-14 rounded-2xl flex items-center justify-center mb-6 transition-colors ${
+                     activeFeature === i ? 'bg-blue-500 text-white' : 'bg-slate-800 text-slate-400'
+                  }`}>
+                     <feature.icon size={28} />
+                  </div>
+                  <h3 className={`text-xl font-bold mb-4 ${activeFeature === i ? 'text-white' : 'text-slate-300'}`}>
+                     {feature.title}
+                  </h3>
+                  <p className="text-slate-500 leading-relaxed text-sm font-medium">
+                     {feature.desc}
+                  </p>
+               </div>
+            ))}
          </div>
       </section>
 
-      {/* CTA Footer */}
-      <section className="text-center mt-32 px-4">
-          <div className="bg-slate-900 rounded-[3rem] p-12 md:p-20 relative overflow-hidden max-w-6xl mx-auto shadow-2xl">
-             <div className="absolute top-0 left-0 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
-             <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-emerald-500/20 rounded-full blur-[100px] -mr-32 -mt-32"></div>
-             
-             <div className="relative z-10">
-                <h2 className="text-4xl md:text-6xl font-black text-white mb-8 tracking-tighter">Ready to take control?</h2>
-                <button className="bg-white text-slate-900 px-10 py-5 rounded-full font-black text-lg hover:scale-105 transition-transform shadow-xl shadow-white/20">
-                   Get Started Free
-                </button>
-                <p className="mt-6 text-slate-500 text-sm font-bold uppercase tracking-widest">No credit card required • Setup in 30s</p>
-             </div>
-          </div>
+      {/* CTA */}
+      <section className="text-center px-4">
+         <h2 className="text-3xl font-black text-white mb-8">Ready to ditch your bank?</h2>
+         <button className="px-12 py-5 bg-white text-slate-900 font-black rounded-full hover:scale-105 transition-transform shadow-lg">
+            Create Free Wallet
+         </button>
       </section>
 
     </div>

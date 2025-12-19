@@ -10,7 +10,8 @@ import {
   ChevronRight, Terminal, Cloud, Smartphone, Repeat,
   ArrowDown, Layout, Users, ShieldCheck, AlertOctagon, FileCheck,
   Building2, Banknote, History, Flag, QrCode, UploadCloud, Rocket,
-  Key, Chrome, ChevronLeft, Delete, User, Edit3, AtSign, Camera, Share2, Save, ShoppingCart, ArrowRight
+  Key, Chrome, ChevronLeft, Delete, User, Edit3, AtSign, Camera, Share2, Save, ShoppingCart, ArrowRight,
+  ShoppingBag, Coins, Monitor
 } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 
@@ -294,7 +295,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
   const [cardMode, setCardMode] = useState<'virtual' | 'physical'>('virtual');
   const [cardFrozen, setCardFrozen] = useState(false);
   const [showCardDetails, setShowCardDetails] = useState(false);
-  const [activeModal, setActiveModal] = useState<'send' | 'receive' | 'buy' | 'editProfile' | 'domainRegistrar' | null>(null);
+  const [activeModal, setActiveModal] = useState<'send' | 'receive' | 'buy' | 'editProfile' | 'domainRegistrar' | 'cardLimits' | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   
   // Profile State
@@ -305,6 +306,14 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alexander&backgroundColor=b6e3f4'
   });
   const [tempProfile, setTempProfile] = useState(profile);
+
+  // Card Limits State
+  const [cardLimits, setCardLimits] = useState({
+    online: 5000,
+    inStore: 2500,
+    atm: 1000
+  });
+  const [tempCardLimits, setTempCardLimits] = useState(cardLimits);
 
   // Domain Registrar State
   const [domainQuery, setDomainQuery] = useState('');
@@ -563,7 +572,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                            <div key={asset.symbol} className="flex items-center justify-between p-4 bg-slate-900/50 backdrop-blur-md border border-white/5 rounded-2xl hover:bg-white/5 transition-colors cursor-pointer group">
                               <div className="flex items-center gap-4">
                                  <div className={`w-10 h-10 rounded-xl ${asset.color} flex items-center justify-center text-white font-bold shadow-lg`}>
-                                    {asset.symbol[0]}
+                                    {asset.symbol === 'FLD' ? <FluidLogo className="w-6 h-6" /> : <Coins size={20} />}
                                  </div>
                                  <div>
                                     <div className="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors">{asset.name}</div>
@@ -787,7 +796,10 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                    <div className="space-y-4">
                       <div className="grid grid-cols-3 gap-3">
                          <button 
-                           onClick={() => handleSecureAction('changeLimits', () => alert("Limits Settings"))}
+                           onClick={() => handleSecureAction('changeLimits', () => {
+                              setTempCardLimits(cardLimits);
+                              setActiveModal('cardLimits');
+                           })}
                            className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-indigo-500/50 transition-colors"
                          >
                             <Settings size={20} className="text-slate-400" />
@@ -1114,6 +1126,18 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                     </div>
                   </div>
 
+                  {/* Desktop Sync Promotion */}
+                  <div className="mb-8 p-4 bg-indigo-600/10 border border-indigo-600/20 rounded-2xl flex items-center justify-between shadow-lg">
+                      <div className="flex items-center gap-3">
+                          <div className="p-2 bg-indigo-600 rounded-xl text-white"><Monitor size={18}/></div>
+                          <div>
+                              <div className="text-xs font-bold text-white">Desktop App</div>
+                              <div className="text-[9px] text-indigo-300">Sync with Windows/Mac/Linux</div>
+                          </div>
+                      </div>
+                      <button className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 transition-colors text-white text-[9px] font-bold rounded-lg uppercase tracking-wider">Download</button>
+                  </div>
+
                   {/* Security Score Audit */}
                   <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-6 mb-8 relative overflow-hidden">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-[40px] pointer-events-none"></div>
@@ -1198,6 +1222,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                        {activeModal === 'buy' && 'Buy Crypto'}
                        {activeModal === 'editProfile' && 'Edit Profile'}
                        {activeModal === 'domainRegistrar' && 'Domain Registrar'}
+                       {activeModal === 'cardLimits' && 'Spending Limits'}
                      </h3>
                      <button onClick={() => { setActiveModal(null); setDomainSearchStatus('idle'); setDomainQuery(''); }} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white">
                         <X size={16} />
@@ -1445,6 +1470,89 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                                 </div>
                             )}
                         </div>
+                    </div>
+                  )}
+
+                  {activeModal === 'cardLimits' && (
+                    <div className="space-y-6 flex-grow flex flex-col">
+                        <div className="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-start gap-3">
+                            <ShieldCheck size={20} className="text-indigo-500 shrink-0 mt-0.5" />
+                            <p className="text-[10px] text-indigo-200/80 leading-relaxed">
+                                Set daily spending limits for different transaction types to enhance security. Changes apply instantly.
+                            </p>
+                        </div>
+
+                        <div className="space-y-6">
+                            {/* Online */}
+                            <div>
+                                <div className="flex justify-between items-center mb-2">
+                                    <div className="flex items-center gap-2">
+                                        <Globe size={16} className="text-blue-400" />
+                                        <span className="text-xs font-bold text-white uppercase tracking-wider">Online</span>
+                                    </div>
+                                    <span className="text-sm font-black text-white">${tempCardLimits.online.toLocaleString()}</span>
+                                </div>
+                                <input 
+                                    type="range" 
+                                    min="0" 
+                                    max="20000" 
+                                    step="100" 
+                                    value={tempCardLimits.online}
+                                    onChange={(e) => setTempCardLimits({...tempCardLimits, online: parseInt(e.target.value)})}
+                                    className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                />
+                            </div>
+
+                            {/* In-Store */}
+                            <div>
+                                <div className="flex justify-between items-center mb-2">
+                                    <div className="flex items-center gap-2">
+                                        <ShoppingBag size={16} className="text-purple-400" />
+                                        <span className="text-xs font-bold text-white uppercase tracking-wider">In-Store</span>
+                                    </div>
+                                    <span className="text-sm font-black text-white">${tempCardLimits.inStore.toLocaleString()}</span>
+                                </div>
+                                <input 
+                                    type="range" 
+                                    min="0" 
+                                    max="10000" 
+                                    step="100" 
+                                    value={tempCardLimits.inStore}
+                                    onChange={(e) => setTempCardLimits({...tempCardLimits, inStore: parseInt(e.target.value)})}
+                                    className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                                />
+                            </div>
+
+                            {/* ATM */}
+                            <div>
+                                <div className="flex justify-between items-center mb-2">
+                                    <div className="flex items-center gap-2">
+                                        <Banknote size={16} className="text-emerald-400" />
+                                        <span className="text-xs font-bold text-white uppercase tracking-wider">ATM Withdrawal</span>
+                                    </div>
+                                    <span className="text-sm font-black text-white">${tempCardLimits.atm.toLocaleString()}</span>
+                                </div>
+                                <input 
+                                    type="range" 
+                                    min="0" 
+                                    max="5000" 
+                                    step="50" 
+                                    value={tempCardLimits.atm}
+                                    onChange={(e) => setTempCardLimits({...tempCardLimits, atm: parseInt(e.target.value)})}
+                                    className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                                />
+                            </div>
+                        </div>
+
+                        <button 
+                            onClick={() => {
+                                setCardLimits(tempCardLimits);
+                                setActiveModal(null);
+                            }}
+                            className="w-full py-4 mt-auto bg-white text-slate-900 font-black rounded-xl uppercase tracking-widest hover:bg-slate-200 transition-colors shadow-lg"
+                        >
+                            Save Limits
+                        </button>
                     </div>
                   )}
                </div>
