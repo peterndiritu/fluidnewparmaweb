@@ -179,7 +179,6 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
     { id: 'cards', label: 'Cards', icon: CreditCard },
     { id: 'fiat', label: 'Fiat', icon: Landmark },
     { id: 'hosting', label: 'Hosting', icon: Server },
-    { id: 'settings', label: 'Settings', icon: Settings },
   ];
 
   if (isLocked) {
