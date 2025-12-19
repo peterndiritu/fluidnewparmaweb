@@ -31,9 +31,9 @@ function App() {
           <FluidWalletApp 
             onNavigate={setCurrentPage} 
             initialView={
-              currentPage === 'dex' ? 'swap' : 
-              currentPage === 'cards' ? 'card' : 
-              currentPage === 'dapps' ? 'dapps' : 
+              currentPage === 'dex' ? 'dex' : 
+              currentPage === 'cards' ? 'cards' : 
+              currentPage === 'dapps' ? 'hosting' : 
               'assets'
             } 
           />

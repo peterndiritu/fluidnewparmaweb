@@ -10,7 +10,7 @@ import {
   ChevronRight, Terminal, Cloud, Smartphone, Repeat,
   ArrowDown, Layout, Users, ShieldCheck, AlertOctagon, FileCheck,
   Building2, Banknote, History, Flag, QrCode, UploadCloud, Rocket,
-  Key, Chrome, ChevronLeft, Delete
+  Key, Chrome, ChevronLeft, Delete, User, Edit3, AtSign, Camera, Share2, Save
 } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 
@@ -294,9 +294,18 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
   const [cardMode, setCardMode] = useState<'virtual' | 'physical'>('virtual');
   const [cardFrozen, setCardFrozen] = useState(false);
   const [showCardDetails, setShowCardDetails] = useState(false);
-  const [activeModal, setActiveModal] = useState<'send' | 'receive' | 'buy' | null>(null);
+  const [activeModal, setActiveModal] = useState<'send' | 'receive' | 'buy' | 'editProfile' | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   
+  // Profile State
+  const [profile, setProfile] = useState({
+    name: 'Alexander Fluid',
+    handle: 'alex.fluid',
+    bio: 'DeFi Native & Fluid Validator 💧',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alexander&backgroundColor=b6e3f4'
+  });
+  const [tempProfile, setTempProfile] = useState(profile);
+
   // DEX States
   const [swapRoute, setSwapRoute] = useState<'fluid' | 'nexus' | 'mesh'>('fluid');
 
@@ -322,8 +331,9 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
     if (securitySettings.changeLimits) score += 10;
     if (securitySettings.sendCrypto) score += 5;
     if (securitySettings.buyCrypto) score += 5;
+    if (profile.handle.endsWith('.fluid')) score += 10; // Bonus for setting up handle
     return Math.min(score, 100);
-  }, [securitySettings, isLocked]);
+  }, [securitySettings, isLocked, profile.handle]);
 
   // Auth Simulation
   const [verifyingAction, setVerifyingAction] = useState<string | null>(null);
@@ -357,6 +367,19 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
       setLastActiveTab(activeTab);
       setActiveTab('settings');
     }
+  };
+
+  const saveProfile = () => {
+    // Basic validation or handle cleaning
+    let cleanHandle = tempProfile.handle.trim().toLowerCase();
+    if (cleanHandle.startsWith('@')) cleanHandle = cleanHandle.substring(1);
+    
+    // Simulate saving
+    setProfile({
+      ...tempProfile,
+      handle: cleanHandle
+    });
+    setActiveModal(null);
   };
   
   // Navigation
@@ -414,9 +437,9 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
              <div className="flex items-center gap-3">
                 <button 
                   onClick={toggleSettings}
-                  className="w-8 h-8 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+                  className="w-8 h-8 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors overflow-hidden"
                 >
-                   <Users size={14} />
+                   <img src={profile.avatar} alt="User" className="w-full h-full object-cover" />
                 </button>
                 <div className="flex flex-col">
                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Network</span>
@@ -575,6 +598,8 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                </div>
              )}
 
+             {/* ... (DEX, Cards, Fiat, Hosting Modules remain unchanged) ... */}
+             
              {/* === MODULE B: DEX === */}
              {activeTab === 'dex' && (
                 <div className="p-6 h-full flex flex-col animate-in fade-in zoom-in-95 duration-300">
@@ -737,7 +762,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                                <div className="flex justify-between items-end">
                                   <div>
                                      <span className="text-[8px] text-slate-400 uppercase font-black block mb-0.5">Card Holder</span>
-                                     <span className="text-xs text-white font-bold tracking-wider">ALEXANDER FLUID</span>
+                                     <span className="text-xs text-white font-bold tracking-wider">{profile.name.toUpperCase()}</span>
                                   </div>
                                   <span className="text-[10px] font-bold text-white/50 italic">{cardMode === 'physical' ? 'STEEL' : 'VIRTUAL'}</span>
                                </div>
@@ -745,8 +770,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                          </div>
                       </div>
                    </div>
-
-                   {/* Controls */}
+                   {/* ... controls ... */}
                    <div className="space-y-4">
                       <div className="grid grid-cols-3 gap-3">
                          <button 
@@ -784,7 +808,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                    </div>
                 </div>
              )}
-             
+
              {/* === MODULE: FIAT INTEGRATION === */}
              {activeTab === 'fiat' && (
                 <div className="p-6 h-full flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -951,8 +975,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                            </div>
                        </div>
                    </div>
-
-                   {/* Deployed dApps */}
+                   {/* ... dApps section ... */}
                    <div className="mb-6">
                       <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">My Deployments</h3>
                       <div className="space-y-3">
@@ -1004,8 +1027,50 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
              {/* === MODULE E: SETTINGS & SECURITY === */}
              {activeTab === 'settings' && (
                <div className="p-6 h-full flex flex-col animate-in fade-in slide-in-from-right-4 duration-300">
-                  <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-6">Security Center</h2>
+                  <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-6">Settings</h2>
                   
+                  {/* Profile Card */}
+                  <div className="bg-slate-900/50 border border-slate-800 rounded-[2rem] p-6 mb-6 relative overflow-hidden backdrop-blur-md">
+                    <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-[40px] pointer-events-none"></div>
+                    <div className="flex items-start justify-between mb-6 relative z-10">
+                       <div className="flex items-center gap-4">
+                          <div className="relative">
+                             <img src={profile.avatar} alt="Profile" className="w-20 h-20 rounded-2xl bg-slate-800 object-cover border-2 border-white/10" />
+                             <div className="absolute -bottom-2 -right-2 p-1.5 bg-indigo-500 rounded-lg border-4 border-slate-900 text-white shadow-lg">
+                                <ShieldCheck size={12} />
+                             </div>
+                          </div>
+                          <div>
+                             <h3 className="text-xl font-black text-white tracking-tight">{profile.name}</h3>
+                             <div className="flex items-center gap-1 text-indigo-400 font-bold text-sm bg-indigo-500/10 px-2 py-0.5 rounded-lg w-fit mt-1 border border-indigo-500/20">
+                                <AtSign size={12} /> {profile.handle}
+                             </div>
+                             <p className="text-[10px] text-slate-500 font-medium mt-2 max-w-[160px] leading-tight">{profile.bio}</p>
+                          </div>
+                       </div>
+                       <button 
+                          onClick={() => {
+                             setTempProfile(profile);
+                             setActiveModal('editProfile');
+                          }}
+                          className="w-10 h-10 rounded-xl bg-slate-800 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition-colors shadow-lg"
+                       >
+                          <Edit3 size={18} />
+                       </button>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-3">
+                       <div className="bg-black/20 rounded-xl p-3 border border-white/5 flex flex-col items-center text-center">
+                          <div className="text-[9px] font-bold text-slate-500 uppercase mb-1">Fluid Score</div>
+                          <div className="text-lg font-black text-white">850</div>
+                       </div>
+                       <div className="bg-black/20 rounded-xl p-3 border border-white/5 flex flex-col items-center text-center">
+                          <div className="text-[9px] font-bold text-slate-500 uppercase mb-1">Member Since</div>
+                          <div className="text-lg font-black text-white">2024</div>
+                       </div>
+                    </div>
+                  </div>
+
                   {/* Security Score Audit */}
                   <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-6 mb-8 relative overflow-hidden">
                       <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-[40px] pointer-events-none"></div>
@@ -1030,12 +1095,12 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                             <span>Vault Protection Active</span>
                          </div>
                          <div className="flex items-center gap-3 text-xs font-bold text-slate-400">
-                            {securitySettings.viewCardDetails ? <div className="w-4 h-4 rounded bg-emerald-500/20 text-emerald-500 flex items-center justify-center"><CheckCircle2 size={10}/></div> : <div className="w-4 h-4 rounded bg-slate-800 text-slate-600 flex items-center justify-center"><AlertOctagon size={10}/></div>}
-                            <span>Card Details Hidden</span>
+                            {profile.handle.endsWith('.fluid') || profile.handle.length > 3 ? <div className="w-4 h-4 rounded bg-emerald-500/20 text-emerald-500 flex items-center justify-center"><CheckCircle2 size={10}/></div> : <div className="w-4 h-4 rounded bg-slate-800 text-slate-600 flex items-center justify-center"><AlertOctagon size={10}/></div>}
+                            <span>Fluid Handle Active</span>
                          </div>
                          <div className="flex items-center gap-3 text-xs font-bold text-slate-400">
-                            {securitySettings.initiateSwap ? <div className="w-4 h-4 rounded bg-emerald-500/20 text-emerald-500 flex items-center justify-center"><CheckCircle2 size={10}/></div> : <div className="w-4 h-4 rounded bg-slate-800 text-slate-600 flex items-center justify-center"><AlertOctagon size={10}/></div>}
-                            <span>High Value Swap Auth</span>
+                            {securitySettings.viewCardDetails ? <div className="w-4 h-4 rounded bg-emerald-500/20 text-emerald-500 flex items-center justify-center"><CheckCircle2 size={10}/></div> : <div className="w-4 h-4 rounded bg-slate-800 text-slate-600 flex items-center justify-center"><AlertOctagon size={10}/></div>}
+                            <span>Card Details Hidden</span>
                          </div>
                       </div>
                   </div>
@@ -1067,7 +1132,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                      ))}
                   </div>
                   
-                  <div className="mt-8 pt-6 border-t border-white/5">
+                  <div className="mt-8 pt-6 border-t border-white/5 pb-20">
                      <button className="w-full py-4 bg-slate-900 border border-slate-800 hover:border-rose-500/30 hover:bg-rose-500/10 text-rose-500 font-black rounded-xl uppercase tracking-widest transition-all text-xs flex items-center justify-center gap-2">
                         <Power size={14} /> Lock Vault Now
                      </button>
@@ -1088,6 +1153,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                        {activeModal === 'send' && 'Send Asset'}
                        {activeModal === 'receive' && 'Receive Asset'}
                        {activeModal === 'buy' && 'Buy Crypto'}
+                       {activeModal === 'editProfile' && 'Edit Profile'}
                      </h3>
                      <button onClick={() => setActiveModal(null)} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white">
                         <X size={16} />
@@ -1099,7 +1165,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                         <div>
                            <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Recipient Address</label>
                            <div className="flex items-center bg-black/20 rounded-xl border border-white/10 p-3">
-                              <input type="text" placeholder="0x..." className="bg-transparent w-full text-sm text-white outline-none font-mono" />
+                              <input type="text" placeholder="0x... or @username" className="bg-transparent w-full text-sm text-white outline-none font-mono" />
                               <ScanFace size={16} className="text-slate-500" />
                            </div>
                         </div>
@@ -1122,6 +1188,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                      </div>
                   )}
 
+                  {/* ... Receive and Buy modals remain unchanged ... */}
                   {activeModal === 'receive' && (
                      <div className="space-y-6 flex-col flex items-center flex-grow justify-center">
                         <div className="p-1 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-[1.5rem]">
@@ -1176,11 +1243,71 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                         </button>
                      </div>
                   )}
+
+                  {activeModal === 'editProfile' && (
+                     <div className="space-y-5 flex-grow overflow-y-auto custom-scrollbar pr-1">
+                        <div className="flex justify-center mb-4 relative">
+                           <img 
+                              src={tempProfile.avatar} 
+                              alt="Avatar" 
+                              className="w-24 h-24 rounded-3xl bg-slate-800 object-cover border-4 border-slate-800 shadow-xl" 
+                           />
+                           <button className="absolute -bottom-2 -right-2 w-8 h-8 bg-indigo-500 rounded-xl flex items-center justify-center text-white border-2 border-slate-900 shadow-lg hover:bg-indigo-400 transition-colors">
+                              <Camera size={14} />
+                           </button>
+                        </div>
+                        
+                        <div>
+                           <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Display Name</label>
+                           <div className="flex items-center bg-black/20 rounded-xl border border-white/10 p-3 focus-within:border-indigo-500/50 transition-colors">
+                              <User size={16} className="text-slate-500 mr-3" />
+                              <input 
+                                 type="text" 
+                                 value={tempProfile.name}
+                                 onChange={(e) => setTempProfile({...tempProfile, name: e.target.value})}
+                                 className="bg-transparent w-full text-sm text-white outline-none font-bold" 
+                              />
+                           </div>
+                        </div>
+
+                        <div>
+                           <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Fluid Handle (Wallet Alias)</label>
+                           <div className="flex items-center bg-black/20 rounded-xl border border-white/10 p-3 focus-within:border-indigo-500/50 transition-colors">
+                              <AtSign size={16} className="text-indigo-500 mr-3" />
+                              <input 
+                                 type="text" 
+                                 value={tempProfile.handle}
+                                 onChange={(e) => setTempProfile({...tempProfile, handle: e.target.value})}
+                                 placeholder="username"
+                                 className="bg-transparent w-full text-sm text-white outline-none font-bold" 
+                              />
+                              {tempProfile.handle && <CheckCircle2 size={16} className="text-emerald-500" />}
+                           </div>
+                           <p className="text-[9px] text-slate-500 mt-1 ml-1">This handle can be used to receive funds.</p>
+                        </div>
+
+                        <div>
+                           <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Bio</label>
+                           <textarea 
+                                 value={tempProfile.bio}
+                                 onChange={(e) => setTempProfile({...tempProfile, bio: e.target.value})}
+                                 className="w-full bg-black/20 rounded-xl border border-white/10 p-3 text-sm text-white outline-none font-medium h-20 resize-none focus:border-indigo-500/50 transition-colors" 
+                           />
+                        </div>
+
+                        <button 
+                          onClick={saveProfile}
+                          className="w-full py-4 mt-auto bg-indigo-600 text-white font-black rounded-xl uppercase tracking-widest hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2"
+                        >
+                          <Save size={16} /> Save Profile
+                        </button>
+                     </div>
+                  )}
                </div>
             </div>
           )}
 
-          {/* --- TRANSACTION DETAIL MODAL --- */}
+          {/* ... Transaction Detail Modal and Bottom Nav remain unchanged ... */}
           {selectedTransaction && (
             <div className="absolute inset-0 z-[60] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center animate-in fade-in duration-200">
                <div className="w-full h-[90%] sm:h-auto sm:max-w-md bg-slate-900 border-t sm:border border-slate-800 rounded-t-[2rem] sm:rounded-[2rem] p-6 relative flex flex-col shadow-2xl animate-in slide-in-from-bottom-10 duration-300">
