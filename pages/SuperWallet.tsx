@@ -1292,7 +1292,6 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
              )}
 
           </div>
-          )}
           
           {/* --- ACTION MODALS --- */}
           {activeModal && (
@@ -1721,6 +1720,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/20 rounded-full z-50 pointer-events-none"></div>
 
        </div>
+       )}
 
        {/* Features Highlight (Below Simulation) */}
        <div className="mt-24 max-w-5xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
