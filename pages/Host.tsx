@@ -72,7 +72,7 @@ const HostPage: React.FC = () => {
         {/* Hero */}
         <section className="max-w-full text-center lg:text-left mb-24 px-4 lg:px-0">
            <div className="inline-block px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/30 mb-6 animate-pulse">
-              <span className="text-indigo-500 font-bold uppercase tracking-wider text-sm">Parmaweb Protocol V1</span>
+              <span className="text-indigo-500 font-bold uppercase tracking-wider text-sm">Fluid Host Protocol V1</span>
            </div>
            <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 dark:text-white mb-6">
               The Permanent Web. <br/>
@@ -119,7 +119,7 @@ const HostPage: React.FC = () => {
                  <div className="text-blue-400">
                     ? Project name: <span className="text-white">awesome-dapp</span> <br/>
                     ? Framework: <span className="text-white">React / Next.js</span> <br/>
-                    ? Storage: <span className="text-white">Permanent (Parmaweb)</span>
+                    ? Storage: <span className="text-white">Permanent (Fluid Host)</span>
                  </div>
                  <div className="flex">
                     <span className="text-green-400 mr-2">$</span>

@@ -285,11 +285,11 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                     </div>
                   </div>
 
-                  {/* Parmaweb dApp View */}
+                  {/* Fluid Host dApp View */}
                   <div className={`absolute inset-0 p-4 transition-all duration-700 flex flex-col gap-2 ${walletView === 3 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
                     <div className="flex items-center gap-1.5 bg-white/5 p-1.5 rounded-full border border-white/5">
                       <Compass size={8} className="text-cyan-500" />
-                      <span className="text-[6px] text-slate-300 font-mono flex-grow">parma://fluid.link/dapp</span>
+                      <span className="text-[6px] text-slate-300 font-mono flex-grow">host://fluid.link/dapp</span>
                     </div>
                     <div className="flex-grow bg-slate-900 rounded-xl overflow-hidden border border-white/5 p-3 flex flex-col gap-2">
                        <div className="flex items-center gap-2">
@@ -311,7 +311,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                   </div>
                 </div>
 
-                <p className="text-[10px] mt-4 text-slate-500 font-bold leading-relaxed">Multichain non-custodial gateway. Seamlessly bridge crypto, manage native debit cards, link bank accounts, and browse decentralized Parmaweb apps.</p>
+                <p className="text-[10px] mt-4 text-slate-500 font-bold leading-relaxed">Multichain non-custodial gateway. Seamlessly bridge crypto, manage native debit cards, link bank accounts, and browse decentralized Fluid Host apps.</p>
                 <button className="mt-4 flex items-center gap-1.5 text-emerald-600 dark:text-cyan-400 font-black text-[9px] uppercase tracking-widest group-hover:translate-x-1 transition-transform">
                   Launch Wallet App <ArrowUpRight size={12} />
                 </button>

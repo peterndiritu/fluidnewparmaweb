@@ -63,7 +63,7 @@ const ASSETS: Asset[] = [
 const TRANSACTIONS: Transaction[] = [
   { id: '1', type: 'swap', title: 'Swap ETH to FLD', subtitle: 'Fluid DEX • Aggregator', amount: '+4,200 FLD', status: 'confirmed', time: '2 min ago' },
   { id: '2', type: 'receive', title: 'Received SOL', subtitle: 'From 8x...92a', amount: '+120 SOL', status: 'confirmed', time: '1 hour ago' },
-  { id: '3', type: 'contract', title: 'Contract Interaction', subtitle: 'Parmaweb Hosting', amount: '-50 FLD', status: 'pending', time: 'Just now' },
+  { id: '3', type: 'contract', title: 'Contract Interaction', subtitle: 'Fluid Host', amount: '-50 FLD', status: 'pending', time: 'Just now' },
 ];
 
 const FIAT_ACCOUNTS = [
@@ -74,7 +74,7 @@ const FIAT_ACCOUNTS = [
 
 const DAPPS: DApp[] = [
   { id: '1', name: 'Fluid Swap', url: 'fluid://dex', icon: RefreshCw, category: 'DeFi', status: 'online' },
-  { id: '2', name: 'ParmaStorage', url: 'parma://storage', icon: Database, category: 'Infrastructure', status: 'online' },
+  { id: '2', name: 'Fluid Storage', url: 'fluid://storage', icon: Database, category: 'Infrastructure', status: 'online' },
   { id: '3', name: 'SecureChat', url: 'fluid://chat', icon: Lock, category: 'Social', status: 'online' },
 ];
 
@@ -222,7 +222,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
     { id: 'dex', label: 'DEX', icon: RefreshCw },
     { id: 'cards', label: 'Cards', icon: CreditCard },
     { id: 'fiat', label: 'Fiat', icon: Landmark },
-    { id: 'hosting', label: 'Parmaweb', icon: Server },
+    { id: 'hosting', label: 'Fluid Host', icon: Server },
   ];
 
   if (isLocked) {
@@ -762,11 +762,11 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                 </div>
              )}
 
-             {/* === MODULE D: HOSTING & PARMAWEB === */}
+             {/* === MODULE D: HOSTING & FLUID HOST === */}
              {activeTab === 'hosting' && (
                 <div className="p-6 h-full flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300">
                    <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-2xl font-black text-white uppercase tracking-tight">Parmaweb</h2>
+                      <h2 className="text-2xl font-black text-white uppercase tracking-tight">Fluid Host</h2>
                       <div className="px-2 py-1 bg-blue-500/10 border border-blue-500/20 rounded text-[9px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-1">
                          <Globe size={10} /> Decentralized
                       </div>
@@ -833,7 +833,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
 
                    {/* dApp Browser */}
                    <div>
-                      <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Parmaweb Browser</h3>
+                      <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Fluid Host Browser</h3>
                       <div className="grid grid-cols-3 gap-3">
                           {DAPPS.map(app => (
                               <button key={app.id} className="flex flex-col items-center gap-2 p-3 bg-slate-900/30 border border-slate-800 rounded-2xl hover:bg-slate-800 hover:border-slate-700 transition-all group">

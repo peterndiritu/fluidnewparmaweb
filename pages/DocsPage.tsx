@@ -44,7 +44,7 @@ const DocsPage: React.FC = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>('core');
 
   const sidebarMenu = [
-    { id: 'core', label: 'Core Protocol', icon: Cpu, items: ['Blockchain', 'Parmaweb', 'Tokenomics'] },
+    { id: 'core', label: 'Core Protocol', icon: Cpu, items: ['Blockchain', 'Fluid Host', 'Tokenomics'] },
     { id: 'apps', label: 'Applications', icon: Wallet, items: ['Wallet App', 'Cards', 'DEX'] },
     { id: 'devs', label: 'Developers', icon: Code2, items: ['CLI', 'SDK', 'RPC'] }
   ];
@@ -163,11 +163,11 @@ const DocsPage: React.FC = () => {
           </AccordionSection>
 
           <AccordionSection 
-            title="Parmaweb Hosting" 
-            id="parmaweb"
+            title="Fluid Host" 
+            id="fluid"
             icon={Globe} 
-            isOpen={openSections['hosting']} 
-            onToggle={() => toggleSection('hosting')}
+            isOpen={openSections['fluid']} 
+            onToggle={() => toggleSection('fluid')}
           >
             <div className="space-y-6 text-slate-600 dark:text-slate-400 leading-relaxed text-sm">
               <p>Permanent storage layer utilizing an endowment model for one-time hosting payments.</p>

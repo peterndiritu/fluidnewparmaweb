@@ -18,8 +18,8 @@ const FaqPage: React.FC = () => {
       answer: "Yes. Fluid Wallet is strictly non-custodial. You own your private keys and have full control over your funds. We cannot access or freeze your assets."
     },
     {
-      question: "What is Parmaweb?",
-      answer: "Parmaweb is our permanent web hosting protocol. By paying once in FLUID tokens, your content is stored eternally across our distributed node network, ensuring it remains censorship-resistant and always online."
+      question: "What is Fluid Host?",
+      answer: "Fluid Host is our permanent web hosting protocol. By paying once in FLUID tokens, your content is stored eternally across our distributed node network, ensuring it remains censorship-resistant and always online."
     },
     {
       question: "When will the Mainnet launch?",
