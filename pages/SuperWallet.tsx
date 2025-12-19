@@ -157,6 +157,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
   const [cardFrozen, setCardFrozen] = useState(false);
   const [showCardDetails, setShowCardDetails] = useState(false);
   const [activeModal, setActiveModal] = useState<'send' | 'receive' | 'buy' | null>(null);
+  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   
   // DEX States
   const [swapRoute, setSwapRoute] = useState<'fluid' | 'nexus' | 'mesh'>('fluid');
@@ -405,7 +406,11 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                      <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Ledger</h3>
                      <div className="space-y-3">
                         {TRANSACTIONS.map((tx) => (
-                           <div key={tx.id} className="flex items-start gap-4 p-3 rounded-2xl hover:bg-white/5 transition-colors">
+                           <div 
+                             key={tx.id} 
+                             onClick={() => setSelectedTransaction(tx)}
+                             className="flex items-start gap-4 p-3 rounded-2xl hover:bg-white/5 transition-colors cursor-pointer"
+                           >
                               <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 shrink-0">
                                  {tx.type === 'swap' && <RefreshCw size={14} />}
                                  {tx.type === 'receive' && <ArrowDownLeft size={14} />}
@@ -868,7 +873,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                             <div className="flex items-baseline gap-1">
                                <span className={`text-4xl font-black ${securityScore > 80 ? 'text-emerald-500' : securityScore > 50 ? 'text-amber-500' : 'text-rose-500'}`}>
                                   {securityScore}
-                               </span>
+                                </span>
                                <span className="text-slate-500 font-bold">/100</span>
                             </div>
                          </div>
@@ -1017,6 +1022,68 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                         <button className="w-full py-4 mt-auto bg-emerald-500 text-white font-black rounded-xl uppercase tracking-widest hover:bg-emerald-400 transition-colors shadow-lg shadow-emerald-500/20">Continue to Payment</button>
                      </div>
                   )}
+               </div>
+            </div>
+          )}
+
+          {/* --- TRANSACTION DETAIL MODAL --- */}
+          {selectedTransaction && (
+            <div className="absolute inset-0 z-[60] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center animate-in fade-in duration-200">
+               <div className="w-full h-[90%] sm:h-auto sm:max-w-md bg-slate-900 border-t sm:border border-slate-800 rounded-t-[2rem] sm:rounded-[2rem] p-6 relative flex flex-col shadow-2xl animate-in slide-in-from-bottom-10 duration-300">
+                  <div className="w-12 h-1 bg-slate-800 rounded-full mx-auto mb-6 sm:hidden"></div>
+                  
+                  <div className="flex justify-between items-center mb-6">
+                     <h3 className="text-xl font-black text-white uppercase tracking-tight">Transaction Details</h3>
+                     <button onClick={() => setSelectedTransaction(null)} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white">
+                        <X size={16} />
+                     </button>
+                  </div>
+                  
+                  <div className="space-y-6">
+                      <div className="text-center">
+                          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-800 border border-slate-700 mb-2">
+                              {selectedTransaction.status === 'confirmed' ? <CheckCircle2 size={12} className="text-emerald-500"/> : <Activity size={12} className="text-amber-500"/>}
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">{selectedTransaction.status}</span>
+                          </div>
+                          <h1 className={`text-4xl font-black ${selectedTransaction.amount.startsWith('+') ? 'text-emerald-500' : 'text-white'}`}>{selectedTransaction.amount}</h1>
+                          <p className="text-xs text-slate-500 font-bold mt-1">{selectedTransaction.time}</p>
+                      </div>
+
+                      <div className="bg-black/20 rounded-2xl p-4 border border-white/5 space-y-4">
+                          <div className="flex justify-between items-center">
+                              <span className="text-xs text-slate-500 font-bold uppercase">Type</span>
+                              <span className="text-sm text-white font-bold capitalize">{selectedTransaction.type}</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                              <span className="text-xs text-slate-500 font-bold uppercase">Network</span>
+                              <span className="text-sm text-white font-bold">Fluid Mainnet</span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                              <span className="text-xs text-slate-500 font-bold uppercase">Hash</span>
+                              <div className="flex items-center gap-2">
+                                  <span className="text-xs text-blue-400 font-mono">0x71...92aF</span>
+                                  <Copy size={12} className="text-slate-600" />
+                              </div>
+                          </div>
+                          <div className="flex justify-between items-center">
+                              <span className="text-xs text-slate-500 font-bold uppercase">Gas Fee</span>
+                              <span className="text-xs text-slate-300 font-mono">0.00042 FLD</span>
+                          </div>
+                      </div>
+
+                      {selectedTransaction.type === 'contract' && (
+                          <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
+                              <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-2 block">Interaction Data</span>
+                              <code className="text-[10px] text-blue-300 font-mono break-all">
+                                  0xa9059cbb000000000000000000000000...
+                              </code>
+                          </div>
+                      )}
+
+                      <button className="w-full py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors">
+                          <ExternalLink size={16} /> View on Explorer
+                      </button>
+                  </div>
                </div>
             </div>
           )}
