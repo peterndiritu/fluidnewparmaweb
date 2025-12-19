@@ -9,7 +9,7 @@ import {
   Landmark, CreditCard as CardIcon, Power, Settings,
   ChevronRight, Terminal, Cloud, Smartphone, Repeat,
   ArrowDown, Layout, Users, ShieldCheck, AlertOctagon, FileCheck,
-  Building2, Banknote, History, Flag
+  Building2, Banknote, History, Flag, QrCode, UploadCloud, Rocket
 } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 
@@ -31,6 +31,15 @@ interface Transaction {
   amount: string;
   status: 'confirmed' | 'pending';
   time: string;
+}
+
+interface DApp {
+  id: string;
+  name: string;
+  url: string;
+  icon: React.ElementType;
+  category: string;
+  status: 'online' | 'offline';
 }
 
 // --- Mock Data ---
@@ -61,6 +70,12 @@ const FIAT_ACCOUNTS = [
    { currency: 'USD', symbol: '$', balance: '12,450.00', bank: 'Fluid US', type: 'Checking', flag: '🇺🇸', details: { route: '021000021', acct: '9876543210' } },
    { currency: 'EUR', symbol: '€', balance: '4,200.50', bank: 'Fluid EU', type: 'IBAN', flag: '🇪🇺', details: { route: 'FLUDDEFF', acct: 'DE89 3704 0044 0532 0130 00' } },
    { currency: 'GBP', symbol: '£', balance: '850.00', bank: 'Fluid UK', type: 'Sort Code', flag: '🇬🇧', details: { route: '04-00-04', acct: '12345678' } },
+];
+
+const DAPPS: DApp[] = [
+  { id: '1', name: 'Fluid Swap', url: 'fluid://dex', icon: RefreshCw, category: 'DeFi', status: 'online' },
+  { id: '2', name: 'ParmaStorage', url: 'parma://storage', icon: Database, category: 'Infrastructure', status: 'online' },
+  { id: '3', name: 'SecureChat', url: 'fluid://chat', icon: Lock, category: 'Social', status: 'online' },
 ];
 
 // --- Components ---
@@ -141,6 +156,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
   const [cardMode, setCardMode] = useState<'virtual' | 'physical'>('virtual');
   const [cardFrozen, setCardFrozen] = useState(false);
   const [showCardDetails, setShowCardDetails] = useState(false);
+  const [activeModal, setActiveModal] = useState<'send' | 'receive' | 'buy' | null>(null);
   
   // DEX States
   const [swapRoute, setSwapRoute] = useState<'fluid' | 'nexus' | 'mesh'>('fluid');
@@ -206,7 +222,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
     { id: 'dex', label: 'DEX', icon: RefreshCw },
     { id: 'cards', label: 'Cards', icon: CreditCard },
     { id: 'fiat', label: 'Fiat', icon: Landmark },
-    { id: 'hosting', label: 'Hosting', icon: Server },
+    { id: 'hosting', label: 'Parmaweb', icon: Server },
   ];
 
   if (isLocked) {
@@ -328,19 +344,33 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
 
                      {/* Global Actions */}
                      <div className="grid grid-cols-4 gap-3 mt-4">
-                        {[
-                           { label: 'Send', icon: ArrowUpRight, color: 'text-white' },
-                           { label: 'Receive', icon: ArrowDownLeft, color: 'text-white' },
-                           { label: 'Buy', icon: CreditCard, color: 'text-emerald-400' },
-                           { label: 'Swap', icon: ArrowLeftRight, color: 'text-indigo-400' },
-                        ].map((action, i) => (
-                           <button key={i} className="flex flex-col items-center gap-2 group">
-                              <div className="w-14 h-14 rounded-[1.2rem] bg-slate-900 border border-white/5 flex items-center justify-center shadow-lg group-active:scale-95 transition-all group-hover:border-white/20">
-                                 <action.icon size={20} className={action.color} />
-                              </div>
-                              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{action.label}</span>
-                           </button>
-                        ))}
+                        <button onClick={() => setActiveModal('send')} className="flex flex-col items-center gap-2 group">
+                          <div className="w-14 h-14 rounded-[1.2rem] bg-slate-900 border border-white/5 flex items-center justify-center shadow-lg group-active:scale-95 transition-all group-hover:border-white/20">
+                             <ArrowUpRight size={20} className="text-white" />
+                          </div>
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Send</span>
+                        </button>
+
+                        <button onClick={() => setActiveModal('receive')} className="flex flex-col items-center gap-2 group">
+                          <div className="w-14 h-14 rounded-[1.2rem] bg-slate-900 border border-white/5 flex items-center justify-center shadow-lg group-active:scale-95 transition-all group-hover:border-white/20">
+                             <ArrowDownLeft size={20} className="text-white" />
+                          </div>
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Receive</span>
+                        </button>
+
+                        <button onClick={() => setActiveModal('buy')} className="flex flex-col items-center gap-2 group">
+                          <div className="w-14 h-14 rounded-[1.2rem] bg-slate-900 border border-white/5 flex items-center justify-center shadow-lg group-active:scale-95 transition-all group-hover:border-white/20">
+                             <CreditCard size={20} className="text-emerald-400" />
+                          </div>
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Buy</span>
+                        </button>
+
+                        <button onClick={() => setActiveTab('dex')} className="flex flex-col items-center gap-2 group">
+                          <div className="w-14 h-14 rounded-[1.2rem] bg-slate-900 border border-white/5 flex items-center justify-center shadow-lg group-active:scale-95 transition-all group-hover:border-white/20">
+                             <ArrowLeftRight size={20} className="text-indigo-400" />
+                          </div>
+                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Swap</span>
+                        </button>
                      </div>
                   </div>
 
@@ -732,13 +762,94 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                 </div>
              )}
 
-             {/* === MODULE D: HOSTING & DAPPS === */}
+             {/* === MODULE D: HOSTING & PARMAWEB === */}
              {activeTab === 'hosting' && (
                 <div className="p-6 h-full flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300">
-                   <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-6">Parmaweb</h2>
-                   {/* ... hosting content preserved (shortened for brevity as requested) ... */}
-                   <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-6 mb-8 relative overflow-hidden">
-                       <div className="flex items-center justify-center h-40 text-slate-500 text-xs font-bold">Hosting Node Status: Online</div>
+                   <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-2xl font-black text-white uppercase tracking-tight">Parmaweb</h2>
+                      <div className="px-2 py-1 bg-blue-500/10 border border-blue-500/20 rounded text-[9px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-1">
+                         <Globe size={10} /> Decentralized
+                      </div>
+                   </div>
+
+                   {/* Node Status Card */}
+                   <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-6 mb-6 relative overflow-hidden">
+                       <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[40px] pointer-events-none"></div>
+                       
+                       <div className="flex justify-between items-start mb-6">
+                           <div>
+                               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Storage Node</span>
+                               <div className="flex items-center gap-2">
+                                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                   <span className="text-xl font-black text-white">Online</span>
+                               </div>
+                           </div>
+                           <Cpu className="text-blue-500" size={24} />
+                       </div>
+
+                       <div className="grid grid-cols-2 gap-4">
+                           <div className="p-3 bg-black/20 rounded-xl border border-white/5">
+                               <div className="text-[9px] text-slate-500 font-bold uppercase mb-1">Used Storage</div>
+                               <div className="text-sm font-bold text-white">45.2 GB <span className="text-slate-600">/ 1TB</span></div>
+                               <div className="w-full h-1 bg-slate-800 rounded-full mt-2 overflow-hidden">
+                                   <div className="w-[4%] h-full bg-blue-500"></div>
+                               </div>
+                           </div>
+                           <div className="p-3 bg-black/20 rounded-xl border border-white/5">
+                               <div className="text-[9px] text-slate-500 font-bold uppercase mb-1">Bandwidth</div>
+                               <div className="text-sm font-bold text-white">12 GB/s</div>
+                               <div className="w-full h-1 bg-slate-800 rounded-full mt-2 overflow-hidden">
+                                   <div className="w-[60%] h-full bg-emerald-500"></div>
+                               </div>
+                           </div>
+                       </div>
+                   </div>
+
+                   {/* Deployed dApps */}
+                   <div className="mb-6">
+                      <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">My Deployments</h3>
+                      <div className="space-y-3">
+                          <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-900/50 border border-slate-800 hover:bg-slate-900 transition-colors">
+                              <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                                      <Rocket size={18} />
+                                  </div>
+                                  <div>
+                                      <div className="text-xs font-bold text-white">fluid-dex-v2</div>
+                                      <div className="text-[9px] text-slate-500 font-mono">ipfs://QmX...7a2</div>
+                                  </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
+                                  <MoreHorizontal size={16} className="text-slate-500" />
+                              </div>
+                          </div>
+                          
+                          <button className="w-full py-3 rounded-2xl border border-dashed border-slate-700 text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-900/50 hover:text-white hover:border-slate-600 transition-all flex items-center justify-center gap-2">
+                               <UploadCloud size={14} /> Deploy New Site
+                          </button>
+                      </div>
+                   </div>
+
+                   {/* dApp Browser */}
+                   <div>
+                      <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Parmaweb Browser</h3>
+                      <div className="grid grid-cols-3 gap-3">
+                          {DAPPS.map(app => (
+                              <button key={app.id} className="flex flex-col items-center gap-2 p-3 bg-slate-900/30 border border-slate-800 rounded-2xl hover:bg-slate-800 hover:border-slate-700 transition-all group">
+                                  <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-white border border-white/5 group-hover:scale-110 transition-transform">
+                                      <app.icon size={18} />
+                                  </div>
+                                  <span className="text-[9px] font-bold text-slate-400 group-hover:text-white">{app.name}</span>
+                              </button>
+                          ))}
+                          <button className="flex flex-col items-center gap-2 p-3 border border-dashed border-slate-800 rounded-2xl hover:bg-slate-900/50 transition-all">
+                              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-600">
+                                  <Search size={18} />
+                              </div>
+                              <span className="text-[9px] font-bold text-slate-600">Explore</span>
+                          </button>
+                      </div>
                    </div>
                 </div>
              )}
@@ -816,6 +927,99 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
              )}
 
           </div>
+          
+          {/* --- ACTION MODALS --- */}
+          {activeModal && (
+            <div className="absolute inset-0 z-[60] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center animate-in fade-in duration-200">
+               <div className="w-full h-[90%] sm:h-auto sm:max-w-xs bg-slate-900 border-t sm:border border-slate-800 rounded-t-[2rem] sm:rounded-[2rem] p-6 relative flex flex-col shadow-2xl animate-in slide-in-from-bottom-10 duration-300">
+                  <div className="w-12 h-1 bg-slate-800 rounded-full mx-auto mb-6 sm:hidden"></div>
+                  
+                  <div className="flex justify-between items-center mb-6">
+                     <h3 className="text-xl font-black text-white uppercase tracking-tight">
+                       {activeModal === 'send' && 'Send Asset'}
+                       {activeModal === 'receive' && 'Receive Asset'}
+                       {activeModal === 'buy' && 'Buy Crypto'}
+                     </h3>
+                     <button onClick={() => setActiveModal(null)} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white">
+                        <X size={16} />
+                     </button>
+                  </div>
+
+                  {activeModal === 'send' && (
+                     <div className="space-y-4 flex-grow">
+                        <div>
+                           <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Recipient Address</label>
+                           <div className="flex items-center bg-black/20 rounded-xl border border-white/10 p-3">
+                              <input type="text" placeholder="0x..." className="bg-transparent w-full text-sm text-white outline-none font-mono" />
+                              <ScanFace size={16} className="text-slate-500" />
+                           </div>
+                        </div>
+                        <div>
+                           <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Amount</label>
+                           <div className="flex items-center justify-between bg-black/20 rounded-xl border border-white/10 p-3">
+                              <input type="number" placeholder="0.0" className="bg-transparent w-full text-xl font-black text-white outline-none" />
+                              <button className="flex items-center gap-1 bg-slate-800 px-2 py-1 rounded text-xs font-bold text-white">
+                                 FLD <ChevronDown size={10} />
+                              </button>
+                           </div>
+                           <div className="text-right mt-1 text-[10px] text-slate-500 font-bold">Balance: 45,000 FLD</div>
+                        </div>
+                        <button className="w-full py-4 mt-auto bg-white text-slate-900 font-black rounded-xl uppercase tracking-widest hover:bg-slate-200 transition-colors">Confirm Send</button>
+                     </div>
+                  )}
+
+                  {activeModal === 'receive' && (
+                     <div className="space-y-6 flex-col flex items-center flex-grow justify-center">
+                        <div className="p-1 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-[1.5rem]">
+                           <div className="bg-white p-4 rounded-[1.3rem]">
+                              <QrCode size={160} className="text-slate-900" />
+                           </div>
+                        </div>
+                        <div className="w-full">
+                           <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block text-center">Your FLD Address</label>
+                           <button className="w-full flex items-center justify-between bg-black/20 rounded-xl border border-white/10 p-3 group hover:border-white/20 transition-colors">
+                              <span className="text-xs text-slate-300 font-mono truncate mr-2">0x71C...92aF</span>
+                              <Copy size={14} className="text-slate-500 group-hover:text-white" />
+                           </button>
+                        </div>
+                        <div className="flex gap-2 w-full">
+                           <button className="flex-1 py-3 bg-slate-800 rounded-xl text-xs font-bold text-white">Share</button>
+                           <button className="flex-1 py-3 bg-slate-800 rounded-xl text-xs font-bold text-white">Save Image</button>
+                        </div>
+                     </div>
+                  )}
+
+                  {activeModal === 'buy' && (
+                     <div className="space-y-4 flex-grow">
+                        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-start gap-3">
+                           <ShieldCheck size={20} className="text-emerald-500 shrink-0 mt-0.5" />
+                           <p className="text-[10px] text-emerald-200/80 leading-relaxed">Transactions are processed via MoonPay. KYC may be required for purchases over $500.</p>
+                        </div>
+                        <div>
+                           <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">You Pay</label>
+                           <div className="flex items-center justify-between bg-black/20 rounded-xl border border-white/10 p-3">
+                              <input type="number" defaultValue="100" className="bg-transparent w-full text-xl font-black text-white outline-none" />
+                              <button className="flex items-center gap-1 bg-slate-800 px-2 py-1 rounded text-xs font-bold text-white">
+                                 USD <ChevronDown size={10} />
+                              </button>
+                           </div>
+                        </div>
+                        <div>
+                           <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">You Get</label>
+                           <div className="flex items-center justify-between bg-black/20 rounded-xl border border-white/10 p-3">
+                              <span className="text-xl font-black text-emerald-400">~8,420</span>
+                              <div className="flex items-center gap-2">
+                                 <div className="w-5 h-5 rounded-full bg-emerald-500"></div>
+                                 <span className="text-xs font-bold text-white">FLD</span>
+                              </div>
+                           </div>
+                        </div>
+                        <button className="w-full py-4 mt-auto bg-emerald-500 text-white font-black rounded-xl uppercase tracking-widest hover:bg-emerald-400 transition-colors shadow-lg shadow-emerald-500/20">Continue to Payment</button>
+                     </div>
+                  )}
+               </div>
+            </div>
+          )}
 
           {/* Bottom Navigation (Glass) */}
           <nav className="h-20 bg-slate-950/80 backdrop-blur-xl border-t border-white/5 flex justify-between px-6 items-center relative z-50">
