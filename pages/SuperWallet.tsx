@@ -10,7 +10,7 @@ import {
   ChevronRight, Terminal, Cloud, Smartphone, Repeat,
   ArrowDown, Layout, Users, ShieldCheck, AlertOctagon, FileCheck,
   Building2, Banknote, History, Flag, QrCode, UploadCloud, Rocket,
-  Key, Chrome, ChevronLeft, Delete, User, Edit3, AtSign, Camera, Share2, Save
+  Key, Chrome, ChevronLeft, Delete, User, Edit3, AtSign, Camera, Share2, Save, ShoppingCart, ArrowRight
 } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 
@@ -294,7 +294,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
   const [cardMode, setCardMode] = useState<'virtual' | 'physical'>('virtual');
   const [cardFrozen, setCardFrozen] = useState(false);
   const [showCardDetails, setShowCardDetails] = useState(false);
-  const [activeModal, setActiveModal] = useState<'send' | 'receive' | 'buy' | 'editProfile' | null>(null);
+  const [activeModal, setActiveModal] = useState<'send' | 'receive' | 'buy' | 'editProfile' | 'domainRegistrar' | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   
   // Profile State
@@ -305,6 +305,10 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
     avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alexander&backgroundColor=b6e3f4'
   });
   const [tempProfile, setTempProfile] = useState(profile);
+
+  // Domain Registrar State
+  const [domainQuery, setDomainQuery] = useState('');
+  const [domainSearchStatus, setDomainSearchStatus] = useState<'idle' | 'searching' | 'results'>('idle');
 
   // DEX States
   const [swapRoute, setSwapRoute] = useState<'fluid' | 'nexus' | 'mesh'>('fluid');
@@ -380,6 +384,15 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
       handle: cleanHandle
     });
     setActiveModal(null);
+  };
+
+  const handleDomainSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!domainQuery.trim()) return;
+    setDomainSearchStatus('searching');
+    setTimeout(() => {
+      setDomainSearchStatus('results');
+    }, 1500);
   };
   
   // Navigation
@@ -598,7 +611,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                </div>
              )}
 
-             {/* ... (DEX, Cards, Fiat, Hosting Modules remain unchanged) ... */}
+             {/* ... (DEX, Cards, Fiat Modules remain unchanged) ... */}
              
              {/* === MODULE B: DEX === */}
              {activeTab === 'dex' && (
@@ -975,7 +988,37 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                            </div>
                        </div>
                    </div>
-                   {/* ... dApps section ... */}
+
+                   {/* Domains Section */}
+                   <div className="mb-6">
+                      <div className="flex justify-between items-center mb-4">
+                         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Domains</h3>
+                         <button 
+                           onClick={() => setActiveModal('domainRegistrar')}
+                           className="text-[9px] font-bold text-indigo-400 uppercase tracking-wider hover:text-white transition-colors"
+                         >
+                            + Register
+                         </button>
+                      </div>
+                      <div className="space-y-3">
+                          <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-900/50 border border-slate-800 hover:bg-slate-900 transition-colors">
+                              <div className="flex items-center gap-3">
+                                  <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400">
+                                      <Globe size={18} />
+                                  </div>
+                                  <div>
+                                      <div className="text-xs font-bold text-white">alex.fluid</div>
+                                      <div className="text-[9px] text-emerald-500 font-bold">Active • Auto-Renew</div>
+                                  </div>
+                              </div>
+                              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+                                  <Settings size={16} className="text-slate-500" />
+                              </button>
+                          </div>
+                      </div>
+                   </div>
+
+                   {/* Deployed dApps */}
                    <div className="mb-6">
                       <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">My Deployments</h3>
                       <div className="space-y-3">
@@ -1154,8 +1197,9 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                        {activeModal === 'receive' && 'Receive Asset'}
                        {activeModal === 'buy' && 'Buy Crypto'}
                        {activeModal === 'editProfile' && 'Edit Profile'}
+                       {activeModal === 'domainRegistrar' && 'Domain Registrar'}
                      </h3>
-                     <button onClick={() => setActiveModal(null)} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white">
+                     <button onClick={() => { setActiveModal(null); setDomainSearchStatus('idle'); setDomainQuery(''); }} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white">
                         <X size={16} />
                      </button>
                   </div>
@@ -1188,7 +1232,6 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                      </div>
                   )}
 
-                  {/* ... Receive and Buy modals remain unchanged ... */}
                   {activeModal === 'receive' && (
                      <div className="space-y-6 flex-col flex items-center flex-grow justify-center">
                         <div className="p-1 bg-gradient-to-br from-indigo-500 to-purple-500 rounded-[1.5rem]">
@@ -1302,6 +1345,107 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                           <Save size={16} /> Save Profile
                         </button>
                      </div>
+                  )}
+
+                  {activeModal === 'domainRegistrar' && (
+                    <div className="space-y-4 flex-grow flex flex-col h-full overflow-hidden">
+                        {/* Search Header */}
+                        <div>
+                           <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Search Domain</label>
+                           <form onSubmit={handleDomainSearch} className="relative">
+                               <input 
+                                   type="text" 
+                                   value={domainQuery}
+                                   onChange={(e) => setDomainQuery(e.target.value)}
+                                   placeholder="findyourname" 
+                                   className="w-full bg-black/20 border border-white/10 rounded-xl py-4 pl-4 pr-12 text-lg font-bold text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-all"
+                               />
+                               <button 
+                                   type="submit"
+                                   className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-indigo-600 rounded-lg text-white hover:bg-indigo-500 transition-colors"
+                               >
+                                   <Search size={16} />
+                               </button>
+                           </form>
+                        </div>
+
+                        {/* Results Area */}
+                        <div className="flex-grow overflow-y-auto custom-scrollbar -mr-2 pr-2">
+                            {domainSearchStatus === 'idle' && (
+                                <div className="flex flex-col items-center justify-center h-40 text-center opacity-50">
+                                    <Globe size={40} className="mb-3 text-slate-600" />
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Register your<br/>Web3 Identity</p>
+                                </div>
+                            )}
+
+                            {domainSearchStatus === 'searching' && (
+                                <div className="flex flex-col items-center justify-center h-40 text-center">
+                                    <div className="w-8 h-8 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
+                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Checking Availability...</p>
+                                </div>
+                            )}
+
+                            {domainSearchStatus === 'results' && (
+                                <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
+                                    {/* Exclusive .fluid Result */}
+                                    <div className="p-4 bg-gradient-to-r from-indigo-900/40 to-purple-900/40 border border-indigo-500/30 rounded-2xl relative overflow-hidden group">
+                                        <div className="absolute top-0 right-0 p-2">
+                                             <div className="bg-emerald-500/20 text-emerald-500 text-[9px] font-black uppercase px-2 py-0.5 rounded-full border border-emerald-500/20">Available</div>
+                                        </div>
+                                        <div className="flex justify-between items-end mb-3 mt-1">
+                                            <div>
+                                                <div className="flex items-center gap-1.5">
+                                                    <span className="text-xl font-black text-white">{domainQuery.split('.')[0]}<span className="text-indigo-400">.fluid</span></span>
+                                                </div>
+                                                <span className="text-[9px] text-slate-400 font-bold block mt-0.5">Permanent Fluid Handle</span>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="text-xl font-black text-emerald-400">FREE</div>
+                                                <div className="text-[9px] text-slate-500 line-through font-bold uppercase">$500 VALUE</div>
+                                            </div>
+                                        </div>
+                                        <button 
+                                            onClick={() => { alert(`Success! You have claimed ${domainQuery.split('.')[0]}.fluid`); setActiveModal(null); }}
+                                            className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-xl text-[10px] uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20"
+                                        >
+                                            Claim Now <ArrowRight size={14} />
+                                        </button>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 py-2">
+                                        <div className="h-px bg-white/5 flex-grow"></div>
+                                        <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">Traditional TLDs</span>
+                                        <div className="h-px bg-white/5 flex-grow"></div>
+                                    </div>
+
+                                    {/* Standard TLDs */}
+                                    {[
+                                        { tld: '.com', price: '$12.99' },
+                                        { tld: '.ai', price: '$65.00' },
+                                        { tld: '.xyz', price: '$1.99' },
+                                    ].map((domain) => (
+                                        <div key={domain.tld} className="flex items-center justify-between p-3 bg-slate-900/50 border border-slate-800 rounded-xl hover:bg-slate-800 transition-colors group">
+                                             <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500 font-bold group-hover:text-white transition-colors">
+                                                    <Globe size={14} />
+                                                </div>
+                                                <div className="text-sm font-bold text-slate-300">{domainQuery.split('.')[0]}<span className="text-slate-500">{domain.tld}</span></div>
+                                             </div>
+                                             <div className="flex items-center gap-3">
+                                                <span className="text-xs font-bold text-white">{domain.price}</span>
+                                                <button 
+                                                    onClick={() => alert(`Added ${domainQuery.split('.')[0]}${domain.tld} to cart`)}
+                                                    className="w-8 h-8 bg-white/5 hover:bg-white/10 rounded-lg text-white flex items-center justify-center transition-colors"
+                                                >
+                                                    <ShoppingCart size={14} />
+                                                </button>
+                                             </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
                   )}
                </div>
             </div>

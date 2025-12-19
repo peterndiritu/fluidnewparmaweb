@@ -1,11 +1,15 @@
 import React, { useState } from 'react';
 import HowItWorks from '../components/HowItWorks';
-import { Server, Database, Cloud, Lock, Terminal, Cpu, Globe, ArrowRight, ChevronDown, Rocket, Layers, Code2 } from 'lucide-react';
+import { Server, Database, Cloud, Lock, Terminal, Cpu, Globe, ArrowRight, ChevronDown, Rocket, Layers, Code2, Search, CheckCircle2, ShoppingCart } from 'lucide-react';
 
 const HostPage: React.FC = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>('start');
+  const [domainQuery, setDomainQuery] = useState('');
+  const [isSearchingDomains, setIsSearchingDomains] = useState(false);
+  const [showDomainResults, setShowDomainResults] = useState(false);
 
   const menuItems = [
+    { id: 'domains', label: 'Domains', icon: Globe, children: ['Search', '.fluid Handle', 'DNS Bridge'] },
     { id: 'start', label: 'Getting Started', icon: Rocket, children: ['CLI Setup', 'Initialization', 'Deployment'] },
     { id: 'tech', label: 'Technical Specs', icon: Layers, children: ['Micro-Sharding', 'Security', 'Performance'] },
     { id: 'api', label: 'API Reference', icon: Code2, children: ['End points', 'Webhooks', 'SDKs'] }
@@ -15,6 +19,21 @@ const HostPage: React.FC = () => {
     const el = document.getElementById(id);
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
+
+  const handleDomainSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!domainQuery) return;
+    setIsSearchingDomains(true);
+    setShowDomainResults(false);
+    
+    // Simulate API call
+    setTimeout(() => {
+      setIsSearchingDomains(false);
+      setShowDomainResults(true);
+    }, 1500);
+  };
+
+  const baseName = domainQuery.split('.')[0] || 'example';
 
   return (
     <div className="min-h-screen pt-28 pb-16 flex flex-col lg:flex-row max-w-7xl mx-auto px-4 gap-8">
@@ -89,6 +108,108 @@ const HostPage: React.FC = () => {
                   Read Documentation
                </button>
            </div>
+        </section>
+
+        {/* DOMAIN SEARCH SECTION */}
+        <section id="domains" className="max-w-5xl mx-auto px-4 mb-24 lg:px-0">
+          <div className="bg-slate-900 border border-slate-800 rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden shadow-2xl">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+            
+            <div className="text-center mb-10 relative z-10">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[10px] font-bold uppercase tracking-wider mb-4">
+                   <Globe size={12} /> Domain Registrar
+                </div>
+                <h2 className="text-3xl font-black text-white mb-4">Claim Your Web3 Identity</h2>
+                <p className="text-slate-400 text-sm max-w-lg mx-auto">Search and register domains directly on Fluid. Get a .fluid domain free with your hosting plan, or purchase traditional TLDs.</p>
+            </div>
+
+            {/* Search Box */}
+            <form onSubmit={handleDomainSearch} className="relative max-w-2xl mx-auto mb-12 z-10">
+                <div className="relative flex items-center group">
+                    <Search className="absolute left-6 text-slate-500 group-focus-within:text-indigo-500 transition-colors" size={24} />
+                    <input 
+                        type="text" 
+                        value={domainQuery}
+                        onChange={(e) => setDomainQuery(e.target.value)}
+                        placeholder="Search for your perfect domain..." 
+                        className="w-full bg-black/40 border border-white/10 rounded-full py-5 pl-16 pr-36 text-xl font-bold text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 transition-all"
+                    />
+                    <button 
+                      type="submit" 
+                      disabled={isSearchingDomains}
+                      className="absolute right-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-full px-8 py-3 transition-all disabled:opacity-70 disabled:cursor-not-allowed flex items-center gap-2"
+                    >
+                        {isSearchingDomains ? (
+                          <>
+                            <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                            Checking
+                          </>
+                        ) : 'Search'}
+                    </button>
+                </div>
+            </form>
+
+            {/* Results */}
+            {showDomainResults && (
+                <div className="max-w-3xl mx-auto space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-500 relative z-10">
+                    {/* .fluid Result (Hero) */}
+                    <div className="flex items-center justify-between p-5 bg-gradient-to-r from-indigo-900/40 to-purple-900/40 border border-indigo-500/30 rounded-2xl relative overflow-hidden group cursor-pointer hover:border-indigo-500/50 transition-all">
+                        <div className="absolute inset-0 bg-indigo-500/5 group-hover:bg-indigo-500/10 transition-colors"></div>
+                        <div className="flex items-center gap-4 relative z-10">
+                            <div className="w-12 h-12 rounded-2xl bg-emerald-500/20 flex items-center justify-center text-emerald-500 shadow-lg shadow-emerald-500/10">
+                                <CheckCircle2 size={24} />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <span className="text-xl font-black text-white">{baseName}<span className="text-indigo-400">.fluid</span></span>
+                                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500 text-slate-950 uppercase tracking-wide">Available</span>
+                                </div>
+                                <p className="text-xs text-slate-400 mt-0.5 font-medium flex items-center gap-1">
+                                  <Lock size={10} /> Permanent decentralized ownership
+                                </p>
+                            </div>
+                        </div>
+                        <div className="text-right relative z-10">
+                            <div className="text-2xl font-black text-emerald-400">FREE</div>
+                            <p className="text-[10px] text-slate-500 line-through font-bold uppercase tracking-wider">$500/yr value</p>
+                        </div>
+                        <button className="absolute inset-0 z-20 focus:outline-none" onClick={() => alert('Redirecting to claim flow...')}></button>
+                    </div>
+
+                    <div className="h-px bg-white/5 my-4 mx-4"></div>
+                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest px-4 mb-2">Traditional Domains</p>
+
+                    {/* Other TLDs */}
+                    {[
+                        { tld: '.com', price: '$12.99', old: '$15.99', popular: true },
+                        { tld: '.ai', price: '$65.00', old: '$80.00', popular: false },
+                        { tld: '.xyz', price: '$1.99', old: '$9.99', popular: false },
+                        { tld: '.io', price: '$35.00', old: '$45.00', popular: false }
+                    ].map((domain) => (
+                        <div key={domain.tld} className="flex items-center justify-between p-4 bg-slate-950/50 border border-slate-800 rounded-xl hover:border-slate-600 transition-all group">
+                            <div className="flex items-center gap-4">
+                                <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-slate-500 group-hover:text-white transition-colors">
+                                    <Globe size={18} />
+                                </div>
+                                <div>
+                                  <span className="text-lg font-bold text-slate-300">{baseName}<span className="text-slate-500">{domain.tld}</span></span>
+                                  {domain.popular && <span className="ml-2 text-[9px] bg-blue-500/20 text-blue-400 px-1.5 py-0.5 rounded font-bold uppercase">Popular</span>}
+                                </div>
+                            </div>
+                            <div className="flex items-center gap-4 sm:gap-6">
+                                <div className="text-right">
+                                    <div className="text-sm font-bold text-white">{domain.price}<span className="text-[10px] text-slate-500 font-normal">/yr</span></div>
+                                    <div className="text-[10px] text-slate-600 line-through font-bold">{domain.old}</div>
+                                </div>
+                                <button className="w-10 h-10 rounded-xl bg-white/5 hover:bg-white/10 text-white flex items-center justify-center transition-colors">
+                                    <ShoppingCart size={16} />
+                                </button>
+                            </div>
+                        </div>
+                    ))}
+                </div>
+            )}
+          </div>
         </section>
 
         {/* HOW HOSTING WORKS - Deep Dive Architecture Section */}
@@ -175,7 +296,7 @@ const HostPage: React.FC = () => {
                     </div>
                     <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white uppercase tracking-tight">One-Time Payment</h3>
                     <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                       Pay once in $FLUID tokens to store data forever. No monthly subscription fees for storage.
+                       Pay once in FLUID tokens to store data forever. No monthly subscription fees for storage.
                     </p>
                  </div>
 
