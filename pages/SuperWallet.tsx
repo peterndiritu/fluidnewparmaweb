@@ -9,7 +9,8 @@ import {
   Landmark, CreditCard as CardIcon, Power, Settings,
   ChevronRight, Terminal, Cloud, Smartphone, Repeat,
   ArrowDown, Layout, Users, ShieldCheck, AlertOctagon, FileCheck,
-  Building2, Banknote, History, Flag, QrCode, UploadCloud, Rocket
+  Building2, Banknote, History, Flag, QrCode, UploadCloud, Rocket,
+  Key, Chrome
 } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 
@@ -116,31 +117,47 @@ const SecurityVault = ({ onUnlock }: { onUnlock: () => void }) => {
          </div>
       </div>
 
-      <h1 className="text-2xl font-black text-white uppercase tracking-tight mb-2">Fluid Sovereign Vault</h1>
-      <p className="text-slate-500 text-sm mb-12 max-w-xs mx-auto">Biometric authentication required to decrypt your local session.</p>
+      <h1 className="text-2xl font-black text-white uppercase tracking-tight mb-2">FLUID DAPP</h1>
+      <p className="text-slate-500 text-sm mb-8 max-w-xs mx-auto">Select authentication method to activate session.</p>
 
+      {/* Primary Biometric Button */}
       <button 
         onClick={handleAuth}
-        className="group relative px-8 py-4 bg-slate-900 rounded-2xl border border-slate-800 hover:border-emerald-500/50 transition-all w-full max-w-xs overflow-hidden"
+        className="group relative px-8 py-4 bg-slate-900 rounded-2xl border border-slate-800 hover:border-emerald-500/50 transition-all w-full max-w-xs overflow-hidden mb-6"
       >
         <div className="absolute inset-0 bg-emerald-500/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
         <div className="relative flex items-center justify-center gap-3">
           {status === 'scanning' ? (
              <>
                <ScanFace size={20} className="text-emerald-500 animate-pulse" />
-               <span className="text-emerald-500 font-bold uppercase tracking-wider text-xs">Verifying Identity...</span>
+               <span className="text-emerald-500 font-bold uppercase tracking-wider text-xs">Verifying...</span>
              </>
           ) : (
              <>
                <Fingerprint size={20} className="text-slate-400 group-hover:text-emerald-500 transition-colors" />
-               <span className="text-slate-300 font-bold uppercase tracking-wider text-xs group-hover:text-white">Authenticate Access</span>
+               <span className="text-slate-300 font-bold uppercase tracking-wider text-xs group-hover:text-white">Biometric Login</span>
              </>
           )}
         </div>
       </button>
+
+      {/* Alternative Auth Methods */}
+      <div className="grid grid-cols-3 gap-3 w-full max-w-xs">
+         <button onClick={handleAuth} className="flex flex-col items-center justify-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-colors group">
+            <Key size={20} className="text-slate-400 group-hover:text-white transition-colors" />
+            <span className="text-[9px] font-bold text-slate-500 group-hover:text-slate-300 uppercase">Passkey</span>
+         </button>
+         <button onClick={handleAuth} className="flex flex-col items-center justify-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-colors group">
+            <Smartphone size={20} className="text-slate-400 group-hover:text-white transition-colors" />
+            <span className="text-[9px] font-bold text-slate-500 group-hover:text-slate-300 uppercase">Phone</span>
+         </button>
+         <button onClick={handleAuth} className="flex flex-col items-center justify-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-colors group">
+            <Chrome size={20} className="text-slate-400 group-hover:text-white transition-colors" />
+            <span className="text-[9px] font-bold text-slate-500 group-hover:text-slate-300 uppercase">Google</span>
+         </button>
+      </div>
       
-      <div className="mt-8 flex gap-6">
-        <button className="text-[10px] font-bold text-slate-600 uppercase tracking-widest hover:text-white transition-colors">Use Passkey</button>
+      <div className="mt-8">
         <button className="text-[10px] font-bold text-slate-600 uppercase tracking-widest hover:text-white transition-colors">Emergency Kit</button>
       </div>
     </div>
@@ -171,15 +188,19 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
     viewCardDetails: true,
     initiateSwap: false,
     changeLimits: true,
+    sendCrypto: true,
+    buyCrypto: true,
   });
   
   // Security Audit Score Calculation
   const securityScore = useMemo(() => {
     let score = 50; // Base score
     if (!isLocked) score += 10; // Vault accessed successfully
-    if (securitySettings.viewCardDetails) score += 15;
-    if (securitySettings.initiateSwap) score += 15;
+    if (securitySettings.viewCardDetails) score += 10;
+    if (securitySettings.initiateSwap) score += 10;
     if (securitySettings.changeLimits) score += 10;
+    if (securitySettings.sendCrypto) score += 5;
+    if (securitySettings.buyCrypto) score += 5;
     return Math.min(score, 100);
   }, [securitySettings, isLocked]);
 
@@ -907,6 +928,8 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                         { id: 'viewCardDetails', label: 'View Card Number', desc: 'Require auth to unmask PAN' },
                         { id: 'changeLimits', label: 'Adjust Limits', desc: 'Require auth to increase spend limits' },
                         { id: 'initiateSwap', label: 'Initiate Swaps', desc: 'Require auth for DEX trades > $100' },
+                        { id: 'sendCrypto', label: 'Send Crypto', desc: 'Require auth for outgoing transfers' },
+                        { id: 'buyCrypto', label: 'Buy Crypto', desc: 'Require auth for fiat on-ramp' },
                      ].map((setting) => (
                         <div key={setting.id} className="p-4 bg-slate-900/50 border border-slate-800 rounded-2xl flex items-center justify-between">
                            <div>
@@ -969,7 +992,12 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                            </div>
                            <div className="text-right mt-1 text-[10px] text-slate-500 font-bold">Balance: 45,000 FLD</div>
                         </div>
-                        <button className="w-full py-4 mt-auto bg-white text-slate-900 font-black rounded-xl uppercase tracking-widest hover:bg-slate-200 transition-colors">Confirm Send</button>
+                        <button 
+                          onClick={() => handleSecureAction('sendCrypto', () => alert("Transaction Sent"))}
+                          className="w-full py-4 mt-auto bg-white text-slate-900 font-black rounded-xl uppercase tracking-widest hover:bg-slate-200 transition-colors"
+                        >
+                          Confirm Send
+                        </button>
                      </div>
                   )}
 
@@ -1019,7 +1047,12 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                               </div>
                            </div>
                         </div>
-                        <button className="w-full py-4 mt-auto bg-emerald-500 text-white font-black rounded-xl uppercase tracking-widest hover:bg-emerald-400 transition-colors shadow-lg shadow-emerald-500/20">Continue to Payment</button>
+                        <button 
+                          onClick={() => handleSecureAction('buyCrypto', () => alert("Proceeding to MoonPay"))}
+                          className="w-full py-4 mt-auto bg-emerald-500 text-white font-black rounded-xl uppercase tracking-widest hover:bg-emerald-400 transition-colors shadow-lg shadow-emerald-500/20"
+                        >
+                          Continue to Payment
+                        </button>
                      </div>
                   )}
                </div>
