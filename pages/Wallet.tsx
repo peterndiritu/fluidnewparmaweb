@@ -67,7 +67,7 @@ const WalletPage: React.FC = () => {
                        <div className="text-3xl font-bold text-white tracking-tight">$12,458.00</div>
                     </div>
                     <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                       <span className="text-white font-black text-xl italic">F</span>
+                       <span className="text-white font-black text-xl">F</span>
                     </div>
                  </div>
                  
@@ -147,7 +147,7 @@ const WalletPage: React.FC = () => {
                             <div className="flex justify-between items-center">
                                <div className="text-xl font-bold text-emerald-400">8,420</div>
                                <div className="flex items-center gap-2 bg-slate-800 px-2 py-1.5 rounded-lg border border-white/10">
-                                  <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center text-[8px] font-bold italic">F</div>
+                                  <div className="w-5 h-5 bg-emerald-500 rounded-full flex items-center justify-center text-[8px] font-bold">F</div>
                                   <span className="text-xs font-bold text-white">FLUID</span>
                                   <ChevronDown size={12} className="text-slate-500" />
                                </div>

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
-import SuperWallet from './pages/SuperWallet';
+import FluidWalletApp from './pages/SuperWallet';
 import HostPage from './pages/Host';
 import AboutPage from './pages/About';
 import TokenPage from './pages/TokenPage';
@@ -26,7 +26,18 @@ function App() {
       case 'wallet': 
       case 'dex': 
       case 'cards': 
-        return <SuperWallet onNavigate={setCurrentPage} initialView={currentPage === 'dex' ? 'swap' : currentPage === 'cards' ? 'card' : 'assets'} />;
+      case 'dapps':
+        return (
+          <FluidWalletApp 
+            onNavigate={setCurrentPage} 
+            initialView={
+              currentPage === 'dex' ? 'swap' : 
+              currentPage === 'cards' ? 'card' : 
+              currentPage === 'dapps' ? 'dapps' : 
+              'assets'
+            } 
+          />
+        );
       case 'token': return <TokenPage />;
       case 'host': return <HostPage />;
       case 'about': return <AboutPage />;

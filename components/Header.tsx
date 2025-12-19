@@ -9,6 +9,14 @@ interface HeaderProps {
   currentPage: string;
 }
 
+const FluidLogo = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M45 22H80C83.3137 22 86 24.6863 86 28V32C86 35.3137 83.3137 38 80 38H40L45 22Z" fill="currentColor" />
+    <path d="M30 44H70C73.3137 44 76 46.6863 76 50V54C76 57.3137 73.3137 60 70 60H25L30 44Z" fill="currentColor" />
+    <path d="M15 66H60C63.3137 66 66 68.6863 66 72V76C66 79.3137 83.3137 82 60 82H10L15 66Z" fill="currentColor" />
+  </svg>
+);
+
 const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [mobileSubmenu, setMobileSubmenu] = useState<string | null>(null);
@@ -61,9 +69,16 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
       label: 'Products',
       children: [
         { label: 'Fluid Blockchain', action: () => handleLinkClick('blockchain') },
-        { label: 'Super Wallet', action: () => handleLinkClick('wallet') },
-        { label: 'Fluid Token', action: () => handleLinkClick('token') },
+        { label: 'Fluid Wallet App', action: () => handleLinkClick('wallet') },
       ]
+    },
+    { 
+      label: 'Protocol Economy', 
+      action: () => handleLinkClick('economics') 
+    },
+    { 
+      label: 'Fluid Token', 
+      action: () => handleLinkClick('token') 
     },
     { 
       label: 'Hosting', 
@@ -81,17 +96,6 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
     { label: 'Docs', action: () => handleLinkClick('docs') },
   ];
 
-  const FluidLogo = ({ className }: { className?: string }) => (
-    <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-      {/* Top Bar - Offset Right */}
-      <path d="M48 20 H78 C83.5 20 88 24.5 88 30 C88 35.5 83.5 40 78 40 H38 L48 20 Z" fill="white" />
-      {/* Middle Bar - Center */}
-      <path d="M35 45 H65 C70.5 45 75 49.5 75 55 C75 60.5 70.5 65 65 65 H25 L35 45 Z" fill="white" />
-      {/* Bottom Bar - Offset Left */}
-      <path d="M22 70 H52 C57.5 70 62 74.5 62 80 C62 85.5 57.5 90 52 90 H12 L22 70 Z" fill="white" />
-    </svg>
-  );
-
   return (
     <nav 
       className={`fixed w-full z-50 top-0 left-0 transition-all duration-300 py-4 ${
@@ -108,7 +112,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
         >
           
           <div className="flex-shrink-0 flex items-center cursor-pointer group" onClick={() => handleLinkClick('home')}>
-            <FluidLogo className="w-10 h-10 mr-2 transition-transform duration-300 group-hover:scale-110" />
+            <FluidLogo className="w-10 h-10 mr-2 transition-transform duration-300 group-hover:scale-110 text-slate-900 dark:text-white" />
             <span className="font-black text-xl tracking-tighter text-slate-900 dark:text-white transition-colors">
               FLUID
             </span>

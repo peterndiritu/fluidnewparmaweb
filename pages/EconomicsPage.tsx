@@ -1,7 +1,21 @@
-import React from 'react';
-import { Coins, Repeat, Landmark, Infinity as InfinityIcon, ShieldCheck, TrendingUp, PieChart, ArrowUpRight } from 'lucide-react';
+import React, { useState } from 'react';
+import { Coins, Repeat, Landmark, Infinity as InfinityIcon, ShieldCheck, TrendingUp, PieChart, ArrowUpRight, ChevronDown, BarChart, Eye, Layout } from 'lucide-react';
 
 const EconomicsPage: React.FC = () => {
+  const [openDropdown, setOpenDropdown] = useState<string | null>('principles');
+
+  const menuItems = [
+    { id: 'principles', label: 'Core Principles', icon: BarChart, children: ['Sustainability', 'Yield Model', 'One-Time Cost'] },
+    { id: 'model', label: 'Endowment Model', icon: InfinityIcon, children: ['Lifecycle', 'Yield Gen', 'Treasury'] },
+    { id: 'stats', label: 'Governance', icon: Landmark, children: ['Voting', 'Proposals', 'Audit'] },
+    { id: 'tokens', label: 'Tokenomics', icon: Coins, children: ['Distribution', 'Supply', 'Burn Rate'] }
+  ];
+
+  const scrollTo = (id: string) => {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
   const principles = [
     {
       title: "Sustainable Yield",
@@ -21,97 +35,127 @@ const EconomicsPage: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen pt-28 pb-16">
+    <div className="min-h-screen pt-32 pb-16 flex flex-col lg:flex-row max-w-7xl mx-auto px-4 gap-8">
       
-      {/* Hero */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24 text-center">
-         <div className="inline-block px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/30 mb-6">
-            <span className="text-amber-500 font-bold uppercase tracking-wider text-sm">Protocol Economics</span>
-         </div>
-         <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 dark:text-white mb-6">
-            The Endowment <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 to-orange-500 text-cyan-400">Sustainable Engine.</span>
-         </h1>
-         <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mb-10">
-            Fluid uses an endowment model similar to university funds to ensure that once data is stored, it stays stored without further payments.
-         </p>
-      </section>
+      {/* Left Sidebar Dropdown Navigation */}
+      <aside className="lg:w-64 flex-shrink-0">
+        <div className="sticky top-32 space-y-2 bg-white/5 dark:bg-slate-900/40 backdrop-blur-xl p-4 rounded-[2rem] border border-white/10">
+           <div className="px-2 py-2 text-[10px] font-black text-slate-500 uppercase tracking-widest border-b border-white/5 mb-4 flex items-center justify-between">
+              <span>Economics Menu</span>
+              <Repeat size={12} className="text-amber-500" />
+           </div>
+           {menuItems.map((item) => (
+             <div key={item.id} className="group">
+                <button 
+                  onClick={() => setOpenDropdown(openDropdown === item.id ? null : item.id)}
+                  className={`w-full flex items-center justify-between px-4 py-3 rounded-xl transition-all duration-300 ${openDropdown === item.id ? 'bg-amber-600/10 text-amber-500 border border-amber-600/20' : 'text-slate-400 hover:bg-white/5 hover:text-white border border-transparent'}`}
+                >
+                   <div className="flex items-center gap-3">
+                      <item.icon size={16} />
+                      <span className="text-xs font-bold uppercase tracking-wider">{item.label}</span>
+                   </div>
+                   <ChevronDown size={14} className={`transition-transform duration-300 ${openDropdown === item.id ? 'rotate-180' : ''}`} />
+                </button>
+                {/* Components hidden under dropdown menu symbol by default */}
+                <div className={`overflow-hidden transition-all duration-300 ease-in-out ${openDropdown === item.id ? 'max-h-96 opacity-100 mt-1' : 'max-h-0 opacity-0 pointer-events-none'}`}>
+                   <div className="pl-11 pr-4 py-2 space-y-2">
+                      {item.children.map((child) => (
+                        <button 
+                          key={child}
+                          className="block text-[10px] font-bold text-slate-500 hover:text-amber-400 transition-colors uppercase tracking-widest text-left w-full"
+                          onClick={() => scrollTo(item.id)}
+                        >
+                           {child}
+                        </button>
+                      ))}
+                   </div>
+                </div>
+             </div>
+           ))}
+        </div>
+      </aside>
 
-      {/* Visual Model */}
-      <section className="max-w-4xl mx-auto px-4 mb-24">
-         <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-[2.5rem] p-8 md:p-12 relative overflow-hidden shadow-2xl">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-[100px]"></div>
-            
-            <div className="grid md:grid-cols-2 gap-12 items-center">
-               <div className="space-y-6">
-                  <h2 className="text-3xl font-bold text-white">How it Scales</h2>
-                  <p className="text-slate-400 leading-relaxed">
-                     When a user pays for storage, the FLUID tokens enter the protocol's <strong>Endowment Pool</strong>. This pool is governed by smart contracts that stake or lend assets to generate the <strong>"Storage Yield"</strong>.
-                  </p>
-                  <div className="space-y-4">
-                     <div className="flex items-center gap-3 text-slate-300 font-medium">
-                        <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center"><ShieldCheck size={14}/></div>
-                        <span>Fully Audited Treasury Management</span>
-                     </div>
-                     <div className="flex items-center gap-3 text-slate-300 font-medium">
-                        <div className="w-6 h-6 rounded-full bg-emerald-500/20 text-emerald-500 flex items-center justify-center"><ShieldCheck size={14}/></div>
-                        <span>Transparent On-Chain Allocation</span>
+      {/* Main Content Area */}
+      <main className="flex-grow">
+        {/* Hero */}
+        <section className="max-w-full text-center lg:text-left mb-24">
+           <div className="inline-block px-4 py-2 rounded-full bg-amber-500/10 border border-amber-500/30 mb-6 animate-fade-in-up">
+              <span className="text-amber-500 font-black uppercase tracking-widest text-xs">Endowment Economy V2.0</span>
+           </div>
+           <h1 className="text-5xl md:text-8xl font-black text-slate-900 dark:text-white mb-6 tracking-tighter leading-none">
+              Economic <br/>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-amber-400 via-orange-500 to-emerald-500">Freedom Rails.</span>
+           </h1>
+           <p className="text-xl text-slate-600 dark:text-slate-400 mb-10 font-medium">
+              Fluid uses a revolutionary endowment model to sustain global infrastructure indefinitely without monthly fees.
+           </p>
+        </section>
+
+        {/* Endowment Lifecycle */}
+        <section id="model" className="mb-32 scroll-card">
+           <div className="bg-slate-950/40 backdrop-blur-3xl border border-white/5 rounded-[4rem] p-12 lg:p-16 relative overflow-hidden shadow-2xl">
+              <div className="text-center mb-16">
+                 <h3 className="text-3xl font-black text-white tracking-tighter uppercase mb-4">Lifecycle</h3>
+                 <p className="text-slate-500 font-medium max-w-xl mx-auto">One-time payment transforms into perpetual incentives.</p>
+              </div>
+
+              <div className="flex flex-col items-center">
+                  <div className="bg-emerald-500/10 border border-emerald-500/40 px-10 py-6 rounded-[2.5rem] text-center mb-8 relative z-10">
+                     <h4 className="text-emerald-500 dark:text-emerald-400 font-black mb-3 text-[10px] tracking-[0.4em] uppercase">Initial Entry</h4>
+                     <div className="flex items-center justify-center gap-3 text-xl font-black text-white">
+                        <Coins size={24} className="text-emerald-500" /> FLUID TOKENS
                      </div>
                   </div>
-               </div>
 
-               <div className="relative">
-                  {/* Decorative Logic Flow */}
-                  <div className="flex flex-col items-center gap-4">
-                     <div className="w-20 h-20 bg-amber-500/20 rounded-2xl border border-amber-500/30 flex items-center justify-center text-amber-500 shadow-lg">
-                        <Coins size={32} />
-                     </div>
-                     <div className="h-10 w-px bg-gradient-to-b from-amber-500 to-cyan-500"></div>
-                     <div className="bg-slate-800 border border-slate-700 px-6 py-4 rounded-xl text-center shadow-xl">
-                        <span className="text-white font-bold block">ENDOWMENT</span>
-                        <span className="text-xs text-slate-500 font-bold uppercase">TREASURY</span>
-                     </div>
-                     <div className="h-10 w-px bg-gradient-to-b from-cyan-500 to-emerald-500"></div>
-                     <div className="w-20 h-20 bg-emerald-500/20 rounded-full border border-emerald-500/30 flex items-center justify-center text-emerald-500 shadow-lg">
-                        <InfinityIcon size={32} />
-                     </div>
+                  <div className="h-12 w-px bg-gradient-to-b from-emerald-500 to-blue-500"></div>
+
+                  <div className="bg-slate-900 border border-slate-700 px-12 py-8 rounded-[3rem] text-center mb-8 w-full max-w-md shadow-2xl">
+                     <h4 className="text-white font-black text-xl tracking-tighter mb-1 uppercase">Endowment Treasury</h4>
+                     <p className="text-blue-500 text-[8px] uppercase font-black tracking-[0.3em]">Governance Managed</p>
                   </div>
-               </div>
+
+                  <div className="h-12 w-px bg-slate-700"></div>
+                  
+                  <div className="bg-gradient-to-br from-blue-600 to-emerald-500 p-[1px] rounded-[3.5rem] w-full max-w-md shadow-2xl">
+                    <div className="bg-slate-950 px-10 py-8 rounded-[3.5rem] text-center flex flex-col items-center gap-4">
+                       <h4 className="text-white font-black text-2xl tracking-tighter uppercase">Permanent Storage</h4>
+                       <InfinityIcon className="w-12 h-12 text-cyan-400 animate-pulse" />
+                    </div>
+                  </div>
+              </div>
+           </div>
+        </section>
+
+        {/* Principles Grid */}
+        <section id="principles" className="mb-24">
+           <div className="grid md:grid-cols-3 gap-6">
+              {principles.map((p, i) => (
+                 <div key={i} className="p-8 bg-white/5 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800 rounded-[2.5rem] hover:border-amber-500/30 transition-all group shadow-xl">
+                    <div className="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center mb-6 text-amber-500 group-hover:scale-110 transition-transform">
+                       <p.icon size={24} />
+                    </div>
+                    <h3 className="text-lg font-black mb-3 text-slate-900 dark:text-white uppercase tracking-tight">{p.title}</h3>
+                    <p className="text-slate-600 dark:text-slate-400 text-xs leading-relaxed font-medium">
+                       {p.desc}
+                    </p>
+                 </div>
+              ))}
+           </div>
+        </section>
+
+        {/* CTA */}
+        <section id="stats" className="text-center">
+            <div className="bg-gradient-to-r from-amber-600 to-orange-500 rounded-[3rem] p-12 shadow-2xl group">
+               <h2 className="text-3xl md:text-5xl font-black text-white mb-6 uppercase tracking-tighter">Decades, Not Days</h2>
+               <p className="text-white/90 text-lg mb-8 max-w-2xl mx-auto leading-relaxed font-medium">
+                  The endowment economy is the final piece of the puzzle for a truly permanent and decentralized web. Build with freedom.
+               </p>
+               <button className="px-12 py-5 bg-white text-orange-600 font-black rounded-full hover:scale-105 transition-all shadow-lg flex items-center justify-center gap-3 mx-auto uppercase tracking-widest text-sm">
+                  Join the Economy <ArrowUpRight size={20} />
+               </button>
             </div>
-         </div>
-      </section>
-
-      {/* Principles */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-24">
-         <div className="grid md:grid-cols-3 gap-8">
-            {principles.map((p, i) => (
-               <div key={i} className="p-8 bg-white/5 dark:bg-slate-900/50 border border-slate-200/50 dark:border-slate-800 rounded-3xl hover:border-amber-500/30 transition-all group">
-                  <div className="w-12 h-12 bg-amber-500/10 rounded-xl flex items-center justify-center mb-6 text-amber-500 group-hover:scale-110 transition-transform">
-                     <p.icon size={24} />
-                  </div>
-                  <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white">{p.title}</h3>
-                  <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
-                     {p.desc}
-                  </p>
-               </div>
-            ))}
-         </div>
-      </section>
-
-      {/* CTA */}
-      <section className="text-center px-4">
-          <div className="bg-gradient-to-r from-amber-600 to-orange-500 rounded-3xl p-12 max-w-4xl mx-auto shadow-2xl relative overflow-hidden group">
-             <div className="absolute inset-0 bg-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-             <h2 className="text-3xl md:text-4xl font-extrabold text-white mb-6">Built for Decades, Not Days</h2>
-             <p className="text-white/90 text-lg mb-8 max-w-2xl mx-auto leading-relaxed">
-                The endowment economy is the final piece of the puzzle for a truly permanent and decentralized web.
-             </p>
-             <button className="px-10 py-4 bg-white text-orange-600 font-bold rounded-full hover:bg-orange-50 transition-colors shadow-lg flex items-center justify-center gap-2 mx-auto">
-                Join the Community <ArrowUpRight size={20} />
-             </button>
-          </div>
-      </section>
-
+        </section>
+      </main>
     </div>
   );
 };

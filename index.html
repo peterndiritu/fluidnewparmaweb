@@ -24,11 +24,18 @@
             animation: {
               'fade-in-up': 'fadeInUp 0.5s ease-out',
               'bounce-slow': 'bounce 3s infinite',
+              'progress-fast': 'progressFast 2.5s linear infinite',
             },
             keyframes: {
               fadeInUp: {
                 '0%': { opacity: '0', transform: 'translateY(10px)' },
                 '100%': { opacity: '1', transform: 'translateY(0)' },
+              },
+              progressFast: {
+                '0%': { width: '0%', opacity: '0.3' },
+                '10%': { opacity: '1' },
+                '90%': { opacity: '1' },
+                '100%': { width: '100%', opacity: '0.3' },
               }
             }
           }
@@ -81,6 +88,15 @@
         opacity: 1;
         transform: translateY(0) scale(1);
       }
+
+      /* Utility to hide scrollbars */
+      .no-scrollbar::-webkit-scrollbar {
+        display: none;
+      }
+      .no-scrollbar {
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+      }
     </style>
   <script type="importmap">
 {
@@ -127,18 +143,4 @@
           });
         }, observerOptions);
 
-        // Function to attach observer to new elements (useful if React renders them later)
-        const observeElements = () => {
-          const elements = document.querySelectorAll('.scroll-card');
-          elements.forEach(el => observer.observe(el));
-        };
-
-        // Observe initially
-        observeElements();
-
-        // Re-observe periodically to catch dynamic content (simple hack for React apps without MutationObserver complexity)
-        setInterval(observeElements, 1000);
-      });
-    </script>
-  </body>
-</html>
+        // Function to attach observer to new elements (useful if React renders them

@@ -34,6 +34,14 @@ interface PaymentOption {
   decimals: number;
 }
 
+const FluidLogo = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M45 22H80C83.3137 22 86 24.6863 86 28V32C86 35.3137 83.3137 38 80 38H40L45 22Z" fill="currentColor" />
+    <path d="M30 44H70C73.3137 44 76 46.6863 76 50V54C76 57.3137 73.3137 60 70 60H25L30 44Z" fill="currentColor" />
+    <path d="M15 66H60C63.3137 66 66 68.6863 66 72V76C66 79.3137 63.3137 82 60 82H10L15 66Z" fill="currentColor" />
+  </svg>
+);
+
 const PAYMENT_OPTIONS: PaymentOption[] = [
   { id: 'eth', symbol: 'ETH', name: 'Ethereum', network: 'ERC-20', chainId: 1, icon: 'https://cryptologos.cc/logos/ethereum-eth-logo.png?v=026', isNative: true, decimals: 18 },
   { id: 'bnb', symbol: 'BNB', name: 'BNB Smart Chain', network: 'BEP-20', chainId: 56, icon: 'https://cryptologos.cc/logos/bnb-bnb-logo.png?v=026', isNative: true, decimals: 18 },
@@ -321,8 +329,8 @@ const PresaleCard: React.FC = () => {
                             {fluidAmount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
                         </div>
                         <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-emerald-500/10 px-3 py-1.5 rounded-xl border border-emerald-500/20">
-                            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 flex items-center justify-center text-[10px] text-white font-bold">
-                                F
+                            <div className="w-5 h-5 rounded-full bg-gradient-to-br from-blue-500 to-cyan-400 p-1 flex items-center justify-center">
+                                <FluidLogo className="w-full h-full text-white" />
                             </div>
                             <span className="text-xs font-bold text-emerald-400">FLUID</span>
                         </div>

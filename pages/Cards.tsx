@@ -36,7 +36,7 @@ const CardsPage: React.FC = () => {
                <div className="absolute bottom-0 left-0 w-full h-32 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>
 
                <div className="flex justify-between items-start z-10 text-white">
-                  <span className="font-bold text-2xl italic tracking-tighter">Fluid</span>
+                  <span className="font-bold text-2xl tracking-tighter">Fluid</span>
                   <FluidLogo className="w-10 h-10 opacity-90" />
                </div>
 
