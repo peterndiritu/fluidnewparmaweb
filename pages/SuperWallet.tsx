@@ -240,6 +240,12 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                 </div>
              </div>
              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => setActiveTab('settings')}
+                  className="w-10 h-10 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-white/20 transition-all"
+                >
+                   <Settings size={18} />
+                </button>
                 <button className="w-10 h-10 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-white/20 transition-all relative">
                    <Bell size={18} />
                    <span className="absolute top-2 right-2.5 w-1.5 h-1.5 bg-rose-500 rounded-full border border-slate-900"></span>
@@ -308,7 +314,6 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                   <div>
                      <div className="flex justify-between items-center mb-4">
                         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Assets</h3>
-                        <Settings size={14} className="text-slate-600 cursor-pointer hover:text-white" onClick={() => setActiveTab('settings')} />
                      </div>
                      <div className="space-y-3">
                         {ASSETS.map((asset) => (
@@ -677,12 +682,6 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
 };
 
 // Simple User Icon Component needed above
-const Users = ({size, className}: {size: number, className?: string}) => (
-   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-   </svg>
-);
-
 const User = ({size, className}: {size: number, className?: string}) => (
    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
       <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
