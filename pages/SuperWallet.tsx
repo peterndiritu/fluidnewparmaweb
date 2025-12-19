@@ -141,15 +141,9 @@ const SecurityVault = ({ onUnlock }: { onUnlock: () => void }) => {
     if (inputCode.length !== 6) return;
     setStatus('verifying');
     setTimeout(() => {
-      // Mock validation
-      if (inputCode === '123456') { // Mock correct code
-        setStatus('success');
-        setTimeout(onUnlock, 800);
-      } else {
-        setStatus('error');
-        setTimeout(() => setStatus('idle'), 1000);
-        setInputCode('');
-      }
+      // Mock validation - Accept any code for simulation
+      setStatus('success');
+      setTimeout(onUnlock, 800);
     }, 1000);
   };
 
