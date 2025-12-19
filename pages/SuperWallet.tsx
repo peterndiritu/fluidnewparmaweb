@@ -11,7 +11,8 @@ import {
   ArrowDown, Layout, Users, ShieldCheck, AlertOctagon, FileCheck,
   Building2, Banknote, History, Flag, QrCode, UploadCloud, Rocket,
   Key, Chrome, ChevronLeft, Delete, User, Edit3, AtSign, Camera, Share2, Save, ShoppingCart, ArrowRight,
-  ShoppingBag, Coins, Monitor, Play, RotateCw, Check
+  ShoppingBag, Coins, Monitor, Play, RotateCw, Check, LayoutGrid, MessageSquare, Send, Paperclip, Smile, Phone,
+  Trash2, Asterisk
 } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 
@@ -43,6 +44,7 @@ interface DApp {
   category: string;
   status: 'online' | 'offline';
   description?: string;
+  action?: () => void;
 }
 
 interface Deployment {
@@ -51,6 +53,33 @@ interface Deployment {
   hash: string;
   status: 'active' | 'deploying' | 'error';
   url: string;
+}
+
+interface ChatMessage {
+  id: string;
+  sender: 'me' | 'other';
+  text: string;
+  time: string;
+  status: 'sent' | 'delivered' | 'read';
+}
+
+interface ChatContact {
+  id: string;
+  name: string;
+  avatar: string;
+  lastMessage: string;
+  time: string;
+  unread: number;
+  online: boolean;
+}
+
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  time: string;
+  type: 'info' | 'alert' | 'success';
+  read: boolean;
 }
 
 // --- Mock Data ---
@@ -83,13 +112,25 @@ const FIAT_ACCOUNTS = [
    { currency: 'GBP', symbol: '£', balance: '850.00', bank: 'Fluid UK', type: 'Sort Code', flag: '🇬🇧', details: { route: '04-00-04', acct: '12345678' } },
 ];
 
+const CONTACTS: ChatContact[] = [
+  { id: '1', name: 'Sarah DeFi', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Sarah', lastMessage: 'Did you see the new APY on Fluid?', time: '2m', unread: 2, online: true },
+  { id: '2', name: 'Dev Team', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Dev', lastMessage: 'Deployment successful! 🚀', time: '1h', unread: 0, online: false },
+  { id: '3', name: 'Crypto Dad', avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Dad', lastMessage: 'How do I bridge to L2?', time: '3h', unread: 0, online: true },
+];
+
 const DAPPS: DApp[] = [
-  { id: '1', name: 'Fluid Swap', url: 'fluid://dex', icon: RefreshCw, category: 'DeFi', status: 'online', description: 'Instant, low-fee token swaps.' },
-  { id: '2', name: 'Fluid Storage', url: 'fluid://storage', icon: Database, category: 'Infrastructure', status: 'online', description: 'Decentralized permanent file storage.' },
-  { id: '3', name: 'SecureChat', url: 'fluid://chat', icon: Lock, category: 'Social', status: 'online', description: 'E2E encrypted wallet-to-wallet chat.' },
-  { id: '4', name: 'Uniswap', url: 'fluid://uniswap', icon: Repeat, category: 'DeFi', status: 'online', description: 'Swap, earn, and build on the leading decentralized protocol.' },
-  { id: '5', name: 'Aave', url: 'fluid://aave', icon: Landmark, category: 'DeFi', status: 'online', description: 'Open source liquidity protocol.' },
-  { id: '6', name: 'Fluid Names', url: 'fluid://ns', icon: Globe, category: 'Utils', status: 'online', description: 'Register and manage your web3 identity.' },
+  { id: '1', name: 'Fluid DEX', url: 'https://fluid.link/dex', icon: RefreshCw, category: 'DeFi', status: 'online', description: 'Swap tokens instantly with zero slippage.' },
+  { id: '2', name: 'Fluid Host', url: 'https://fluid.link/host', icon: Server, category: 'Utils', status: 'online', description: 'Decentralized hosting for your dApps.' },
+  { id: '3', name: 'SecureChat', url: 'https://chat.fluid.link', icon: MessageSquare, category: 'Social', status: 'online', description: 'End-to-end encrypted wallet messaging.' },
+  { id: '4', name: 'NFT Market', url: 'https://nft.fluid.link', icon: Layers, category: 'NFT', status: 'online', description: 'Trade digital collectibles on Fluid.' },
+  { id: '5', name: 'Fluid Lend', url: 'https://lend.fluid.link', icon: Coins, category: 'DeFi', status: 'online', description: 'Borrow and lend assets.' },
+  { id: '6', name: 'Name Service', url: 'https://fns.fluid.link', icon: Globe, category: 'Utils', status: 'online', description: 'Register your .fluid domain.' },
+];
+
+const NOTIFICATIONS: Notification[] = [
+  { id: '1', title: 'Staking Reward', message: 'You received 450 FLD from pooling.', time: '2m ago', type: 'success', read: false },
+  { id: '2', title: 'Security Alert', message: 'New login detected from Frankfurt, DE.', time: '1h ago', type: 'alert', read: false },
+  { id: '3', title: 'System Update', message: 'Fluid Node V2.1 is live.', time: '5h ago', type: 'info', read: true },
 ];
 
 // --- Components ---
@@ -107,22 +148,23 @@ const SecurityVault = ({ onUnlock }: { onUnlock: () => void }) => {
   const [view, setView] = useState<'main' | 'input' | 'passkey_scan'>('main');
   const [authMethod, setAuthMethod] = useState<'phone' | 'google' | null>(null);
   const [inputCode, setInputCode] = useState('');
-  const [status, setStatus] = useState<'idle' | 'scanning' | 'success' | 'verifying' | 'error'>('idle');
+  const [status, setStatus] = useState<'idle' | 'scanning' | 'success' | 'verifying' | 'error' | 'welcome'>('idle');
 
-  // Handles Biometric (Immediate) and Passkey (Simulated System Dialog)
   const handleDirectAuth = (method: 'biometric' | 'passkey') => {
     if (method === 'passkey') setView('passkey_scan');
     
     setStatus('scanning');
     
-    // Simulate auth delay
     setTimeout(() => {
       setStatus('success');
-      setTimeout(onUnlock, 800);
-    }, 1500);
+      // Transition to Welcome screen
+      setTimeout(() => {
+        setStatus('welcome');
+        setTimeout(onUnlock, 1800); // Allow time to read welcome message
+      }, 800);
+    }, 1200);
   };
 
-  // Switch to Input View for Code-based Auth
   const handleCodeAuth = (method: 'phone' | 'google') => {
     setAuthMethod(method);
     setView('input');
@@ -144,13 +186,14 @@ const SecurityVault = ({ onUnlock }: { onUnlock: () => void }) => {
     if (inputCode.length !== 6) return;
     setStatus('verifying');
     setTimeout(() => {
-      // Mock validation - Accept any code for simulation
       setStatus('success');
-      setTimeout(onUnlock, 800);
+      setTimeout(() => {
+        setStatus('welcome');
+        setTimeout(onUnlock, 1800);
+      }, 800);
     }, 1000);
   };
 
-  // Submit automatically when 6 digits are entered
   useEffect(() => {
     if (inputCode.length === 6) verifyCode();
   }, [inputCode]);
@@ -160,133 +203,267 @@ const SecurityVault = ({ onUnlock }: { onUnlock: () => void }) => {
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-64 h-64 bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none"></div>
 
-      {view === 'main' || view === 'passkey_scan' ? (
-        <>
-          <div className="relative mb-8">
-             <div className={`w-24 h-24 rounded-[2rem] bg-slate-900 border border-slate-800 flex items-center justify-center shadow-2xl relative overflow-hidden transition-all duration-500 ${status === 'scanning' ? 'border-emerald-500/50 shadow-emerald-500/20' : ''}`}>
-                {status === 'scanning' && <div className="absolute inset-0 bg-emerald-500/10 animate-pulse"></div>}
-                {status === 'success' ? (
-                   <CheckCircle2 size={40} className="text-emerald-500 animate-in zoom-in" />
-                ) : (
-                   <FluidLogo className="w-12 h-12 text-white" />
-                )}
-             </div>
-          </div>
-
-          <h1 className="text-2xl font-black text-white uppercase tracking-tight mb-2">FLUID DAPP</h1>
-          <p className="text-slate-500 text-sm mb-8 max-w-xs mx-auto">
-            {view === 'passkey_scan' ? 'Follow system prompt to authenticate.' : 'Select authentication method to activate session.'}
-          </p>
-
-          {/* Primary Biometric Button */}
-          {view === 'main' && (
-            <button 
-              onClick={() => handleDirectAuth('biometric')}
-              className="group relative px-8 py-4 bg-slate-900 rounded-2xl border border-slate-800 hover:border-emerald-500/50 transition-all w-full max-w-xs overflow-hidden mb-6"
-            >
-              <div className="absolute inset-0 bg-emerald-500/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-              <div className="relative flex items-center justify-center gap-3">
-                 <Fingerprint size={20} className="text-slate-400 group-hover:text-emerald-500 transition-colors" />
-                 <span className="text-slate-300 font-bold uppercase tracking-wider text-xs group-hover:text-white">Biometric Login</span>
+      {status === 'welcome' ? (
+        <div className="flex flex-col items-center animate-in fade-in zoom-in duration-500">
+           <div className="relative mb-6">
+              <div className="w-24 h-24 rounded-full bg-slate-900 border-4 border-emerald-500/30 flex items-center justify-center overflow-hidden shadow-[0_0_40px_rgba(16,185,129,0.3)]">
+                  <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alexander&backgroundColor=b6e3f4" alt="User" className="w-full h-full object-cover opacity-90" />
               </div>
-            </button>
-          )}
+              <div className="absolute -bottom-1 -right-1 bg-emerald-500 text-slate-900 rounded-full p-1.5 border-4 border-[#020617]">
+                  <CheckCircle2 size={16} />
+              </div>
+           </div>
+           <h2 className="text-2xl font-black text-white tracking-tight mb-2">Welcome Back</h2>
+           <p className="text-slate-400 text-sm font-medium animate-pulse">Decrypted & Ready</p>
+        </div>
+      ) : (
+        <>
+          {view === 'main' || view === 'passkey_scan' ? (
+            <>
+              <div className="relative mb-8">
+                 <div className={`w-24 h-24 rounded-[2rem] bg-slate-900 border border-slate-800 flex items-center justify-center shadow-2xl relative overflow-hidden transition-all duration-500 ${status === 'scanning' ? 'border-emerald-500/50 shadow-emerald-500/20' : ''}`}>
+                    {status === 'scanning' && <div className="absolute inset-0 bg-emerald-500/10 animate-pulse"></div>}
+                    {status === 'success' ? (
+                       <CheckCircle2 size={40} className="text-emerald-500 animate-in zoom-in" />
+                    ) : (
+                       <FluidLogo className="w-12 h-12 text-white" />
+                    )}
+                 </div>
+              </div>
 
-          {/* Alternative Auth Methods */}
-          {view === 'main' && (
-            <div className="grid grid-cols-3 gap-3 w-full max-w-xs">
-               <button onClick={() => handleDirectAuth('passkey')} className="flex flex-col items-center justify-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-colors group">
-                  <Key size={20} className="text-slate-400 group-hover:text-white transition-colors" />
-                  <span className="text-[9px] font-bold text-slate-500 group-hover:text-slate-300 uppercase">Passkey</span>
+              <h1 className="text-2xl font-black text-white uppercase tracking-tight mb-2">FLUID DAPP</h1>
+              <p className="text-slate-500 text-sm mb-8 max-w-xs mx-auto">
+                {view === 'passkey_scan' ? 'Follow system prompt to authenticate.' : 'Select authentication method to activate session.'}
+              </p>
+
+              {view === 'main' && (
+                <button 
+                  onClick={() => handleDirectAuth('biometric')}
+                  className="group relative px-8 py-4 bg-slate-900 rounded-2xl border border-slate-800 hover:border-emerald-500/50 transition-all w-full max-w-xs overflow-hidden mb-6"
+                >
+                  <div className="absolute inset-0 bg-emerald-500/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+                  <div className="relative flex items-center justify-center gap-3">
+                     <Fingerprint size={20} className="text-slate-400 group-hover:text-emerald-500 transition-colors" />
+                     <span className="text-slate-300 font-bold uppercase tracking-wider text-xs group-hover:text-white">Biometric Login</span>
+                  </div>
+                </button>
+              )}
+
+              {view === 'main' && (
+                <div className="grid grid-cols-3 gap-3 w-full max-w-xs">
+                   <button onClick={() => handleDirectAuth('passkey')} className="flex flex-col items-center justify-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-colors group">
+                      <Key size={20} className="text-slate-400 group-hover:text-white transition-colors" />
+                      <span className="text-[9px] font-bold text-slate-500 group-hover:text-slate-300 uppercase">Passkey</span>
+                   </button>
+                   <button onClick={() => handleCodeAuth('phone')} className="flex flex-col items-center justify-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-colors group">
+                      <Smartphone size={20} className="text-slate-400 group-hover:text-white transition-colors" />
+                      <span className="text-[9px] font-bold text-slate-500 group-hover:text-slate-300 uppercase">Phone</span>
+                   </button>
+                   <button onClick={() => handleCodeAuth('google')} className="flex flex-col items-center justify-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-colors group">
+                      <Chrome size={20} className="text-slate-400 group-hover:text-white transition-colors" />
+                      <span className="text-[9px] font-bold text-slate-500 group-hover:text-slate-300 uppercase">Google</span>
+                   </button>
+                </div>
+              )}
+              
+              {view === 'passkey_scan' && (
+                 <div className="animate-pulse flex flex-col items-center gap-4">
+                    <ScanFace size={48} className="text-emerald-500" />
+                    <span className="text-emerald-500 font-bold uppercase tracking-widest text-xs">Waiting for Passkey...</span>
+                    <button onClick={() => setView('main')} className="text-slate-500 hover:text-white text-xs font-bold mt-4">Cancel</button>
+                 </div>
+              )}
+            </>
+          ) : (
+            <div className="w-full max-w-xs flex flex-col items-center animate-in fade-in slide-in-from-bottom-8 duration-300">
+               <button onClick={() => setView('main')} className="absolute top-6 left-6 text-slate-500 hover:text-white">
+                  <ChevronLeft size={24} />
                </button>
-               <button onClick={() => handleCodeAuth('phone')} className="flex flex-col items-center justify-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-colors group">
-                  <Smartphone size={20} className="text-slate-400 group-hover:text-white transition-colors" />
-                  <span className="text-[9px] font-bold text-slate-500 group-hover:text-slate-300 uppercase">Phone</span>
-               </button>
-               <button onClick={() => handleCodeAuth('google')} className="flex flex-col items-center justify-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-colors group">
-                  <Chrome size={20} className="text-slate-400 group-hover:text-white transition-colors" />
-                  <span className="text-[9px] font-bold text-slate-500 group-hover:text-slate-300 uppercase">Google</span>
-               </button>
+
+               <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mb-6 text-emerald-500 border border-slate-800">
+                  {authMethod === 'phone' ? <Smartphone size={28} /> : <Chrome size={28} />}
+               </div>
+
+               <h2 className="text-xl font-black text-white uppercase tracking-tight mb-2">
+                  {authMethod === 'phone' ? 'SMS Code' : 'Authenticator'}
+               </h2>
+               <p className="text-slate-500 text-xs mb-8">
+                  {authMethod === 'phone' ? 'Enter the code sent to +1 *** *** 9928' : 'Enter the code from your Google Auth app'}
+               </p>
+
+               <div className="flex gap-3 mb-8">
+                  {[0, 1, 2, 3, 4, 5].map((i) => (
+                     <div key={i} className={`w-10 h-12 rounded-xl border flex items-center justify-center text-xl font-bold transition-all ${
+                        inputCode[i] 
+                        ? 'border-emerald-500/50 bg-emerald-500/10 text-white' 
+                        : 'border-slate-800 bg-slate-900 text-slate-700'
+                     } ${status === 'error' ? 'border-rose-500 text-rose-500' : ''}`}>
+                        {inputCode[i] || ''}
+                     </div>
+                  ))}
+               </div>
+
+               {status === 'verifying' && <div className="text-emerald-500 text-xs font-bold uppercase tracking-widest animate-pulse mb-4">Verifying...</div>}
+               {status === 'error' && <div className="text-rose-500 text-xs font-bold uppercase tracking-widest mb-4">Invalid Code</div>}
+
+               <div className="grid grid-cols-3 gap-4 w-full px-4">
+                  {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+                     <button key={num} onClick={() => handleKeyPress(num.toString())} className="h-14 rounded-2xl bg-slate-900/50 hover:bg-slate-800 text-white font-bold text-lg transition-colors border border-white/5 active:scale-95">{num}</button>
+                  ))}
+                  <div className="h-14"></div>
+                  <button onClick={() => handleKeyPress('0')} className="h-14 rounded-2xl bg-slate-900/50 hover:bg-slate-800 text-white font-bold text-lg transition-colors border border-white/5 active:scale-95">0</button>
+                  <button onClick={handleDelete} className="h-14 rounded-2xl bg-slate-900/50 hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-colors border border-white/5 active:scale-95"><Delete size={20} /></button>
+               </div>
             </div>
           )}
-          
-          {view === 'passkey_scan' && (
-             <div className="animate-pulse flex flex-col items-center gap-4">
-                <ScanFace size={48} className="text-emerald-500" />
-                <span className="text-emerald-500 font-bold uppercase tracking-widest text-xs">Waiting for Passkey...</span>
-                <button onClick={() => setView('main')} className="text-slate-500 hover:text-white text-xs font-bold mt-4">Cancel</button>
-             </div>
+          {view === 'main' && (
+            <div className="mt-8">
+              <button className="text-[10px] font-bold text-slate-600 uppercase tracking-widest hover:text-white transition-colors">Emergency Kit</button>
+            </div>
           )}
         </>
-      ) : (
-        // --- Input View for Phone/Google ---
-        <div className="w-full max-w-xs flex flex-col items-center animate-in fade-in slide-in-from-bottom-8 duration-300">
-           <button onClick={() => setView('main')} className="absolute top-6 left-6 text-slate-500 hover:text-white">
-              <ChevronLeft size={24} />
-           </button>
-
-           <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mb-6 text-emerald-500 border border-slate-800">
-              {authMethod === 'phone' ? <Smartphone size={28} /> : <Chrome size={28} />}
-           </div>
-
-           <h2 className="text-xl font-black text-white uppercase tracking-tight mb-2">
-              {authMethod === 'phone' ? 'SMS Code' : 'Authenticator'}
-           </h2>
-           <p className="text-slate-500 text-xs mb-8">
-              {authMethod === 'phone' 
-                ? 'Enter the code sent to +1 *** *** 9928' 
-                : 'Enter the code from your Google Auth app'}
-           </p>
-
-           {/* Code Display */}
-           <div className="flex gap-3 mb-8">
-              {[0, 1, 2, 3, 4, 5].map((i) => (
-                 <div key={i} className={`w-10 h-12 rounded-xl border flex items-center justify-center text-xl font-bold transition-all ${
-                    inputCode[i] 
-                    ? 'border-emerald-500/50 bg-emerald-500/10 text-white' 
-                    : 'border-slate-800 bg-slate-900 text-slate-700'
-                 } ${status === 'error' ? 'border-rose-500 text-rose-500' : ''}`}>
-                    {inputCode[i] || ''}
-                 </div>
-              ))}
-           </div>
-
-           {/* Feedback */}
-           {status === 'verifying' && <div className="text-emerald-500 text-xs font-bold uppercase tracking-widest animate-pulse mb-4">Verifying...</div>}
-           {status === 'error' && <div className="text-rose-500 text-xs font-bold uppercase tracking-widest mb-4">Invalid Code</div>}
-
-           {/* Keypad */}
-           <div className="grid grid-cols-3 gap-4 w-full px-4">
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
-                 <button 
-                   key={num}
-                   onClick={() => handleKeyPress(num.toString())}
-                   className="h-14 rounded-2xl bg-slate-900/50 hover:bg-slate-800 text-white font-bold text-lg transition-colors border border-white/5 active:scale-95"
-                 >
-                    {num}
-                 </button>
-              ))}
-              <div className="h-14"></div>
-              <button 
-                 onClick={() => handleKeyPress('0')}
-                 className="h-14 rounded-2xl bg-slate-900/50 hover:bg-slate-800 text-white font-bold text-lg transition-colors border border-white/5 active:scale-95"
-              >
-                 0
-              </button>
-              <button 
-                 onClick={handleDelete}
-                 className="h-14 rounded-2xl bg-slate-900/50 hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-colors border border-white/5 active:scale-95"
-              >
-                 <Delete size={20} />
-              </button>
-           </div>
-        </div>
       )}
-      
-      {view === 'main' && (
-        <div className="mt-8">
-          <button className="text-[10px] font-bold text-slate-600 uppercase tracking-widest hover:text-white transition-colors">Emergency Kit</button>
+    </div>
+  );
+};
+
+// --- Secure Chat Component ---
+const SecureChatApp = ({ onBack }: { onBack: () => void }) => {
+  const [activeChat, setActiveChat] = useState<ChatContact | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    { id: '1', sender: 'other', text: 'Hey! Did you check out the new Fluid staking pool?', time: '10:02 AM', status: 'read' },
+    { id: '2', sender: 'me', text: 'Yeah, the APY looks insane. Just bridged some ETH.', time: '10:05 AM', status: 'read' },
+  ]);
+  const [inputText, setInputText] = useState('');
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const sendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputText.trim()) return;
+    
+    const newMsg: ChatMessage = {
+      id: Date.now().toString(),
+      sender: 'me',
+      text: inputText,
+      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      status: 'sent'
+    };
+    
+    setMessages(prev => [...prev, newMsg]);
+    setInputText('');
+    
+    // Simulate Reply
+    setTimeout(() => {
+      setMessages(prev => [...prev, {
+        id: (Date.now() + 1).toString(),
+        sender: 'other',
+        text: 'Nice! Fees are super low right now too.',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        status: 'delivered'
+      }]);
+    }, 2000);
+  };
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  return (
+    <div className="flex flex-col h-full bg-[#020617] animate-in slide-in-from-right duration-300">
+      {/* Header */}
+      <div className="flex items-center justify-between p-4 border-b border-white/5 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10">
+        <div className="flex items-center gap-3">
+          <button onClick={activeChat ? () => setActiveChat(null) : onBack} className="p-2 -ml-2 text-slate-400 hover:text-white">
+            <ChevronLeft size={24} />
+          </button>
+          {activeChat ? (
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <img src={activeChat.avatar} className="w-10 h-10 rounded-full bg-slate-800" />
+                {activeChat.online && <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-slate-900"></div>}
+              </div>
+              <div>
+                <div className="text-sm font-bold text-white">{activeChat.name}</div>
+                <div className="text-[10px] text-emerald-500 flex items-center gap-1 font-bold"><Lock size={8} /> Encrypted</div>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <h2 className="text-lg font-black text-white tracking-tight">SecureChat</h2>
+              <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-1">
+                <ShieldCheck size={10} className="text-emerald-500" /> Wallet-to-Wallet
+              </div>
+            </div>
+          )}
         </div>
+        {activeChat && (
+          <div className="flex gap-2">
+             <button className="p-2 text-slate-400 hover:text-white"><Phone size={20}/></button>
+             <button className="p-2 text-slate-400 hover:text-white"><MoreHorizontal size={20}/></button>
+          </div>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="flex-grow overflow-y-auto no-scrollbar bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-90">
+        {!activeChat ? (
+          <div className="p-2">
+             <div className="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Recent Chats</div>
+             <div className="space-y-1">
+               {CONTACTS.map(contact => (
+                 <button key={contact.id} onClick={() => setActiveChat(contact)} className="w-full flex items-center gap-4 p-3 rounded-2xl hover:bg-white/5 transition-colors group text-left">
+                    <div className="relative">
+                       <img src={contact.avatar} className="w-12 h-12 rounded-full bg-slate-800" />
+                       {contact.online && <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-slate-900"></div>}
+                    </div>
+                    <div className="flex-grow min-w-0">
+                       <div className="flex justify-between items-center mb-0.5">
+                          <span className="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors">{contact.name}</span>
+                          <span className="text-[10px] font-medium text-slate-500">{contact.time}</span>
+                       </div>
+                       <div className="flex justify-between items-center">
+                          <p className="text-xs text-slate-400 truncate pr-4">{contact.lastMessage}</p>
+                          {contact.unread > 0 && <div className="w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold text-white">{contact.unread}</div>}
+                       </div>
+                    </div>
+                 </button>
+               ))}
+             </div>
+          </div>
+        ) : (
+          <div className="p-4 space-y-4 min-h-full flex flex-col justify-end">
+             <div className="text-center text-[10px] text-slate-600 font-bold uppercase tracking-widest my-4">Today</div>
+             {messages.map((msg) => (
+                <div key={msg.id} className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
+                   <div className={`max-w-[80%] p-3 rounded-2xl ${msg.sender === 'me' ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-slate-800 text-slate-200 rounded-tl-sm'}`}>
+                      <p className="text-sm font-medium leading-relaxed">{msg.text}</p>
+                      <div className={`text-[9px] mt-1 flex items-center justify-end gap-1 ${msg.sender === 'me' ? 'text-indigo-200' : 'text-slate-500'}`}>
+                         {msg.time}
+                         {msg.sender === 'me' && <Check size={10} />}
+                      </div>
+                   </div>
+                </div>
+             ))}
+             <div ref={messagesEndRef} />
+          </div>
+        )}
+      </div>
+
+      {/* Input Area (Only in Chat) */}
+      {activeChat && (
+        <form onSubmit={sendMessage} className="p-3 bg-slate-900 border-t border-white/5 flex items-center gap-2">
+           <button type="button" className="p-2 text-slate-400 hover:text-white bg-slate-800 rounded-full"><Paperclip size={18}/></button>
+           <input 
+             type="text" 
+             value={inputText}
+             onChange={(e) => setInputText(e.target.value)}
+             placeholder="Type a message..." 
+             className="flex-grow bg-black/20 border border-white/10 rounded-full py-2.5 px-4 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all"
+           />
+           <button type="submit" className="p-2.5 bg-indigo-600 text-white rounded-full hover:bg-indigo-500 transition-colors shadow-lg disabled:opacity-50" disabled={!inputText.trim()}>
+              <Send size={18} className={inputText.trim() ? 'ml-0.5' : ''} />
+           </button>
+        </form>
       )}
     </div>
   );
@@ -296,14 +473,23 @@ const SecurityVault = ({ onUnlock }: { onUnlock: () => void }) => {
 const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView?: string }> = ({ onNavigate, initialView = 'assets' }) => {
   const [isLocked, setIsLocked] = useState(true);
   const [activeTab, setActiveTab] = useState(initialView);
+  const [activeApp, setActiveApp] = useState<string | null>(null); // 'chat', etc.
   const [lastActiveTab, setLastActiveTab] = useState('assets');
   const [network, setNetwork] = useState('Fluid Mainnet');
   const [cardMode, setCardMode] = useState<'virtual' | 'physical'>('virtual');
   const [cardFrozen, setCardFrozen] = useState(false);
   const [showCardDetails, setShowCardDetails] = useState(false);
-  const [activeModal, setActiveModal] = useState<'send' | 'receive' | 'buy' | 'editProfile' | 'domainRegistrar' | 'cardLimits' | 'deploy' | 'dappStore' | null>(null);
+  const [activeModal, setActiveModal] = useState<'send' | 'receive' | 'buy' | 'editProfile' | 'domainRegistrar' | 'cardLimits' | 'deploy' | 'dappStore' | 'notifications' | 'requestCard' | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   
+  // Card & Security State
+  const [hasCard, setHasCard] = useState(true);
+  const [cardPin, setCardPin] = useState('');
+  const [confirmCardPin, setConfirmCardPin] = useState('');
+  const [cvv, setCvv] = useState('***');
+  const [isCvvVisible, setIsCvvVisible] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
+
   // Profile State
   const [profile, setProfile] = useState({
     name: 'Alexander Fluid',
@@ -330,7 +516,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
     { id: '1', name: 'fluid-dex-v2', hash: 'ipfs://QmX...7a2', status: 'active', url: 'https://fluid.link/dex' }
   ]);
   const [newDeployName, setNewDeployName] = useState('');
-  const [deployStep, setDeployStep] = useState(0); // 0: input, 1: deploying, 2: success
+  const [deployStep, setDeployStep] = useState(0); 
   const [deployLogs, setDeployLogs] = useState<string[]>([]);
   const logsEndRef = useRef<HTMLDivElement>(null);
 
@@ -352,18 +538,18 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
     changeLimits: true,
     sendCrypto: true,
     buyCrypto: true,
+    generateCvv: true,
   });
   
-  // Security Audit Score Calculation
   const securityScore = useMemo(() => {
-    let score = 50; // Base score
-    if (!isLocked) score += 10; // Vault accessed successfully
+    let score = 50; 
+    if (!isLocked) score += 10;
     if (securitySettings.viewCardDetails) score += 10;
     if (securitySettings.initiateSwap) score += 10;
     if (securitySettings.changeLimits) score += 10;
     if (securitySettings.sendCrypto) score += 5;
     if (securitySettings.buyCrypto) score += 5;
-    if (profile.handle.endsWith('.fluid')) score += 10; // Bonus for setting up handle
+    if (profile.handle.endsWith('.fluid')) score += 10; 
     return Math.min(score, 100);
   }, [securitySettings, isLocked, profile.handle]);
 
@@ -375,13 +561,42 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
     
     if (shouldVerify) {
       setVerifyingAction(typeof actionType === 'string' ? actionType : 'Verify');
-      // Simulate FaceID
       setTimeout(() => {
         setVerifyingAction(null);
         callback();
       }, 1500);
     } else {
       callback();
+    }
+  };
+
+  const handleGenerateCvv = () => {
+    handleSecureAction('generateCvv', () => {
+        // Generate random 3 digit number
+        const randomCvv = Math.floor(100 + Math.random() * 900).toString();
+        setCvv(randomCvv);
+        setIsCvvVisible(true);
+        // Hide after 30 seconds
+        setTimeout(() => {
+            setIsCvvVisible(false);
+            setCvv('***');
+        }, 30000);
+    });
+  };
+
+  const handleCreateCard = () => {
+    if (cardPin.length !== 4 || cardPin !== confirmCardPin) return;
+    setHasCard(true);
+    setActiveModal(null);
+    setCardPin('');
+    setConfirmCardPin('');
+  };
+
+  const handleDeleteCard = () => {
+    if (confirm("Are you sure you want to permanently delete your virtual card?")) {
+        setHasCard(false);
+        setCardMode('virtual'); // Reset to virtual default
+        setCardFrozen(false);
     }
   };
 
@@ -449,6 +664,14 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
         setDeployStep(2);
     }, 11500);
   };
+
+  // Prepare DApps with Actions
+  const DAPPS_WITH_ACTIONS: DApp[] = DAPPS.map(app => {
+    if (app.id === '3') { // SecureChat ID
+        return { ...app, action: () => { setActiveModal(null); setActiveApp('chat'); } };
+    }
+    return app;
+  });
   
   // Navigation
   const tabs = [
@@ -458,6 +681,8 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
     { id: 'fiat', label: 'Fiat', icon: Landmark },
     { id: 'hosting', label: 'Fluid Host', icon: Server },
   ];
+
+  const unreadNotifications = NOTIFICATIONS.filter(n => !n.read).length;
 
   return (
     <div className="min-h-screen pt-32 pb-24 flex flex-col items-center justify-center">
@@ -481,7 +706,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
              <SecurityVault onUnlock={() => setIsLocked(false)} />
           </div>
        ) : (
-          <div className="w-full max-w-[420px] h-[850px] bg-[#020617] rounded-[3.5rem] border-[8px] border-[#1e232f] relative overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col mx-auto">
+          <div className="w-full max-w-[420px] h-[850px] bg-[#020617] rounded-[3.5rem] border-[8px] border-[#1e232f] relative overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col mx-auto transition-colors duration-500">
           
           {/* Dynamic Island / Status Bar */}
           <div className="absolute top-0 inset-x-0 h-14 z-50 pointer-events-none px-8 pt-5 flex justify-between items-start text-white">
@@ -509,54 +734,87 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
              </div>
           </div>
 
-          {/* App Header (Glass) */}
-          <header className="px-6 pt-16 pb-4 flex justify-between items-center z-40 bg-slate-950/50 backdrop-blur-md border-b border-white/5">
-             <div className="flex items-center gap-3">
-                <button 
-                  onClick={toggleSettings}
-                  className="w-8 h-8 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors overflow-hidden"
-                >
-                   <img src={profile.avatar} alt="User" className="w-full h-full object-cover" />
-                </button>
-                <div className="flex flex-col">
-                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Network</span>
-                   <button 
-                      onClick={() => setNetwork(prev => prev === 'Fluid Mainnet' ? 'Ethereum' : 'Fluid Mainnet')}
-                      className="flex items-center gap-1 text-xs font-black text-white"
-                   >
-                      {network} <ChevronDown size={10} className="text-slate-500" />
-                   </button>
+          {/* App Header (Glass) - Hide if Active App is Full Screen */}
+          {!activeApp && (
+            <header className="px-6 pt-16 pb-4 flex justify-between items-center z-40 bg-slate-950/50 backdrop-blur-md border-b border-white/5 relative">
+                <div className="flex items-center gap-3">
+                    <button 
+                    onClick={toggleSettings}
+                    className="w-8 h-8 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors overflow-hidden"
+                    >
+                    <img src={profile.avatar} alt="User" className="w-full h-full object-cover" />
+                    </button>
+                    <div className="flex flex-col">
+                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Network</span>
+                    <button 
+                        onClick={() => setNetwork(prev => prev === 'Fluid Mainnet' ? 'Ethereum' : 'Fluid Mainnet')}
+                        className="flex items-center gap-1 text-xs font-black text-white"
+                    >
+                        {network} <ChevronDown size={10} className="text-slate-500" />
+                    </button>
+                    </div>
                 </div>
-             </div>
-             <div className="flex items-center gap-2">
-                <button 
-                  onClick={toggleSettings}
-                  className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${
-                    activeTab === 'settings' 
-                      ? 'bg-indigo-600 border-indigo-500 text-white shadow-[0_0_15px_rgba(79,70,229,0.3)]' 
-                      : 'bg-slate-900 border-white/10 text-slate-400 hover:text-white hover:border-white/20'
-                  }`}
-                >
-                   <Settings size={18} />
-                </button>
-                <button className="w-10 h-10 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-white/20 transition-all relative">
-                   <Bell size={18} />
-                   <span className="absolute top-2 right-2.5 w-1.5 h-1.5 bg-rose-500 rounded-full border border-slate-900"></span>
-                </button>
-             </div>
-          </header>
+                <div className="flex items-center gap-2">
+                    <button 
+                    onClick={toggleSettings}
+                    className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${
+                        activeTab === 'settings' 
+                        ? 'bg-indigo-600 border-indigo-500 text-white shadow-[0_0_15px_rgba(79,70,229,0.3)]' 
+                        : 'bg-slate-900 border-white/10 text-slate-400 hover:text-white hover:border-white/20'
+                    }`}
+                    >
+                    <Settings size={18} />
+                    </button>
+                    <div className="relative">
+                        <button 
+                            onClick={() => setShowNotifications(!showNotifications)}
+                            className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${showNotifications ? 'bg-slate-800 text-white border-white/30' : 'bg-slate-900 border-white/10 text-slate-400 hover:text-white hover:border-white/20'}`}
+                        >
+                            <Bell size={18} />
+                            {unreadNotifications > 0 && <span className="absolute top-2 right-2.5 w-1.5 h-1.5 bg-rose-500 rounded-full border border-slate-900"></span>}
+                        </button>
+                        
+                        {/* Notification Dropdown */}
+                        {showNotifications && (
+                            <div className="absolute right-0 top-12 w-64 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 origin-top-right">
+                                <div className="px-3 py-2 border-b border-white/5 flex justify-between items-center">
+                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Notifications</span>
+                                    <button className="text-[9px] text-indigo-400 font-bold hover:text-white">Clear All</button>
+                                </div>
+                                <div className="max-h-48 overflow-y-auto no-scrollbar py-1">
+                                    {NOTIFICATIONS.map(n => (
+                                        <div key={n.id} className="p-2 hover:bg-white/5 rounded-xl transition-colors cursor-pointer group">
+                                            <div className="flex justify-between items-start mb-1">
+                                                <span className="text-xs font-bold text-white group-hover:text-indigo-400 transition-colors">{n.title}</span>
+                                                <span className="text-[9px] text-slate-600">{n.time}</span>
+                                            </div>
+                                            <p className="text-[10px] text-slate-400 leading-tight">{n.message}</p>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            </header>
+          )}
 
           {/* Main Scrollable Content */}
-          <div className="flex-grow overflow-y-auto no-scrollbar relative bg-[#020617] scroll-smooth">
-             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none"></div>
+          <div className={`flex-grow overflow-y-auto no-scrollbar relative bg-[#020617] scroll-smooth ${activeApp ? 'pt-10' : ''}`}>
+             {!activeApp && <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none"></div>}
 
+             {/* === MODULE: SECURE CHAT (SUPER APP) === */}
+             {activeApp === 'chat' ? (
+                <SecureChatApp onBack={() => setActiveApp(null)} />
+             ) : (
+             <>
              {/* === MODULE A: DASHBOARD === */}
              {activeTab === 'assets' && (
                <div className="p-6 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
                   {/* Portfolio Card */}
                   <div className="relative">
                      <div className="text-center mb-6">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1 block">Total Liquidity</span>
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1 block">Total Balance</span>
                         <h1 className="text-4xl font-black text-white tracking-tighter">$84,592.45</h1>
                         <div className="flex items-center justify-center gap-2 mt-2">
                            <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-bold uppercase tracking-wider">+2.4% (24H)</span>
@@ -770,6 +1028,24 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
              {/* === MODULE C: CARDS === */}
              {activeTab === 'cards' && (
                 <div className="p-6 h-full flex flex-col animate-in fade-in slide-in-from-right-4 duration-300">
+                   {!hasCard ? (
+                        <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
+                            <div className="w-24 h-24 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-full flex items-center justify-center border border-indigo-500/20 mb-4 animate-pulse">
+                                <CreditCard size={48} className="text-indigo-400" />
+                            </div>
+                            <div>
+                                <h2 className="text-2xl font-black text-white uppercase tracking-tight">No Active Card</h2>
+                                <p className="text-slate-400 text-sm mt-2 max-w-[200px] mx-auto">Get a virtual card instantly to spend your crypto anywhere.</p>
+                            </div>
+                            <button 
+                                onClick={() => setActiveModal('requestCard')}
+                                className="px-8 py-4 bg-white text-slate-900 font-black rounded-xl uppercase tracking-widest hover:bg-indigo-50 transition-colors shadow-lg shadow-indigo-500/20 flex items-center gap-2"
+                            >
+                                <Lock size={16} /> Request Card
+                            </button>
+                        </div>
+                   ) : (
+                   <>
                    <div className="flex justify-center mb-8">
                       <div className="flex bg-slate-900 p-1 rounded-full border border-slate-800">
                          <button 
@@ -795,6 +1071,11 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                          {cardMode === 'physical' && <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>}
                          {cardMode === 'virtual' && <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-[60px]"></div>}
 
+                         {/* Watermark Logo */}
+                         <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
+                            <FluidLogo className="w-64 h-64 text-white" />
+                         </div>
+
                          {/* Freeze Overlay */}
                          {cardFrozen && (
                             <div className="absolute inset-0 flex flex-col items-center justify-center z-20 bg-black/40 backdrop-blur-[2px]">
@@ -816,7 +1097,17 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                             <div>
                                <div className="flex items-center justify-between mb-4">
                                   {showCardDetails ? (
-                                     <span className="font-mono text-lg text-white tracking-widest">4920 1928 4492 1029</span>
+                                     <div className="flex items-center gap-4">
+                                        <span className="font-mono text-lg text-white tracking-widest">4920 1928 4492 1029</span>
+                                        <div className="flex items-center gap-2">
+                                            <span className="text-[10px] text-slate-400 font-bold">CVV</span>
+                                            {isCvvVisible ? (
+                                                <span className="font-mono text-white font-bold">{cvv}</span>
+                                            ) : (
+                                                <button onClick={(e) => { e.stopPropagation(); handleGenerateCvv(); }} className="px-1.5 py-0.5 bg-white/10 rounded text-[9px] text-white hover:bg-white/20">Show</button>
+                                            )}
+                                        </div>
+                                     </div>
                                   ) : (
                                      <span className="font-mono text-lg text-white tracking-widest">**** **** **** 1029</span>
                                   )}
@@ -862,9 +1153,12 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                             <Lock size={20} className="text-slate-400" />
                             <span className="text-[9px] font-bold text-slate-500 uppercase">Pin</span>
                          </button>
-                         <button className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-indigo-500/50 transition-colors">
-                            <RefreshCw size={20} className="text-slate-400" />
-                            <span className="text-[9px] font-bold text-slate-500 uppercase">Replace</span>
+                         <button 
+                            onClick={handleDeleteCard}
+                            className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-rose-500/50 hover:bg-rose-500/5 transition-colors group"
+                         >
+                            <Trash2 size={20} className="text-slate-400 group-hover:text-rose-500" />
+                            <span className="text-[9px] font-bold text-slate-500 group-hover:text-rose-500 uppercase">Delete</span>
                          </button>
                       </div>
 
@@ -884,6 +1178,8 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                          </div>
                       </div>
                    </div>
+                   </>
+                   )}
                 </div>
              )}
 
@@ -1021,88 +1317,142 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                       </div>
                    </div>
 
-                   {/* Node Status Card */}
-                   <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-6 mb-6 relative overflow-hidden">
-                       <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/10 rounded-full blur-[40px] pointer-events-none"></div>
+                   {/* Node Status Card - Modernized */}
+                   <div className="bg-gradient-to-br from-[#0B0F19] to-[#02040A] border border-blue-500/10 rounded-[2rem] p-6 mb-6 relative overflow-hidden shadow-2xl group">
+                       <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-[80px] group-hover:bg-blue-500/10 transition-colors duration-700 pointer-events-none"></div>
+                       <div className="absolute bottom-0 left-0 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none"></div>
                        
-                       <div className="flex justify-between items-start mb-6">
+                       <div className="flex justify-between items-start mb-6 relative z-10">
                            <div>
-                               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 block">Storage Node</span>
-                               <div className="flex items-center gap-2">
-                                   <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                                   <span className="text-xl font-black text-white">Online</span>
+                               <div className="flex items-center gap-2 mb-2">
+                                 <span className="relative flex h-2 w-2">
+                                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                 </span>
+                                 <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">System Online</span>
                                </div>
+                               <h3 className="text-3xl font-black text-white tracking-tighter mb-1">Validator Node</h3>
+                               <p className="text-[10px] text-slate-500 font-mono flex items-center gap-2">
+                                 <Activity size={10} className="text-blue-500" /> 
+                                 Latency: 12ms
+                               </p>
                            </div>
-                           <Cpu className="text-blue-500" size={24} />
+                           <div className="w-12 h-12 rounded-2xl bg-slate-900/50 border border-slate-800 flex items-center justify-center text-blue-500 shadow-lg backdrop-blur-sm">
+                              <Server size={24} />
+                           </div>
                        </div>
 
-                       <div className="grid grid-cols-2 gap-4">
-                           <div className="p-3 bg-black/20 rounded-xl border border-white/5">
-                               <div className="text-[9px] text-slate-500 font-bold uppercase mb-1">Used Storage</div>
-                               <div className="text-sm font-bold text-white">45.2 GB <span className="text-slate-600">/ 1TB</span></div>
+                       <div className="grid grid-cols-2 gap-3 relative z-10">
+                           <div className="p-3 bg-slate-900/40 rounded-xl border border-white/5 backdrop-blur-md hover:border-blue-500/20 transition-colors">
+                               <div className="flex justify-between items-center mb-3">
+                                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Storage</span>
+                                  <Database size={12} className="text-slate-500"/>
+                               </div>
+                               <div className="flex items-baseline gap-1">
+                                  <span className="text-lg font-black text-white">45.2</span>
+                                  <span className="text-[10px] font-bold text-slate-500">GB</span>
+                               </div>
                                <div className="w-full h-1 bg-slate-800 rounded-full mt-2 overflow-hidden">
-                                   <div className="w-[4%] h-full bg-blue-500"></div>
+                                   <div className="w-[15%] h-full bg-blue-500 rounded-full"></div>
                                </div>
                            </div>
-                           <div className="p-3 bg-black/20 rounded-xl border border-white/5">
-                               <div className="text-[9px] text-slate-500 font-bold uppercase mb-1">Bandwidth</div>
-                               <div className="text-sm font-bold text-white">12 GB/s</div>
+                           <div className="p-3 bg-slate-900/40 rounded-xl border border-white/5 backdrop-blur-md hover:border-blue-500/20 transition-colors">
+                               <div className="flex justify-between items-center mb-3">
+                                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Bandwidth</span>
+                                  <Zap size={12} className="text-slate-500"/>
+                               </div>
+                               <div className="flex items-baseline gap-1">
+                                  <span className="text-lg font-black text-white">1.2</span>
+                                  <span className="text-[10px] font-bold text-slate-500">TB</span>
+                               </div>
                                <div className="w-full h-1 bg-slate-800 rounded-full mt-2 overflow-hidden">
-                                   <div className="w-[60%] h-full bg-emerald-500"></div>
+                                   <div className="w-[42%] h-full bg-emerald-500 rounded-full"></div>
                                </div>
                            </div>
                        </div>
                    </div>
 
-                   {/* Domains Section */}
-                   <div className="mb-6">
+                   {/* Domains Section - Enhanced */}
+                   <div className="mb-8">
                       <div className="flex justify-between items-center mb-4">
-                         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Domains</h3>
+                         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
+                            <Globe size={12} /> Your Domains
+                         </h3>
                          <button 
                            onClick={() => setActiveModal('domainRegistrar')}
-                           className="text-[9px] font-bold text-indigo-400 uppercase tracking-wider hover:text-white transition-colors"
+                           className="text-[9px] font-bold text-indigo-400 uppercase tracking-wider hover:text-white transition-colors flex items-center gap-1 group"
                          >
-                            + Register
+                            <span className="w-4 h-4 rounded bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 group-hover:border-indigo-500/50 text-xs">+</span> Register
                          </button>
                       </div>
-                      <div className="space-y-3">
-                          <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-900/50 border border-slate-800 hover:bg-slate-900 transition-colors">
-                              <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400">
-                                      <Globe size={18} />
+                      
+                      <div className="relative group overflow-hidden rounded-2xl cursor-pointer border border-white/5 hover:border-indigo-500/30 transition-all bg-slate-900/30">
+                          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
+                          <div className="relative p-4 flex items-center justify-between">
+                              <div className="flex items-center gap-4">
+                                  <div className="w-10 h-10 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center text-indigo-400 shadow-lg group-hover:scale-110 transition-transform duration-300">
+                                      <AtSign size={18} />
                                   </div>
                                   <div>
-                                      <div className="text-xs font-bold text-white">alex.fluid</div>
-                                      <div className="text-[9px] text-emerald-500 font-bold">Active • Auto-Renew</div>
+                                      <div className="text-sm font-black text-white tracking-tight flex items-center gap-2">
+                                        alex.fluid 
+                                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-500 text-[8px] font-bold uppercase tracking-wider border border-emerald-500/10">Active</span>
+                                      </div>
+                                      <div className="flex items-center gap-1.5 mt-1">
+                                         <Lock size={10} className="text-slate-500" />
+                                         <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wide">Permanent Lease</span>
+                                      </div>
                                   </div>
                               </div>
-                              <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-                                  <Settings size={16} className="text-slate-500" />
-                              </button>
+                              <div className="flex items-center gap-3">
+                                <div className="text-right hidden sm:block">
+                                    <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Expires</div>
+                                    <div className="text-xs font-black text-white">Never</div>
+                                </div>
+                                <ChevronRight size={16} className="text-slate-600 group-hover:text-white transition-colors" />
+                              </div>
                           </div>
                       </div>
                    </div>
 
-                   {/* Deployed dApps */}
-                   <div className="mb-6">
-                      <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">My Deployments</h3>
+                   {/* Deployed dApps - Enhanced */}
+                   <div className="mb-8">
+                      <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <Rocket size={12} /> Deployments
+                      </h3>
                       <div className="space-y-3">
                           {myDeployments.map((deploy) => (
-                            <div key={deploy.id} className="flex items-center justify-between p-3 rounded-2xl bg-slate-900/50 border border-slate-800 hover:bg-slate-900 transition-colors animate-in fade-in slide-in-from-bottom-2">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
-                                        <Rocket size={18} />
+                            <div key={deploy.id} className="group relative p-3 rounded-2xl bg-slate-900/50 border border-white/5 hover:border-blue-500/30 transition-all cursor-default overflow-hidden">
+                                <div className="absolute inset-y-0 left-0 w-1 bg-blue-500/50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                <div className="flex items-center justify-between mb-3 pl-2">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-white border border-white/5 shadow-inner">
+                                            <Layout size={18} className="text-slate-300 group-hover:text-white transition-colors" />
+                                        </div>
+                                        <div>
+                                            <div className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors flex items-center gap-2">
+                                              {deploy.name}
+                                              <span className={`w-1.5 h-1.5 rounded-full ${deploy.status === 'active' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-amber-500'}`}></span>
+                                            </div>
+                                            <div className="flex items-center gap-1 mt-0.5">
+                                               <span className="text-[9px] text-slate-500 font-mono truncate max-w-[100px]">{deploy.url}</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                    <div>
-                                        <div className="text-xs font-bold text-white">{deploy.name}</div>
-                                        <div className="text-[9px] text-slate-500 font-mono truncate w-24">{deploy.hash}</div>
+                                    <div className="flex gap-2">
+                                      <a href={deploy.url} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+                                          <ExternalLink size={14} />
+                                      </a>
+                                      <button className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
+                                          <Settings size={14} />
+                                      </button>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-3">
-                                    {deploy.status === 'active' && <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>}
-                                    <a href={deploy.url} target="_blank" rel="noreferrer" className="text-slate-500 hover:text-white transition-colors">
-                                        <ExternalLink size={14} />
-                                    </a>
+                                <div className="pl-[54px] pr-2">
+                                   <div className="p-1.5 rounded-lg bg-black/40 border border-white/5 font-mono text-[9px] text-slate-500 flex items-center justify-between group-hover:border-white/10 transition-colors">
+                                      <span className="truncate">{deploy.hash}</span>
+                                      <Copy size={10} className="hover:text-white cursor-pointer shrink-0 ml-2" />
+                                   </div>
                                 </div>
                             </div>
                           ))}
@@ -1114,37 +1464,47 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                                 setDeployLogs([]);
                                 setActiveModal('deploy');
                             }}
-                            className="w-full py-3 rounded-2xl border border-dashed border-slate-700 text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-900/50 hover:text-white hover:border-slate-600 transition-all flex items-center justify-center gap-2"
+                            className="w-full py-4 rounded-2xl border border-dashed border-slate-700 hover:border-blue-500/50 text-slate-500 hover:text-blue-400 text-[10px] font-bold uppercase tracking-widest hover:bg-blue-500/5 transition-all flex items-center justify-center gap-2 group"
                           >
-                               <UploadCloud size={14} /> Deploy New Site
+                               <div className="w-6 h-6 rounded-lg bg-slate-800 group-hover:bg-blue-500/20 flex items-center justify-center transition-colors"><UploadCloud size={14} /></div>
+                               Deploy New Project
                           </button>
                       </div>
                    </div>
 
-                   {/* dApp Browser */}
+                   {/* dApp Browser - Enhanced Grid */}
                    <div>
-                      <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Fluid Host Browser</h3>
-                      <div className="grid grid-cols-3 gap-3">
-                          {DAPPS.map(app => (
+                      <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+                        <LayoutGrid size={12} /> App Store
+                      </h3>
+                      <div className="grid grid-cols-4 gap-3">
+                          {DAPPS_WITH_ACTIONS.map(app => (
                               <button 
                                 key={app.id} 
-                                onClick={() => setActiveModal('dappStore')}
-                                className="flex flex-col items-center gap-2 p-3 bg-slate-900/30 border border-slate-800 rounded-2xl hover:bg-slate-800 hover:border-slate-700 transition-all group"
+                                onClick={app.action ? app.action : () => {
+                                    if (app.id === '6') {
+                                        setActiveModal('domainRegistrar');
+                                    } else {
+                                        setActiveModal('dappStore');
+                                    }
+                                }}
+                                className="flex flex-col items-center gap-2 group relative"
                               >
-                                  <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-white border border-white/5 group-hover:scale-110 transition-transform">
-                                      <app.icon size={18} />
+                                  <div className="w-14 h-14 bg-slate-900 rounded-[18px] flex items-center justify-center text-white border border-white/10 shadow-lg group-hover:scale-105 group-hover:border-blue-500/50 transition-all relative overflow-hidden group-hover:shadow-blue-500/20">
+                                      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                      <app.icon size={24} className="text-slate-300 group-hover:text-white transition-colors" />
                                   </div>
-                                  <span className="text-[9px] font-bold text-slate-400 group-hover:text-white">{app.name}</span>
+                                  <span className="text-[9px] font-bold text-slate-500 group-hover:text-white line-clamp-1 transition-colors">{app.name}</span>
                               </button>
                           ))}
                           <button 
                             onClick={() => setActiveModal('dappStore')}
-                            className="flex flex-col items-center gap-2 p-3 border border-dashed border-slate-800 rounded-2xl hover:bg-slate-900/50 transition-all group"
+                            className="flex flex-col items-center gap-2 group"
                           >
-                              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-600 group-hover:text-white transition-colors">
-                                  <Search size={18} />
+                              <div className="w-14 h-14 rounded-[18px] border-2 border-dashed border-slate-800 flex items-center justify-center text-slate-600 group-hover:text-white group-hover:border-white/30 group-hover:bg-white/5 transition-all">
+                                  <Search size={20} />
                               </div>
-                              <span className="text-[9px] font-bold text-slate-600 group-hover:text-white transition-colors">Explore</span>
+                              <span className="text-[9px] font-bold text-slate-600 group-hover:text-white transition-colors">Browse</span>
                           </button>
                       </div>
                    </div>
@@ -1278,6 +1638,8 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                   </div>
                </div>
              )}
+             </>
+             )}
 
           </div>
           
@@ -1297,11 +1659,65 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                        {activeModal === 'cardLimits' && 'Spending Limits'}
                        {activeModal === 'deploy' && 'Deploy dApp'}
                        {activeModal === 'dappStore' && 'dApp Store'}
+                       {activeModal === 'requestCard' && 'Request Card'}
                      </h3>
                      <button onClick={() => { setActiveModal(null); setDomainSearchStatus('idle'); setDomainQuery(''); }} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white">
                         <X size={16} />
                      </button>
                   </div>
+
+                  {activeModal === 'requestCard' && (
+                    <div className="space-y-6 flex-grow flex flex-col">
+                        <div className="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-start gap-3">
+                            <ShieldCheck size={20} className="text-indigo-500 shrink-0 mt-0.5" />
+                            <p className="text-[10px] text-indigo-200/80 leading-relaxed">
+                                Set a secure 4-digit PIN for your new virtual card. This PIN will be required for transactions.
+                            </p>
+                        </div>
+
+                        <div>
+                            <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Set New PIN</label>
+                            <div className="flex items-center bg-black/20 rounded-xl border border-white/10 p-3">
+                                <input 
+                                    type="password" 
+                                    maxLength={4}
+                                    placeholder="****" 
+                                    value={cardPin}
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/[^0-9]/g, '');
+                                        setCardPin(val);
+                                    }}
+                                    className="bg-transparent w-full text-center text-2xl font-black text-white outline-none tracking-[1em]" 
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Confirm PIN</label>
+                            <div className="flex items-center bg-black/20 rounded-xl border border-white/10 p-3">
+                                <input 
+                                    type="password" 
+                                    maxLength={4}
+                                    placeholder="****" 
+                                    value={confirmCardPin}
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/[^0-9]/g, '');
+                                        setConfirmCardPin(val);
+                                    }}
+                                    className="bg-transparent w-full text-center text-2xl font-black text-white outline-none tracking-[1em]" 
+                                />
+                            </div>
+                        </div>
+
+                        <button 
+                            disabled={cardPin.length !== 4 || cardPin !== confirmCardPin}
+                            onClick={handleCreateCard}
+                            className="w-full py-4 mt-auto bg-white text-slate-900 font-black rounded-xl uppercase tracking-widest hover:bg-slate-200 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Create Virtual Card
+                        </button>
+                    </div>
+                  )}
 
                   {activeModal === 'domainRegistrar' && (
                     <div className="flex flex-col h-full overflow-hidden">
@@ -1515,10 +1931,10 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
 
                         {/* List */}
                         <div className="flex-grow overflow-y-auto space-y-3 pr-1 custom-scrollbar">
-                            {DAPPS.filter(app => (selectedDAppCategory === 'All' || app.category === selectedDAppCategory) && app.name.toLowerCase().includes(dAppSearch.toLowerCase())).map(app => (
+                            {DAPPS_WITH_ACTIONS.filter(app => (selectedDAppCategory === 'All' || app.category === selectedDAppCategory) && app.name.toLowerCase().includes(dAppSearch.toLowerCase())).map(app => (
                                 <div 
                                     key={app.id} 
-                                    onClick={() => {
+                                    onClick={app.action ? app.action : () => {
                                         if (app.id === '6') {
                                             setActiveModal('domainRegistrar');
                                         }
@@ -1756,87 +2172,43 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                           <div className="flex justify-between items-center">
                               <span className="text-xs text-slate-500 font-bold uppercase">Hash</span>
                               <div className="flex items-center gap-2">
-                                  <span className="text-xs text-blue-400 font-mono">0x71...92aF</span>
+                                  <span className="text-xs text-slate-300 font-mono">0x8a...4b1c</span>
                                   <Copy size={12} className="text-slate-600" />
                               </div>
                           </div>
-                          <div className="flex justify-between items-center">
-                              <span className="text-xs text-slate-500 font-bold uppercase">Gas Fee</span>
-                              <span className="text-xs text-slate-300 font-mono">0.00042 FLD</span>
-                          </div>
                       </div>
 
-                      {selectedTransaction.type === 'contract' && (
-                          <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700/50">
-                              <span className="text-[9px] text-slate-500 font-black uppercase tracking-widest mb-2 block">Interaction Data</span>
-                              <code className="text-[10px] text-blue-300 font-mono break-all">
-                                  0xa9059cbb000000000000000000000000...
-                              </code>
-                          </div>
-                      )}
-
-                      <button className="w-full py-4 bg-slate-800 hover:bg-slate-700 text-white font-bold rounded-xl flex items-center justify-center gap-2 transition-colors">
-                          <ExternalLink size={16} /> View on Explorer
+                      <div className="flex-grow"></div>
+                      <button className="w-full py-3 bg-slate-800 rounded-xl text-xs font-bold text-white uppercase tracking-widest hover:bg-slate-700 transition-colors flex items-center justify-center gap-2">
+                          <ExternalLink size={14} /> View Explorer
                       </button>
                   </div>
                </div>
             </div>
           )}
 
-          {/* Bottom Navigation (Glass) */}
-          <nav className="h-20 bg-slate-950/80 backdrop-blur-xl border-t border-white/5 flex justify-between px-6 items-center relative z-50">
-             {tabs.map((tab) => (
-                <button 
-                  key={tab.id}
-                  onClick={() => handleTabChange(tab.id)}
-                  className={`flex flex-col items-center gap-1 transition-all duration-300 ${activeTab === tab.id ? 'text-indigo-400 -translate-y-1' : 'text-slate-600 hover:text-slate-400'}`}
-                >
-                   <tab.icon size={22} strokeWidth={activeTab === tab.id ? 2.5 : 2} />
-                   {activeTab === tab.id && <span className="w-1 h-1 bg-indigo-500 rounded-full absolute -bottom-2"></span>}
-                </button>
-             ))}
-          </nav>
+          {/* Bottom Navigation */}
+          {!activeApp && (
+            <nav className="px-6 py-4 bg-slate-900/90 backdrop-blur-xl border-t border-white/5 absolute bottom-0 w-full z-40">
+                <div className="flex justify-between items-center">
+                    {tabs.map((tab) => (
+                    <button 
+                        key={tab.id}
+                        onClick={() => handleTabChange(tab.id)}
+                        className={`flex flex-col items-center gap-1 transition-all duration-300 ${activeTab === tab.id ? 'text-white scale-110' : 'text-slate-500 hover:text-slate-300'}`}
+                    >
+                        <tab.icon size={24} strokeWidth={activeTab === tab.id ? 2.5 : 2} />
+                        <span className="text-[9px] font-bold tracking-wide">{tab.label}</span>
+                    </button>
+                    ))}
+                </div>
+            </nav>
+          )}
           
           {/* Home Indicator */}
-          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/20 rounded-full z-50 pointer-events-none"></div>
-
-       </div>
+          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/20 rounded-full z-50"></div>
+          </div>
        )}
-
-       {/* Features Highlight (Below Simulation) */}
-       <div className="mt-24 max-w-5xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="p-6 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm hover:border-indigo-500/50 transition-colors group">
-             <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center mb-4 text-indigo-500 group-hover:scale-110 transition-transform">
-                <CreditCard size={24} />
-             </div>
-             <h3 className="text-lg font-bold text-white mb-2">Universal Access</h3>
-             <p className="text-xs text-slate-400 leading-relaxed">Spend crypto like fiat anywhere in the world with instant issuance virtual and physical metal cards.</p>
-          </div>
-
-          <div className="p-6 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm hover:border-emerald-500/50 transition-colors group">
-             <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center mb-4 text-emerald-500 group-hover:scale-110 transition-transform">
-                <RefreshCw size={24} />
-             </div>
-             <h3 className="text-lg font-bold text-white mb-2">Multi-Chain DEX</h3>
-             <p className="text-xs text-slate-400 leading-relaxed">Swap assets instantly across Ethereum, Solana, and more with our built-in aggregator engine.</p>
-          </div>
-
-          <div className="p-6 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm hover:border-blue-500/50 transition-colors group">
-             <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mb-4 text-blue-500 group-hover:scale-110 transition-transform">
-                <Server size={24} />
-             </div>
-             <h3 className="text-lg font-bold text-white mb-2">Fluid Host</h3>
-             <p className="text-xs text-slate-400 leading-relaxed">Access unstoppable decentralized applications directly within the wallet's secure browser environment.</p>
-          </div>
-
-          <div className="p-6 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm hover:border-rose-500/50 transition-colors group">
-             <div className="w-12 h-12 bg-rose-500/10 rounded-xl flex items-center justify-center mb-4 text-rose-500 group-hover:scale-110 transition-transform">
-                <ShieldCheck size={24} />
-             </div>
-             <h3 className="text-lg font-bold text-white mb-2">ZK-Security</h3>
-             <p className="text-xs text-slate-400 leading-relaxed">Your keys never leave your device. Enhanced with biometric FaceID and Zero-Knowledge proofs.</p>
-          </div>
-       </div>
     </div>
   );
 };
