@@ -1,12 +1,17 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import HowItWorks from '../components/HowItWorks';
-import { Server, Database, Cloud, Lock, Terminal, Cpu, Globe, ArrowRight, ChevronDown, Rocket, Layers, Code2, Search, CheckCircle2, ShoppingCart } from 'lucide-react';
+import { Server, Database, Cloud, Lock, Terminal, Cpu, Globe, ArrowRight, ChevronDown, Rocket, Layers, Code2, Search, CheckCircle2, ShoppingCart, RefreshCw } from 'lucide-react';
 
 const HostPage: React.FC = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>('start');
   const [domainQuery, setDomainQuery] = useState('');
   const [isSearchingDomains, setIsSearchingDomains] = useState(false);
   const [showDomainResults, setShowDomainResults] = useState(false);
+
+  // Terminal State
+  const [terminalLines, setTerminalLines] = useState<Array<{ type: string; content: React.ReactNode }>>([]);
+  const [isTyping, setIsTyping] = useState(false);
+  const terminalRef = useRef<HTMLDivElement>(null);
 
   const menuItems = [
     { id: 'domains', label: 'Domains', icon: Globe, children: ['Search', '.fluid Handle', 'DNS Bridge'] },
@@ -34,6 +39,103 @@ const HostPage: React.FC = () => {
   };
 
   const baseName = domainQuery.split('.')[0] || 'example';
+
+  // --- Terminal Animation Logic ---
+  const runTerminalAnimation = async () => {
+    setTerminalLines([]);
+    setIsTyping(true);
+
+    const prompt = (
+      <div className="flex">
+        <span className="text-green-400 mr-2 font-bold">➜</span>
+        <span className="text-cyan-400 mr-2">~</span>
+      </div>
+    );
+
+    const addToTerminal = (line: { type: string; content: React.ReactNode }) => {
+      setTerminalLines(prev => [...prev, line]);
+      if (terminalRef.current) {
+        terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
+      }
+    };
+
+    const typeCommand = async (cmd: string) => {
+      addToTerminal({ type: 'prompt', content: <div className="flex items-center">{prompt}<span className="typing-cursor ml-1"></span></div> });
+      
+      // Simulate typing
+      let typed = "";
+      for (let i = 0; i < cmd.length; i++) {
+        await new Promise(r => setTimeout(r, Math.random() * 50 + 30));
+        typed += cmd[i];
+        setTerminalLines(prev => {
+          const newLines = [...prev];
+          newLines[newLines.length - 1] = { 
+            type: 'prompt', 
+            content: <div className="flex items-center">{prompt}<span className="text-white ml-2">{typed}</span><span className="typing-cursor"></span></div> 
+          };
+          return newLines;
+        });
+      }
+      
+      // Remove cursor from command line
+      await new Promise(r => setTimeout(r, 200));
+      setTerminalLines(prev => {
+        const newLines = [...prev];
+        newLines[newLines.length - 1] = { 
+          type: 'prompt', 
+          content: <div className="flex items-center">{prompt}<span className="text-white ml-2">{typed}</span></div> 
+        };
+        return newLines;
+      });
+    };
+
+    // Step 1: Install
+    await typeCommand("npm install -g fluid-cli");
+    await new Promise(r => setTimeout(r, 500));
+    addToTerminal({ type: 'output', content: <div className="text-slate-400">+ fluid-cli@1.0.4</div> });
+    addToTerminal({ type: 'output', content: <div className="text-slate-400 mb-4">added 12 packages in 2s</div> });
+
+    // Step 2: Init
+    await new Promise(r => setTimeout(r, 500));
+    await typeCommand("fluid init");
+    await new Promise(r => setTimeout(r, 400));
+    addToTerminal({ type: 'output', content: <div className="text-blue-400">? <span className="text-slate-300">Project name:</span> <span className="text-white font-bold">awesome-dapp</span></div> });
+    await new Promise(r => setTimeout(r, 200));
+    addToTerminal({ type: 'output', content: <div className="text-blue-400">? <span className="text-slate-300">Framework:</span> <span className="text-white font-bold">React / Next.js</span></div> });
+    await new Promise(r => setTimeout(r, 200));
+    addToTerminal({ type: 'output', content: <div className="text-blue-400 mb-4">? <span className="text-slate-300">Storage:</span> <span className="text-white font-bold">Permanent (Fluid Host)</span></div> });
+
+    // Step 3: Deploy
+    await new Promise(r => setTimeout(r, 600));
+    await typeCommand("fluid deploy");
+    await new Promise(r => setTimeout(r, 300));
+    
+    const steps = [
+      "> Building project...",
+      "> Uploading assets to Shard 1...",
+      "> Uploading assets to Shard 2...",
+      "> Verifying integrity..."
+    ];
+
+    for (const step of steps) {
+      await new Promise(r => setTimeout(r, 600));
+      addToTerminal({ type: 'output', content: <div className="text-slate-400">{step}</div> });
+    }
+
+    await new Promise(r => setTimeout(r, 500));
+    addToTerminal({ type: 'success', content: <div className="text-emerald-400 font-bold mt-2">✔ Deployment Successful!</div> });
+    addToTerminal({ type: 'link', content: <div className="text-slate-300">Access your app at: <a href="#" className="text-blue-400 hover:underline">https://fluid.link/awesome-dapp</a></div> });
+    
+    // Final Prompt
+    await new Promise(r => setTimeout(r, 500));
+    addToTerminal({ type: 'prompt', content: <div className="flex items-center mt-4">{prompt}<span className="typing-cursor ml-2"></span></div> });
+    
+    setIsTyping(false);
+  };
+
+  useEffect(() => {
+    runTerminalAnimation();
+  }, []);
 
   return (
     <div className="min-h-screen pt-28 pb-16 flex flex-col lg:flex-row max-w-7xl mx-auto px-4 gap-8">
@@ -217,49 +319,48 @@ const HostPage: React.FC = () => {
 
         {/* Terminal Visual */}
         <section id="start" className="max-w-5xl mx-auto px-4 mb-24 lg:px-0">
-           <div className="bg-slate-900 rounded-xl border border-slate-800 shadow-2xl overflow-hidden font-mono text-sm">
-              <div className="bg-slate-800 px-4 py-2 flex items-center gap-2 border-b border-slate-700">
-                 <div className="w-3 h-3 rounded-full bg-red-500"></div>
-                 <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
-                 <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                 <div className="ml-4 text-slate-400">user@dev:~/my-fluid-app</div>
+           <div className="bg-slate-900 rounded-xl border border-slate-800 shadow-2xl overflow-hidden font-mono text-sm relative group">
+              {/* Terminal Header */}
+              <div className="bg-slate-800 px-4 py-2 flex items-center justify-between border-b border-slate-700">
+                 <div className="flex items-center gap-2">
+                    <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                    <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                    <div className="ml-4 text-slate-400 text-xs">user@dev:~/my-fluid-app</div>
+                 </div>
+                 <button 
+                    onClick={runTerminalAnimation}
+                    disabled={isTyping}
+                    className="text-[10px] flex items-center gap-1 text-slate-500 hover:text-white transition-colors uppercase font-bold tracking-wider disabled:opacity-50 disabled:cursor-not-allowed"
+                 >
+                    <RefreshCw size={10} className={isTyping ? 'animate-spin' : ''} /> Replay
+                 </button>
               </div>
-              <div className="p-6 text-slate-300 space-y-2">
-                 <div className="flex">
-                    <span className="text-green-400 mr-2">$</span>
-                    <span>npm install -g fluid-cli</span>
-                 </div>
-                 <div className="text-slate-500">
-                    + fluid-cli@1.0.4 <br/>
-                    added 12 packages in 2s
-                 </div>
-                 <div className="flex">
-                    <span className="text-green-400 mr-2">$</span>
-                    <span>fluid init</span>
-                 </div>
-                 <div className="text-blue-400">
-                    ? Project name: <span className="text-white">awesome-dapp</span> <br/>
-                    ? Framework: <span className="text-white">React / Next.js</span> <br/>
-                    ? Storage: <span className="text-white">Permanent (Fluid Host)</span>
-                 </div>
-                 <div className="flex">
-                    <span className="text-green-400 mr-2">$</span>
-                    <span>fluid deploy</span>
-                 </div>
-                 <div className="text-slate-300">
-                    {'>'} Building project... <br/>
-                    {'>'} Uploading assets to Shard 1... <br/>
-                    {'>'} Uploading assets to Shard 2... <br/>
-                    {'>'} Verifying integrity...
-                 </div>
-                 <div className="text-emerald-400 font-bold mt-4">
-                    ✔ Deployment Successful! <br/>
-                    Access your app at: <a href="#" className="underline">https://fluid.link/awesome-dapp</a>
-                 </div>
-                 <div className="flex animate-pulse">
-                    <span className="text-green-400 mr-2">$</span>
-                    <span className="w-3 h-5 bg-slate-500 block"></span>
-                 </div>
+              
+              {/* Terminal Body */}
+              <div 
+                ref={terminalRef}
+                className="p-6 text-slate-300 min-h-[400px] max-h-[500px] overflow-y-auto custom-scrollbar"
+              >
+                 {terminalLines.map((line, idx) => (
+                    <div key={idx} className="mb-1 break-words">
+                       {line.content}
+                    </div>
+                 ))}
+                 <style dangerouslySetInnerHTML={{__html: `
+                    .typing-cursor {
+                      display: inline-block;
+                      width: 8px;
+                      height: 15px;
+                      background-color: #cbd5e1;
+                      animation: blink 1s infinite;
+                      vertical-align: middle;
+                    }
+                    @keyframes blink {
+                      0%, 100% { opacity: 1; }
+                      50% { opacity: 0; }
+                    }
+                 `}} />
               </div>
            </div>
         </section>

@@ -124,6 +124,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             <h1 className="text-4xl lg:text-6xl font-black leading-tight mb-2 text-slate-900 dark:text-white tracking-tighter">
               Fluid <br />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-cyan-500 to-emerald-400">Store. Spend. Host.</span>
+              <br />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-500 to-blue-600">Infinitely & Eternally.</span>
             </h1>
             
             <div className="min-h-[4rem] flex items-center justify-center">

@@ -87,6 +87,9 @@ const DAPPS: DApp[] = [
   { id: '1', name: 'Fluid Swap', url: 'fluid://dex', icon: RefreshCw, category: 'DeFi', status: 'online', description: 'Instant, low-fee token swaps.' },
   { id: '2', name: 'Fluid Storage', url: 'fluid://storage', icon: Database, category: 'Infrastructure', status: 'online', description: 'Decentralized permanent file storage.' },
   { id: '3', name: 'SecureChat', url: 'fluid://chat', icon: Lock, category: 'Social', status: 'online', description: 'E2E encrypted wallet-to-wallet chat.' },
+  { id: '4', name: 'Uniswap', url: 'fluid://uniswap', icon: Repeat, category: 'DeFi', status: 'online', description: 'Swap, earn, and build on the leading decentralized protocol.' },
+  { id: '5', name: 'Aave', url: 'fluid://aave', icon: Landmark, category: 'DeFi', status: 'online', description: 'Open source liquidity protocol.' },
+  { id: '6', name: 'Fluid Names', url: 'fluid://ns', icon: Globe, category: 'Utils', status: 'online', description: 'Register and manage your web3 identity.' },
 ];
 
 // --- Components ---
@@ -398,19 +401,6 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
     }
   };
 
-  const saveProfile = () => {
-    // Basic validation or handle cleaning
-    let cleanHandle = tempProfile.handle.trim().toLowerCase();
-    if (cleanHandle.startsWith('@')) cleanHandle = cleanHandle.substring(1);
-    
-    // Simulate saving
-    setProfile({
-      ...tempProfile,
-      handle: cleanHandle
-    });
-    setActiveModal(null);
-  };
-
   const handleDomainSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!domainQuery.trim()) return;
@@ -685,8 +675,6 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                </div>
              )}
 
-             {/* ... (DEX, Cards, Fiat Modules remain unchanged) ... */}
-             
              {/* === MODULE B: DEX === */}
              {activeTab === 'dex' && (
                 <div className="p-6 h-full flex flex-col animate-in fade-in zoom-in-95 duration-300">
@@ -1315,6 +1303,91 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                      </button>
                   </div>
 
+                  {activeModal === 'domainRegistrar' && (
+                    <div className="flex flex-col h-full overflow-hidden">
+                        {/* Search */}
+                        <div className="mb-6 relative z-10">
+                            <form onSubmit={handleDomainSearch} className="relative">
+                                <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                                <input 
+                                    type="text" 
+                                    value={domainQuery}
+                                    onChange={(e) => setDomainQuery(e.target.value)}
+                                    placeholder="Search names..." 
+                                    className="w-full bg-black/20 border border-white/10 rounded-xl py-3 pl-10 pr-20 text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition-all"
+                                />
+                                <button 
+                                    type="submit"
+                                    disabled={!domainQuery || domainSearchStatus === 'searching'}
+                                    className="absolute right-2 top-1.5 bottom-1.5 px-3 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold rounded-lg uppercase tracking-wider transition-colors disabled:opacity-50"
+                                >
+                                    {domainSearchStatus === 'searching' ? '...' : 'Search'}
+                                </button>
+                            </form>
+                        </div>
+
+                        {/* Results */}
+                        <div className="flex-grow overflow-y-auto space-y-4 pr-1 custom-scrollbar">
+                            {domainSearchStatus === 'idle' && (
+                                <div className="flex flex-col items-center justify-center h-40 text-slate-500 space-y-3 opacity-50">
+                                    <Globe size={48} strokeWidth={1} />
+                                    <span className="text-xs font-bold">Search to register</span>
+                                </div>
+                            )}
+
+                            {domainSearchStatus === 'results' && (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+                                    <div className="p-4 bg-gradient-to-br from-indigo-900/40 to-purple-900/40 border border-indigo-500/30 rounded-2xl relative overflow-hidden group">
+                                        <div className="absolute inset-0 bg-indigo-500/5 group-hover:bg-indigo-500/10 transition-colors"></div>
+                                        <div className="flex justify-between items-start mb-4 relative z-10">
+                                            <div>
+                                                <span className="text-sm font-black text-white">{domainQuery.split('.')[0]}<span className="text-indigo-400">.fluid</span></span>
+                                                <div className="flex items-center gap-1 mt-1 text-[10px] text-emerald-400 font-bold">
+                                                    <CheckCircle2 size={10} /> Available
+                                                </div>
+                                            </div>
+                                            <div className="text-right">
+                                                <span className="text-lg font-black text-white">FREE</span>
+                                                <span className="block text-[8px] text-slate-400 uppercase tracking-wider line-through">$500 Value</span>
+                                            </div>
+                                        </div>
+                                        <button className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white text-[10px] font-bold uppercase tracking-widest rounded-xl transition-colors shadow-lg relative z-10 flex items-center justify-center gap-2">
+                                            Claim Handle <ArrowRight size={12} />
+                                        </button>
+                                    </div>
+
+                                    <div className="flex items-center gap-2 my-2">
+                                        <div className="h-px flex-grow bg-slate-800"></div>
+                                        <span className="text-[9px] font-bold text-slate-600 uppercase">Traditional TLDs</span>
+                                        <div className="h-px flex-grow bg-slate-800"></div>
+                                    </div>
+
+                                    {[
+                                        { tld: '.com', price: '$12.99' },
+                                        { tld: '.io', price: '$35.00' },
+                                        { tld: '.xyz', price: '$1.99' }
+                                    ].map((item) => (
+                                        <div key={item.tld} className="flex items-center justify-between p-3 bg-slate-900/50 border border-slate-800 rounded-xl hover:border-slate-700 transition-colors">
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500 border border-white/5">
+                                                    <Globe size={14} />
+                                                </div>
+                                                <span className="text-xs font-bold text-slate-300">{domainQuery.split('.')[0]}<span className="text-slate-500">{item.tld}</span></span>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <span className="text-xs font-bold text-white">{item.price}</span>
+                                                <button className="p-2 bg-white/5 hover:bg-white/10 rounded-lg text-slate-400 hover:text-white transition-colors">
+                                                    <ShoppingCart size={14} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                  )}
+
                   {activeModal === 'deploy' && (
                     <div className="flex flex-col h-full overflow-hidden">
                         {deployStep === 0 && (
@@ -1443,7 +1516,15 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                         {/* List */}
                         <div className="flex-grow overflow-y-auto space-y-3 pr-1 custom-scrollbar">
                             {DAPPS.filter(app => (selectedDAppCategory === 'All' || app.category === selectedDAppCategory) && app.name.toLowerCase().includes(dAppSearch.toLowerCase())).map(app => (
-                                <div key={app.id} className="flex items-center gap-4 p-3 bg-slate-900/50 border border-slate-800 rounded-2xl hover:border-indigo-500/30 transition-all group cursor-pointer">
+                                <div 
+                                    key={app.id} 
+                                    onClick={() => {
+                                        if (app.id === '6') {
+                                            setActiveModal('domainRegistrar');
+                                        }
+                                    }}
+                                    className="flex items-center gap-4 p-3 bg-slate-900/50 border border-slate-800 rounded-2xl hover:border-indigo-500/30 transition-all group cursor-pointer"
+                                >
                                     <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-white border border-white/5 shrink-0 group-hover:scale-105 transition-transform">
                                         <app.icon size={20} />
                                     </div>
