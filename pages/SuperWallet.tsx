@@ -1,35 +1,62 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  Play, Apple, Box, ArrowDownUp, ChevronDown, RefreshCw, 
-  Wallet as WalletIcon, Layers, CreditCard, Shield, 
-  Globe, Smartphone, Zap, Landmark, DollarSign,
-  Building2, SmartphoneNfc, Receipt, ArrowRightLeft,
-  CheckCircle2, ShieldAlert, X, ShieldCheck, AlertTriangle,
-  History, Settings, MoreHorizontal, Layout, Search, ExternalLink,
-  Network, Database, Coins, Eye, Cloud, Lock, Plus, Save,
-  Fingerprint, ScanFace, EyeOff, Truck, MapPin, User, CreditCard as CardIcon,
-  Wifi, Ban, Globe2, Compass, AlertCircle, Sparkles, Key, Smartphone as PhoneIcon,
-  ArrowUpRight, ArrowDownLeft, ArrowLeftRight, Monitor, Terminal, Info, 
-  ArrowDown, Briefcase, Gamepad2, Share2, Rocket, ArrowRight, MousePointer2,
-  LockKeyhole, UserCircle, ChevronLeft, Bell
+  Wallet as WalletIcon, RefreshCw, CreditCard, Layers, 
+  Lock, Fingerprint, ScanFace, ChevronDown, Bell, 
+  Search, ArrowUpRight, ArrowDownLeft, ArrowLeftRight, 
+  Zap, Shield, Globe, Cpu, Server, Database, 
+  Wifi, Battery, Signal, MoreHorizontal, Copy, CheckCircle2,
+  ExternalLink, Eye, EyeOff, X, Activity, AlertTriangle,
+  Landmark, CreditCard as CardIcon, Power, Settings,
+  ChevronRight, Terminal, Cloud, Smartphone, Repeat,
+  ArrowDown, Layout, Users
 } from 'lucide-react';
-import { AreaChart, Area, ResponsiveContainer, Tooltip } from 'recharts';
+import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 
-interface FluidWalletAppProps {
-  onNavigate: (page: string) => void;
-  initialView?: 'assets' | 'swap' | 'card' | 'fiat' | 'security' | 'history' | 'dapps';
+// --- Types & Interfaces ---
+interface Asset {
+  symbol: string;
+  name: string;
+  amount: string;
+  value: string;
+  change: string;
+  color: string;
 }
 
-// Mock Data for Chart
-const chartData = [
-  { name: 'Mon', value: 12400 },
-  { name: 'Tue', value: 12800 },
-  { name: 'Wed', value: 12200 },
-  { name: 'Thu', value: 13500 },
-  { name: 'Fri', value: 13100 },
-  { name: 'Sat', value: 14200 },
-  { name: 'Sun', value: 14592 },
+interface Transaction {
+  id: string;
+  type: 'receive' | 'send' | 'swap' | 'contract';
+  title: string;
+  subtitle: string;
+  amount: string;
+  status: 'confirmed' | 'pending';
+  time: string;
+}
+
+// --- Mock Data ---
+const CHART_DATA = [
+  { time: '00:00', value: 12400 },
+  { time: '04:00', value: 12800 },
+  { time: '08:00', value: 13500 },
+  { time: '12:00', value: 13200 },
+  { time: '16:00', value: 14100 },
+  { time: '20:00', value: 14300 },
+  { time: '24:00', value: 14592 },
 ];
+
+const ASSETS: Asset[] = [
+  { symbol: 'FLD', name: 'Fluid', amount: '45,000', value: '$22,500.00', change: '+12.5%', color: 'bg-emerald-500' },
+  { symbol: 'ETH', name: 'Ethereum', amount: '12.5', value: '$38,240.50', change: '+2.1%', color: 'bg-indigo-500' },
+  { symbol: 'SOL', name: 'Solana', amount: '245.0', value: '$18,450.00', change: '-0.4%', color: 'bg-purple-500' },
+  { symbol: 'USDT', name: 'Tether', amount: '5,000', value: '$5,000.00', change: '0.0%', color: 'bg-emerald-400' },
+];
+
+const TRANSACTIONS: Transaction[] = [
+  { id: '1', type: 'swap', title: 'Swap ETH to FLD', subtitle: 'Fluid DEX • Aggregator', amount: '+4,200 FLD', status: 'confirmed', time: '2 min ago' },
+  { id: '2', type: 'receive', title: 'Received SOL', subtitle: 'From 8x...92a', amount: '+120 SOL', status: 'confirmed', time: '1 hour ago' },
+  { id: '3', type: 'contract', title: 'Contract Interaction', subtitle: 'Parmaweb Hosting', amount: '-50 FLD', status: 'pending', time: 'Just now' },
+];
+
+// --- Components ---
 
 const FluidLogo = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -39,572 +66,545 @@ const FluidLogo = ({ className }: { className?: string }) => (
   </svg>
 );
 
-const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ initialView = 'assets' }) => {
-  const [mockupView, setMockupView] = useState<'assets' | 'swap' | 'card' | 'history' | 'security' | 'dapps'>(initialView as any);
-  const [openDropdown, setOpenDropdown] = useState<string | null>('wallet');
-  
-  // Navigation internal state for deeper simulation
-  const [selectedAsset, setSelectedAsset] = useState<string | null>(null);
-  
-  // Card Specific States
-  const [isCardFlipped, setIsCardFlipped] = useState(false);
-  const [isCardFrozen, setIsCardFrozen] = useState(false);
-  
-  // Swap States
-  const [swapInput, setSwapInput] = useState('1.5');
-  const [swapOutput, setSwapOutput] = useState('8420');
-  const [swapStep, setSwapStep] = useState<'input' | 'review' | 'processing' | 'success'>('input');
+// --- Security Vault Overlay ---
+const SecurityVault = ({ onUnlock }: { onUnlock: () => void }) => {
+  const [status, setStatus] = useState<'idle' | 'scanning' | 'success'>('idle');
 
-  // Security Preferences
-  const [securitySettings, setSecuritySettings] = useState({
-    globalBiometrics: true,
-    requireForCardDetails: true,
-    requireForLimits: true,
-    requireForSwaps: true,
-    seedPhraseBackedUp: false,
-    twoFactorEnabled: false,
-  });
-
-  const [spentAmount] = useState(2400);
-  const [monthlyLimit, setMonthlyLimit] = useState(5000);
-  
-  // Dynamic Island State
-  const [islandState, setIslandState] = useState<'idle' | 'faceid' | 'loading' | 'success'>('idle');
-
-  const sidebarMenu = [
-    { id: 'wallet', label: 'Wallet Hub', icon: WalletIcon, children: ['Assets', 'History', 'Portfolio'] },
-    { id: 'banking', label: 'Payments', icon: CreditCard, children: ['Native Cards', 'Fiat Rails', 'Billing'] },
-    { id: 'trade', label: 'Trading', icon: RefreshCw, children: ['Fluid DEX', 'Limit Orders', 'Analytics'] },
-    { id: 'privacy', label: 'Security', icon: LockKeyhole, children: ['Biometrics', '2FA Center', 'Privacy'] }
-  ];
-
-  const coins = [
-    { name: 'Fluid', symbol: 'FLD', amount: '45,000', value: '$22,500', color: 'bg-emerald-500', trend: '+1.2%', chartColor: '#10b981' },
-    { name: 'Ethereum', symbol: 'ETH', amount: '12.5', value: '$38,240', color: 'bg-indigo-500', trend: '+0.8%', chartColor: '#6366f1' },
-    { name: 'Tether', symbol: 'USDT', amount: '63,852', value: '$63,852', color: 'bg-slate-600', trend: '+0.0%', chartColor: '#94a3b8' }
-  ];
-
-  const transactions = [
-    { id: '1', type: 'swap', token: 'FLD', subToken: 'ETH', amount: '+1,200', usdValue: '$600.00', status: 'completed', date: 'Today, 2:45 PM', icon: ArrowLeftRight },
-    { id: '2', type: 'send', token: 'ETH', address: '0x7a...2f1', amount: '-0.5', usdValue: '$1,240.50', status: 'completed', date: 'Today, 11:20 AM', icon: ArrowUpRight },
-    { id: '3', type: 'receive', token: 'USDT', from: 'Exchange', amount: '+5,000', usdValue: '$5,000.00', status: 'completed', date: 'Yesterday', icon: ArrowDownLeft },
-    { id: '4', type: 'card', token: 'USD', merchant: 'Apple Store', amount: '-$999.00', usdValue: '$999.00', status: 'completed', date: 'Oct 24, 2024', icon: CardIcon },
-  ];
-
-  const dapps = [
-    { id: '1', name: 'Fluid DEX', category: 'defi', icon: RefreshCw, desc: 'Swap tokens instantly' },
-    { id: '2', name: 'Fluid Lend', category: 'defi', icon: Landmark, desc: 'Lending protocol' },
-    { id: '3', name: 'ParmaDAO', category: 'social', icon: User, desc: 'Governance portal' },
-    { id: '4', name: 'Fluid NFT', category: 'utility', icon: Layout, desc: 'NFT Marketplace' }
-  ];
-
-  // Helper: Trigger FaceID Simulation
-  const triggerFaceID = (onSuccess: () => void) => {
-    setIslandState('faceid');
+  const handleAuth = () => {
+    setStatus('scanning');
     setTimeout(() => {
-        setIslandState('success');
-        setTimeout(() => {
-            setIslandState('idle');
-            onSuccess();
-        }, 800);
+      setStatus('success');
+      setTimeout(onUnlock, 800);
     }, 1500);
   };
 
-  const handleSwap = () => {
-    setSwapStep('review');
-  };
-
-  const confirmSwap = () => {
-    triggerFaceID(() => {
-        setSwapStep('processing');
-        setTimeout(() => {
-            setSwapStep('success');
-            setTimeout(() => {
-                setSwapStep('input');
-                setMockupView('assets'); // Go back to assets after swap
-            }, 2000);
-        }, 1500);
-    });
-  };
-
-  const limitPercentage = Math.min((spentAmount / monthlyLimit) * 100, 100);
-
   return (
-    <div className="min-h-screen pt-32 pb-12 flex flex-col lg:flex-row max-w-7xl mx-auto px-4 gap-8">
-      
-      {/* CSS for 3D Card Flip */}
-      <style>{`
-        .perspective-1000 { perspective: 1000px; }
-        .transform-style-3d { transform-style: preserve-3d; }
-        .backface-hidden { backface-visibility: hidden; }
-        .rotate-y-180 { transform: rotateY(180deg); }
-      `}</style>
+    <div className="absolute inset-0 z-50 bg-[#020617] flex flex-col items-center justify-center p-6 text-center">
+      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-64 h-64 bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none"></div>
 
-      {/* Left Sidebar Dropdown Navigation */}
-      <aside className="lg:w-64 flex-shrink-0 hidden lg:block">
-        <div className="sticky top-32 w-full">
-            <div className="bg-[#0F1115] border border-white/5 rounded-2xl p-2 shadow-2xl overflow-hidden">
-               <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Wallet</span>
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
-               </div>
-               
-               <div className="flex flex-col gap-1">
-                   {sidebarMenu.map((menu) => (
-                     <div key={menu.id} className="group">
-                        <button 
-                          onClick={() => setOpenDropdown(openDropdown === menu.id ? null : menu.id)}
-                          className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 border ${
-                             openDropdown === menu.id 
-                             ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500' 
-                             : 'bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                          }`}
-                        >
-                           <div className="flex items-center gap-3">
-                              <menu.icon size={16} className={openDropdown === menu.id ? 'text-emerald-500' : 'text-slate-500 group-hover:text-slate-400'} />
-                              <span className="text-xs font-bold tracking-wide">{menu.label}</span>
-                           </div>
-                           <ChevronDown size={14} className={`transition-transform duration-200 ${openDropdown === menu.id ? 'rotate-180 text-emerald-500' : 'text-slate-600'}`} />
-                        </button>
-                        
-                        {openDropdown === menu.id && (
-                           <div className="mt-1 mb-2 ml-3 pl-3 border-l border-white/5 space-y-0.5 animate-fade-in-up">
-                              {menu.children.map((child) => (
-                                <button 
-                                  key={child}
-                                  onClick={() => {
-                                     setSelectedAsset(null);
-                                     if (child === 'Assets') setMockupView('assets');
-                                     if (child === 'Native Cards') setMockupView('card');
-                                     if (child === 'History') setMockupView('history');
-                                     if (child === 'Fluid DEX') setMockupView('swap');
-                                     if (child === 'Privacy') setMockupView('security');
-                                  }}
-                                  className="w-full text-left px-3 py-2 rounded-lg text-[11px] font-medium text-slate-500 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-2"
-                                >
-                                   <div className="w-1 h-1 rounded-full bg-slate-700 group-hover:bg-emerald-500 transition-colors"></div>
-                                   {child}
-                                </button>
-                              ))}
-                           </div>
-                        )}
-                     </div>
-                   ))}
-               </div>
+      <div className="relative mb-8">
+         <div className={`w-24 h-24 rounded-[2rem] bg-slate-900 border border-slate-800 flex items-center justify-center shadow-2xl relative overflow-hidden transition-all duration-500 ${status === 'scanning' ? 'border-emerald-500/50 shadow-emerald-500/20' : ''}`}>
+            {status === 'scanning' && <div className="absolute inset-0 bg-emerald-500/10 animate-pulse"></div>}
+            {status === 'success' ? (
+               <CheckCircle2 size={40} className="text-emerald-500 animate-in zoom-in" />
+            ) : (
+               <FluidLogo className="w-12 h-12 text-white" />
+            )}
+         </div>
+      </div>
 
-               {/* User Profile Snippet */}
-               <div className="mt-4 p-3 bg-white/5 border border-white/5 rounded-xl flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-indigo-500/20 text-indigo-400 flex items-center justify-center shadow-lg">
-                     <UserCircle size={20} />
-                  </div>
-                  <div className="flex flex-col">
-                     <span className="text-[10px] font-black text-white">Fluid User</span>
-                     <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Verified</span>
-                  </div>
-               </div>
-            </div>
+      <h1 className="text-2xl font-black text-white uppercase tracking-tight mb-2">Fluid Sovereign Vault</h1>
+      <p className="text-slate-500 text-sm mb-12 max-w-xs mx-auto">Biometric authentication required to decrypt your local session.</p>
+
+      <button 
+        onClick={handleAuth}
+        className="group relative px-8 py-4 bg-slate-900 rounded-2xl border border-slate-800 hover:border-emerald-500/50 transition-all w-full max-w-xs overflow-hidden"
+      >
+        <div className="absolute inset-0 bg-emerald-500/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+        <div className="relative flex items-center justify-center gap-3">
+          {status === 'scanning' ? (
+             <>
+               <ScanFace size={20} className="text-emerald-500 animate-pulse" />
+               <span className="text-emerald-500 font-bold uppercase tracking-wider text-xs">Verifying Identity...</span>
+             </>
+          ) : (
+             <>
+               <Fingerprint size={20} className="text-slate-400 group-hover:text-emerald-500 transition-colors" />
+               <span className="text-slate-300 font-bold uppercase tracking-wider text-xs group-hover:text-white">Authenticate Access</span>
+             </>
+          )}
         </div>
-      </aside>
-
-      {/* Main Content Area */}
-      <main className="flex-grow">
-        <section className="text-center lg:text-left mb-12 px-4 lg:px-0">
-           <div className="inline-block px-4 py-2 rounded-full bg-emerald-500/10 border border-emerald-500/30 mb-6">
-              <span className="text-emerald-500 font-black uppercase tracking-[0.2em] text-[10px]">V2.0 LIVE SIMULATION</span>
-           </div>
-           <h1 className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white mb-4 tracking-tighter leading-none">
-              Super <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-500 to-blue-500">Wallet</span>
-           </h1>
-           <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mb-10 font-medium">
-              Interact with the simulation below to experience the future of non-custodial finance.
-           </p>
-        </section>
-
-        {/* Interface Mockup */}
-        <section className="max-w-[420px] mx-auto lg:mx-0 relative z-10">
-            {/* Phone Container */}
-            <div className="bg-[#0b0e14] border-[6px] border-[#1e232f] rounded-[3.5rem] shadow-2xl overflow-hidden relative min-h-[820px] flex flex-col">
-                
-                {/* Dynamic Island / Notch */}
-                <div className="absolute top-0 inset-x-0 h-10 flex justify-center z-50 pt-3 pointer-events-none">
-                    <div className={`bg-black rounded-full transition-all duration-300 flex items-center justify-center gap-3 overflow-hidden ${
-                        islandState === 'faceid' ? 'w-48 h-12' : 
-                        islandState === 'success' ? 'w-48 h-12 bg-emerald-500' :
-                        islandState === 'loading' ? 'w-32 h-8' : 
-                        'w-28 h-8'
-                    }`}>
-                        {islandState === 'faceid' && (
-                            <>
-                                <ScanFace size={20} className="text-emerald-400 animate-pulse" />
-                                <span className="text-[10px] font-bold text-white uppercase tracking-wider">Face ID</span>
-                            </>
-                        )}
-                        {islandState === 'success' && (
-                             <>
-                                <CheckCircle2 size={20} className="text-white" />
-                                <span className="text-[10px] font-bold text-white uppercase tracking-wider">Success</span>
-                             </>
-                        )}
-                        {islandState === 'idle' && (
-                             <div className="w-16 h-full flex items-center justify-center gap-1.5">
-                                 <div className="w-2 h-2 rounded-full bg-slate-800"></div>
-                                 <div className="w-1.5 h-1.5 rounded-full bg-blue-900/50"></div>
-                             </div>
-                        )}
-                    </div>
-                </div>
-
-                {/* Status Bar */}
-                <div className="flex justify-between items-center px-8 pt-4 pb-2 text-[10px] font-bold text-white z-40">
-                    <span>9:41</span>
-                    <div className="flex gap-1.5">
-                        <Wifi size={12} />
-                        <div className="w-4 h-2.5 bg-white rounded-[2px] relative overflow-hidden">
-                             <div className="absolute inset-y-0 left-0 w-[80%] bg-black"></div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Main Screen Content */}
-                <div className="flex-grow flex flex-col relative bg-[#020617] overflow-hidden">
-                  
-                  {/* Views */}
-                  <div className="flex-grow overflow-y-auto no-scrollbar pb-24 relative">
-                     
-                     {/* Asset View */}
-                     {mockupView === 'assets' && !selectedAsset && (
-                        <div className="animate-fade-in-up px-6 pt-6 space-y-6">
-                            {/* Total Balance */}
-                            <div className="flex flex-col items-center">
-                                <span className="text-[10px] text-slate-400 uppercase font-black tracking-widest mb-1">Total Balance</span>
-                                <h2 className="text-4xl font-black text-white tracking-tighter">$14,592.45</h2>
-                                <span className="inline-flex items-center gap-1 bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full text-[10px] font-bold mt-2">
-                                    <ArrowUpRight size={10} /> +2.4% Today
-                                </span>
-                            </div>
-
-                            {/* Actions */}
-                            <div className="grid grid-cols-4 gap-3">
-                                {['Send', 'Receive', 'Buy', 'More'].map((action, i) => (
-                                    <button key={i} className="flex flex-col items-center gap-2 group">
-                                        <div className="w-12 h-12 bg-slate-800 rounded-full flex items-center justify-center text-white group-active:scale-95 transition-transform border border-white/5">
-                                            {i === 0 && <ArrowUpRight size={20} />}
-                                            {i === 1 && <ArrowDownLeft size={20} />}
-                                            {i === 2 && <CreditCard size={20} />}
-                                            {i === 3 && <MoreHorizontal size={20} />}
-                                        </div>
-                                        <span className="text-[9px] font-bold text-slate-400">{action}</span>
-                                    </button>
-                                ))}
-                            </div>
-
-                            {/* Chart Area */}
-                            <div className="h-40 -mx-6 relative">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <AreaChart data={chartData}>
-                                        <defs>
-                                            <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
-                                                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                                            </linearGradient>
-                                        </defs>
-                                        <Area type="monotone" dataKey="value" stroke="#10b981" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
-                                    </AreaChart>
-                                </ResponsiveContainer>
-                            </div>
-
-                            {/* Asset List */}
-                            <div className="space-y-3 pb-8">
-                                <h3 className="text-sm font-bold text-white">Assets</h3>
-                                {coins.map(coin => (
-                                    <div key={coin.symbol} onClick={() => setSelectedAsset(coin.name)} className="flex items-center justify-between p-3 rounded-2xl bg-white/5 hover:bg-white/10 active:scale-98 transition-all cursor-pointer">
-                                        <div className="flex items-center gap-3">
-                                            <div className={`w-10 h-10 rounded-full ${coin.color} flex items-center justify-center text-white font-bold`}>{coin.symbol[0]}</div>
-                                            <div>
-                                                <div className="text-sm font-bold text-white">{coin.name}</div>
-                                                <div className="text-[10px] text-slate-400">{coin.amount} {coin.symbol}</div>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className="text-sm font-bold text-white">{coin.value}</div>
-                                            <div className="text-[10px] text-emerald-500 font-bold">{coin.trend}</div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                     )}
-
-                     {/* Detailed Asset View (Drill Down) */}
-                     {selectedAsset && mockupView === 'assets' && (
-                        <div className="animate-fade-in-up h-full flex flex-col">
-                            <div className="px-6 pt-2 pb-4 flex items-center gap-4 border-b border-white/5">
-                                <button onClick={() => setSelectedAsset(null)} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-white"><ChevronLeft size={18}/></button>
-                                <span className="font-bold text-white">{selectedAsset}</span>
-                            </div>
-                            <div className="flex-grow p-6 flex flex-col items-center justify-center text-center">
-                                <div className="w-16 h-16 rounded-full bg-emerald-500 mb-4 flex items-center justify-center text-2xl font-black text-white">
-                                    {selectedAsset[0]}
-                                </div>
-                                <h2 className="text-3xl font-black text-white mb-1">$22,500.00</h2>
-                                <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mb-8">~45,000 FLD</p>
-                                
-                                <div className="w-full bg-slate-900 rounded-2xl p-4 border border-white/5 mb-4">
-                                    <div className="flex justify-between items-center mb-2">
-                                        <span className="text-xs text-slate-400 font-bold">Network Stats</span>
-                                        <span className="text-[9px] text-emerald-500 font-bold bg-emerald-500/10 px-2 py-0.5 rounded">Live</span>
-                                    </div>
-                                    <div className="grid grid-cols-2 gap-4 text-left">
-                                        <div>
-                                            <span className="text-[9px] text-slate-500 uppercase block">Market Cap</span>
-                                            <span className="text-xs text-white font-bold">$450M</span>
-                                        </div>
-                                        <div>
-                                            <span className="text-[9px] text-slate-500 uppercase block">Vol (24h)</span>
-                                            <span className="text-xs text-white font-bold">$12.4M</span>
-                                        </div>
-                                    </div>
-                                </div>
-                                
-                                <div className="grid grid-cols-2 gap-3 w-full">
-                                    <button className="py-3 rounded-xl bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider">Stake</button>
-                                    <button className="py-3 rounded-xl bg-slate-800 text-white font-bold text-xs uppercase tracking-wider">Trade</button>
-                                </div>
-                            </div>
-                        </div>
-                     )}
-
-                     {/* Swap View */}
-                     {mockupView === 'swap' && (
-                         <div className="px-6 pt-6 h-full flex flex-col">
-                             <h2 className="text-xl font-black text-white mb-6">Fluid DEX</h2>
-                             
-                             {swapStep === 'input' && (
-                                 <div className="space-y-2 animate-fade-in-up">
-                                     {/* Input Token */}
-                                     <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-4">
-                                         <div className="flex justify-between mb-2">
-                                             <span className="text-[10px] font-bold text-slate-500 uppercase">Pay</span>
-                                             <span className="text-[10px] font-bold text-slate-500">Bal: 12.5 ETH</span>
-                                         </div>
-                                         <div className="flex justify-between items-center">
-                                             <input 
-                                                 type="text" 
-                                                 value={swapInput}
-                                                 onChange={(e) => setSwapInput(e.target.value)}
-                                                 className="bg-transparent text-2xl font-bold text-white w-1/2 outline-none"
-                                             />
-                                             <div className="flex items-center gap-2 bg-slate-800 px-2 py-1.5 rounded-xl border border-white/5">
-                                                 <div className="w-5 h-5 rounded-full bg-indigo-500"></div>
-                                                 <span className="text-xs font-bold text-white">ETH</span>
-                                                 <ChevronDown size={12} className="text-slate-500" />
-                                             </div>
-                                         </div>
-                                     </div>
-
-                                     <div className="flex justify-center -my-3 relative z-10">
-                                         <div className="bg-slate-800 p-2 rounded-xl border border-slate-700 text-white shadow-lg">
-                                             <ArrowDown size={16} />
-                                         </div>
-                                     </div>
-
-                                     {/* Output Token */}
-                                     <div className="bg-slate-900/50 border border-white/5 rounded-2xl p-4">
-                                         <div className="flex justify-between mb-2">
-                                             <span className="text-[10px] font-bold text-slate-500 uppercase">Receive</span>
-                                             <span className="text-[10px] font-bold text-emerald-500">Best Rate</span>
-                                         </div>
-                                         <div className="flex justify-between items-center">
-                                             <div className="text-2xl font-bold text-emerald-400">{swapOutput}</div>
-                                             <div className="flex items-center gap-2 bg-slate-800 px-2 py-1.5 rounded-xl border border-white/5">
-                                                 <div className="w-5 h-5 rounded-full bg-emerald-500"></div>
-                                                 <span className="text-xs font-bold text-white">FLD</span>
-                                                 <ChevronDown size={12} className="text-slate-500" />
-                                             </div>
-                                         </div>
-                                     </div>
-
-                                     <div className="mt-8">
-                                         <button onClick={handleSwap} className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-white font-black rounded-2xl text-sm uppercase tracking-widest shadow-lg shadow-emerald-500/20 transition-all active:scale-95">
-                                             Review Swap
-                                         </button>
-                                     </div>
-                                 </div>
-                             )}
-
-                             {swapStep === 'review' && (
-                                 <div className="bg-slate-900 border border-white/10 rounded-2xl p-6 mt-4 animate-fade-in-up">
-                                     <h3 className="text-center font-bold text-white mb-6">Confirm Transaction</h3>
-                                     <div className="space-y-4 mb-8">
-                                         <div className="flex justify-between items-center text-sm">
-                                             <span className="text-slate-400">Rate</span>
-                                             <span className="text-white font-bold">1 ETH = 5,613 FLD</span>
-                                         </div>
-                                         <div className="flex justify-between items-center text-sm">
-                                             <span className="text-slate-400">Network Fee</span>
-                                             <span className="text-white font-bold flex items-center gap-1"><Zap size={12} className="text-orange-500"/> $4.20</span>
-                                         </div>
-                                     </div>
-                                     <button onClick={confirmSwap} className="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-black rounded-2xl text-sm uppercase tracking-widest flex items-center justify-center gap-2">
-                                         <ScanFace size={18}/> Sign & Swap
-                                     </button>
-                                     <button onClick={() => setSwapStep('input')} className="w-full py-3 mt-2 text-slate-500 font-bold text-xs uppercase tracking-widest">Cancel</button>
-                                 </div>
-                             )}
-
-                             {swapStep === 'processing' && (
-                                 <div className="flex-grow flex flex-col items-center justify-center text-center animate-pulse">
-                                     <RefreshCw size={48} className="text-cyan-400 animate-spin mb-4" />
-                                     <h3 className="text-white font-bold text-lg">Swapping...</h3>
-                                     <p className="text-slate-500 text-xs mt-2">Interacting with Fluid Smart Contract</p>
-                                 </div>
-                             )}
-
-                             {swapStep === 'success' && (
-                                 <div className="flex-grow flex flex-col items-center justify-center text-center animate-fade-in-up">
-                                     <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center mb-6 shadow-2xl shadow-emerald-500/40">
-                                         <CheckCircle2 size={40} className="text-white" />
-                                     </div>
-                                     <h3 className="text-white font-black text-2xl mb-2">Swap Complete!</h3>
-                                     <p className="text-slate-400 text-sm">You received 8,420 FLD</p>
-                                 </div>
-                             )}
-                         </div>
-                     )}
-
-                     {/* Card View - 3D Flip */}
-                     {mockupView === 'card' && (
-                        <div className="px-6 pt-6 h-full flex flex-col">
-                            <h2 className="text-xl font-black text-white mb-6">Fluid Debit</h2>
-                            
-                            <div className="perspective-1000 w-full aspect-[1.586/1] mb-8 cursor-pointer group" onClick={() => setIsCardFlipped(!isCardFlipped)}>
-                                <div className={`relative w-full h-full transition-transform duration-700 transform-style-3d ${isCardFlipped ? 'rotate-y-180' : ''}`}>
-                                    
-                                    {/* Front */}
-                                    <div className="absolute inset-0 backface-hidden rounded-2xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-700 p-6 flex flex-col justify-between shadow-2xl overflow-hidden">
-                                        <div className="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 rounded-full blur-2xl"></div>
-                                        <div className="flex justify-between items-start z-10">
-                                            <FluidLogo className="w-8 h-8 text-white" />
-                                            <div className="flex items-center gap-1">
-                                                <div className="w-1 h-2 bg-slate-600 rounded-full"></div>
-                                                <div className="w-1 h-3 bg-white rounded-full"></div>
-                                                <div className="w-1 h-2 bg-slate-600 rounded-full"></div>
-                                            </div>
-                                        </div>
-                                        <div className="z-10">
-                                            {isCardFrozen && <div className="absolute inset-0 bg-white/10 backdrop-blur-sm flex items-center justify-center rounded-2xl z-20"><Lock size={32} className="text-white"/></div>}
-                                            <div className="text-white font-mono text-lg tracking-widest mb-1">**** **** **** 8842</div>
-                                            <div className="text-[10px] text-slate-400 font-black uppercase">Alexander Fluid</div>
-                                        </div>
-                                        <div className="absolute bottom-6 right-6">
-                                            <div className="w-8 h-5 bg-white/20 rounded"></div>
-                                        </div>
-                                    </div>
-
-                                    {/* Back */}
-                                    <div className="absolute inset-0 backface-hidden rotate-y-180 rounded-2xl bg-slate-900 border border-slate-700 p-6 flex flex-col justify-center shadow-2xl">
-                                        <div className="w-full h-10 bg-black mb-4"></div>
-                                        <div className="px-4">
-                                            <div className="bg-white h-8 flex items-center justify-end px-2 font-mono text-black font-bold tracking-widest">
-                                                884
-                                            </div>
-                                            <p className="text-[8px] text-slate-500 mt-2">This card is issued by Fluid Protocol. Use implies acceptance of terms.</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="space-y-3">
-                                <div className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5">
-                                    <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-lg ${isCardFrozen ? 'bg-orange-500/20 text-orange-500' : 'bg-emerald-500/20 text-emerald-500'}`}>
-                                            <Lock size={18} />
-                                        </div>
-                                        <div>
-                                            <div className="text-sm font-bold text-white">Freeze Card</div>
-                                            <div className="text-[10px] text-slate-400">{isCardFrozen ? 'Card is frozen' : 'Card is active'}</div>
-                                        </div>
-                                    </div>
-                                    <div 
-                                        onClick={() => setIsCardFrozen(!isCardFrozen)}
-                                        className={`w-10 h-6 rounded-full p-1 cursor-pointer transition-colors ${isCardFrozen ? 'bg-orange-500' : 'bg-slate-700'}`}
-                                    >
-                                        <div className={`w-4 h-4 bg-white rounded-full shadow-md transition-transform ${isCardFrozen ? 'translate-x-4' : ''}`}></div>
-                                    </div>
-                                </div>
-
-                                <div className="flex justify-between items-center p-4 bg-white/5 rounded-2xl border border-white/5 cursor-pointer hover:bg-white/10">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-2 rounded-lg bg-blue-500/20 text-blue-500">
-                                            <Eye size={18} />
-                                        </div>
-                                        <div>
-                                            <div className="text-sm font-bold text-white">Show Details</div>
-                                            <div className="text-[10px] text-slate-400">View PAN & CVV</div>
-                                        </div>
-                                    </div>
-                                    <ChevronDown size={16} className="-rotate-90 text-slate-500" />
-                                </div>
-                            </div>
-                        </div>
-                     )}
-
-                     {/* History View */}
-                     {mockupView === 'history' && (
-                         <div className="px-6 pt-6">
-                            <h2 className="text-xl font-black text-white mb-6">Activity</h2>
-                            <div className="space-y-4">
-                                {transactions.map(tx => (
-                                    <div key={tx.id} className="flex items-center justify-between p-3 bg-white/5 rounded-2xl border border-white/5">
-                                        <div className="flex items-center gap-3">
-                                            <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-white border border-white/5">
-                                                <tx.icon size={16} />
-                                            </div>
-                                            <div>
-                                                <div className="text-sm font-bold text-white flex items-center gap-1">
-                                                    {tx.type === 'send' ? 'Sent' : tx.type === 'receive' ? 'Received' : tx.type === 'swap' ? 'Swapped' : 'Purchase'}
-                                                </div>
-                                                <div className="text-[10px] text-slate-500">{tx.date}</div>
-                                            </div>
-                                        </div>
-                                        <div className="text-right">
-                                            <div className={`text-sm font-bold ${tx.amount.startsWith('+') ? 'text-emerald-500' : 'text-white'}`}>{tx.amount} {tx.token}</div>
-                                            <div className="text-[9px] text-slate-500">{tx.usdValue}</div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                         </div>
-                     )}
-
-                  </div>
-
-                  {/* Bottom Navigation Bar */}
-                  <div className="absolute bottom-0 inset-x-0 h-20 bg-[#020617]/90 backdrop-blur-md border-t border-white/5 flex justify-around items-start pt-4 px-2 z-30">
-                     {[
-                         { id: 'assets', icon: WalletIcon },
-                         { id: 'swap', icon: RefreshCw },
-                         { id: 'card', icon: CreditCard },
-                         { id: 'history', icon: History }
-                     ].map(item => (
-                         <button 
-                            key={item.id}
-                            onClick={() => { setMockupView(item.id as any); setSelectedAsset(null); }}
-                            className={`p-2 rounded-xl transition-all ${mockupView === item.id ? 'text-emerald-400 bg-emerald-400/10' : 'text-slate-500 hover:text-slate-300'}`}
-                         >
-                             <item.icon size={24} />
-                         </button>
-                     ))}
-                  </div>
-
-                  {/* Home Indicator */}
-                  <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/20 rounded-full z-40"></div>
-                </div>
-            </div>
-        </section>
-      </main>
+      </button>
+      
+      <div className="mt-8 flex gap-6">
+        <button className="text-[10px] font-bold text-slate-600 uppercase tracking-widest hover:text-white transition-colors">Use Passkey</button>
+        <button className="text-[10px] font-bold text-slate-600 uppercase tracking-widest hover:text-white transition-colors">Emergency Kit</button>
+      </div>
     </div>
   );
 };
+
+// --- Main Wallet Application ---
+const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView?: string }> = ({ onNavigate, initialView = 'assets' }) => {
+  const [isLocked, setIsLocked] = useState(true);
+  const [activeTab, setActiveTab] = useState(initialView);
+  const [network, setNetwork] = useState('Fluid Mainnet');
+  const [cardMode, setCardMode] = useState<'virtual' | 'physical'>('virtual');
+  const [cardFrozen, setCardFrozen] = useState(false);
+  const [showCardDetails, setShowCardDetails] = useState(false);
+  
+  // DEX States
+  const [swapRoute, setSwapRoute] = useState<'fluid' | 'nexus' | 'mesh'>('fluid');
+  
+  // Navigation
+  const tabs = [
+    { id: 'assets', label: 'Wallet', icon: WalletIcon },
+    { id: 'dex', label: 'DEX', icon: RefreshCw },
+    { id: 'cards', label: 'Cards', icon: CreditCard },
+    { id: 'fiat', label: 'Fiat', icon: Landmark },
+    { id: 'hosting', label: 'Hosting', icon: Server },
+    { id: 'settings', label: 'Settings', icon: Settings },
+  ];
+
+  if (isLocked) {
+    return (
+       <div className="min-h-screen pt-24 pb-12 flex justify-center px-4">
+          <div className="w-full max-w-[420px] h-[850px] bg-black rounded-[3.5rem] border-8 border-slate-900 relative overflow-hidden shadow-2xl">
+             <SecurityVault onUnlock={() => setIsLocked(false)} />
+          </div>
+       </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen pt-24 pb-12 flex flex-col items-center justify-center px-4">
+       {/* Device Chassis */}
+       <div className="w-full max-w-[420px] h-[850px] bg-[#020617] rounded-[3.5rem] border-[8px] border-[#1e232f] relative overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col">
+          
+          {/* Dynamic Island / Status Bar */}
+          <div className="absolute top-0 inset-x-0 h-14 z-50 pointer-events-none px-8 pt-5 flex justify-between items-start text-white">
+             <span className="text-xs font-bold tracking-widest ml-2">9:41</span>
+             
+             {/* Dynamic Island Area */}
+             <div className="absolute top-3 left-1/2 -translate-x-1/2 w-32 h-8 bg-black rounded-full flex items-center justify-center gap-2 px-3">
+                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
+                <span className="text-[8px] font-bold text-slate-500 uppercase tracking-tighter">Secure Enclave</span>
+             </div>
+
+             <div className="flex gap-1.5 mr-2">
+                <Signal size={12} />
+                <Wifi size={12} />
+                <Battery size={12} />
+             </div>
+          </div>
+
+          {/* App Header (Glass) */}
+          <header className="px-6 pt-16 pb-4 flex justify-between items-center z-40 bg-slate-950/50 backdrop-blur-md border-b border-white/5">
+             <div className="flex items-center gap-3">
+                <button className="w-8 h-8 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400">
+                   <User size={14} />
+                </button>
+                <div className="flex flex-col">
+                   <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Network</span>
+                   <button 
+                      onClick={() => setNetwork(prev => prev === 'Fluid Mainnet' ? 'Ethereum' : 'Fluid Mainnet')}
+                      className="flex items-center gap-1 text-xs font-black text-white"
+                   >
+                      {network} <ChevronDown size={10} className="text-slate-500" />
+                   </button>
+                </div>
+             </div>
+             <div className="flex items-center gap-2">
+                <button className="w-10 h-10 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-white/20 transition-all relative">
+                   <Bell size={18} />
+                   <span className="absolute top-2 right-2.5 w-1.5 h-1.5 bg-rose-500 rounded-full border border-slate-900"></span>
+                </button>
+             </div>
+          </header>
+
+          {/* Main Scrollable Content */}
+          <div className="flex-grow overflow-y-auto no-scrollbar relative bg-[#020617] scroll-smooth">
+             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none"></div>
+
+             {/* === MODULE A: DASHBOARD === */}
+             {activeTab === 'assets' && (
+               <div className="p-6 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  {/* Portfolio Card */}
+                  <div className="relative">
+                     <div className="text-center mb-6">
+                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1 block">Total Liquidity</span>
+                        <h1 className="text-4xl font-black text-white tracking-tighter">$84,592.45</h1>
+                        <div className="flex items-center justify-center gap-2 mt-2">
+                           <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-bold uppercase tracking-wider">+2.4% (24H)</span>
+                        </div>
+                     </div>
+                     
+                     {/* Chart */}
+                     <div className="h-32 w-full -mx-2">
+                        <ResponsiveContainer width="100%" height="100%">
+                           <AreaChart data={CHART_DATA}>
+                              <defs>
+                                 <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
+                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
+                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
+                                 </linearGradient>
+                              </defs>
+                              <Area 
+                                type="monotone" 
+                                dataKey="value" 
+                                stroke="#6366f1" 
+                                strokeWidth={2}
+                                fillOpacity={1} 
+                                fill="url(#colorVal)" 
+                              />
+                           </AreaChart>
+                        </ResponsiveContainer>
+                     </div>
+
+                     {/* Global Actions */}
+                     <div className="grid grid-cols-4 gap-3 mt-4">
+                        {[
+                           { label: 'Send', icon: ArrowUpRight, color: 'text-white' },
+                           { label: 'Receive', icon: ArrowDownLeft, color: 'text-white' },
+                           { label: 'Buy', icon: CreditCard, color: 'text-emerald-400' },
+                           { label: 'Swap', icon: ArrowLeftRight, color: 'text-indigo-400' },
+                        ].map((action, i) => (
+                           <button key={i} className="flex flex-col items-center gap-2 group">
+                              <div className="w-14 h-14 rounded-[1.2rem] bg-slate-900 border border-white/5 flex items-center justify-center shadow-lg group-active:scale-95 transition-all group-hover:border-white/20">
+                                 <action.icon size={20} className={action.color} />
+                              </div>
+                              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{action.label}</span>
+                           </button>
+                        ))}
+                     </div>
+                  </div>
+
+                  {/* Asset List */}
+                  <div>
+                     <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Assets</h3>
+                        <Settings size={14} className="text-slate-600" />
+                     </div>
+                     <div className="space-y-3">
+                        {ASSETS.map((asset) => (
+                           <div key={asset.symbol} className="flex items-center justify-between p-4 bg-slate-900/50 backdrop-blur-md border border-white/5 rounded-2xl hover:bg-white/5 transition-colors cursor-pointer group">
+                              <div className="flex items-center gap-4">
+                                 <div className={`w-10 h-10 rounded-xl ${asset.color} flex items-center justify-center text-white font-bold shadow-lg`}>
+                                    {asset.symbol[0]}
+                                 </div>
+                                 <div>
+                                    <div className="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors">{asset.name}</div>
+                                    <div className="text-[10px] font-bold text-slate-500">{asset.amount} {asset.symbol}</div>
+                                 </div>
+                              </div>
+                              <div className="text-right">
+                                 <div className="text-sm font-bold text-white">{asset.value}</div>
+                                 <div className={`text-[10px] font-bold ${asset.change.startsWith('+') ? 'text-emerald-500' : 'text-rose-500'}`}>{asset.change}</div>
+                              </div>
+                           </div>
+                        ))}
+                     </div>
+                  </div>
+
+                  {/* Ledger */}
+                  <div>
+                     <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Ledger</h3>
+                     <div className="space-y-3">
+                        {TRANSACTIONS.map((tx) => (
+                           <div key={tx.id} className="flex items-start gap-4 p-3 rounded-2xl hover:bg-white/5 transition-colors">
+                              <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 shrink-0">
+                                 {tx.type === 'swap' && <RefreshCw size={14} />}
+                                 {tx.type === 'receive' && <ArrowDownLeft size={14} />}
+                                 {tx.type === 'contract' && <Terminal size={14} />}
+                              </div>
+                              <div className="flex-grow">
+                                 <div className="flex justify-between items-center mb-0.5">
+                                    <span className="text-xs font-bold text-white">{tx.title}</span>
+                                    <span className={`text-xs font-bold ${tx.amount.startsWith('+') ? 'text-emerald-500' : 'text-white'}`}>{tx.amount}</span>
+                                 </div>
+                                 <div className="flex justify-between items-center">
+                                    <span className="text-[10px] font-medium text-slate-500">{tx.subtitle}</span>
+                                    <span className="text-[10px] font-medium text-slate-600">{tx.time}</span>
+                                 </div>
+                              </div>
+                           </div>
+                        ))}
+                     </div>
+                  </div>
+               </div>
+             )}
+
+             {/* === MODULE B: DEX === */}
+             {activeTab === 'dex' && (
+                <div className="p-6 h-full flex flex-col animate-in fade-in zoom-in-95 duration-300">
+                   <div className="mb-6 flex justify-between items-center">
+                      <h2 className="text-2xl font-black text-white uppercase tracking-tight">Fluid DEX</h2>
+                      <div className="px-2 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded text-[9px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1">
+                         <Shield size={10} /> MEV Protected
+                      </div>
+                   </div>
+
+                   {/* Swap Interface */}
+                   <div className="bg-slate-900/50 border border-white/5 rounded-[2rem] p-6 relative overflow-hidden backdrop-blur-xl mb-6">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-[50px] pointer-events-none"></div>
+                      
+                      {/* From */}
+                      <div className="mb-2">
+                         <div className="flex justify-between mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                            <span>You Pay</span>
+                            <span>Bal: 12.5 ETH</span>
+                         </div>
+                         <div className="flex items-center justify-between bg-black/20 rounded-2xl p-4 border border-white/5">
+                            <input type="number" defaultValue="1.5" className="bg-transparent text-2xl font-black text-white outline-none w-32" />
+                            <div className="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-xl border border-white/10">
+                               <div className="w-5 h-5 rounded-full bg-indigo-500"></div>
+                               <span className="text-xs font-bold text-white">ETH</span>
+                               <ChevronDown size={12} className="text-slate-500" />
+                            </div>
+                         </div>
+                      </div>
+
+                      {/* Divider */}
+                      <div className="flex justify-center -my-3 relative z-10">
+                         <div className="bg-slate-800 border border-slate-700 p-2 rounded-xl text-indigo-400 shadow-lg">
+                            <ArrowDown size={16} />
+                         </div>
+                      </div>
+
+                      {/* To */}
+                      <div className="mt-2 mb-6">
+                         <div className="flex justify-between mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                            <span>You Receive</span>
+                            <span className="text-emerald-500">Best Price</span>
+                         </div>
+                         <div className="flex items-center justify-between bg-black/20 rounded-2xl p-4 border border-white/5">
+                            <span className="text-2xl font-black text-emerald-400">8,420.50</span>
+                            <div className="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-xl border border-white/10">
+                               <div className="w-5 h-5 rounded-full bg-emerald-500"></div>
+                               <span className="text-xs font-bold text-white">FLD</span>
+                               <ChevronDown size={12} className="text-slate-500" />
+                            </div>
+                         </div>
+                      </div>
+
+                      {/* Route Selection */}
+                      <div className="bg-black/20 rounded-xl p-3 border border-white/5 mb-6">
+                         <div className="flex justify-between items-center mb-3">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Routing Engine</span>
+                            <Zap size={12} className="text-amber-500" />
+                         </div>
+                         <div className="space-y-2">
+                            {[
+                               { id: 'fluid', label: 'Fluid Hub', fee: '$2.40', time: '1s', best: true },
+                               { id: 'nexus', label: 'Nexus Liq', fee: '$2.45', time: '3s', best: false },
+                               { id: 'mesh', label: 'Mesh Route', fee: '$3.10', time: '5s', best: false },
+                            ].map(route => (
+                               <button 
+                                 key={route.id}
+                                 onClick={() => setSwapRoute(route.id as any)}
+                                 className={`w-full flex items-center justify-between p-2 rounded-lg border transition-all ${swapRoute === route.id ? 'bg-indigo-500/10 border-indigo-500/50' : 'bg-transparent border-transparent opacity-50'}`}
+                               >
+                                  <div className="flex items-center gap-2">
+                                     <div className={`w-2 h-2 rounded-full ${route.best ? 'bg-emerald-500' : 'bg-slate-600'}`}></div>
+                                     <span className="text-[10px] font-bold text-white">{route.label}</span>
+                                     {route.best && <span className="text-[8px] bg-emerald-500/20 text-emerald-500 px-1 rounded uppercase font-black">Best</span>}
+                                  </div>
+                                  <div className="text-[10px] font-mono text-slate-400">{route.fee} • ~{route.time}</div>
+                               </button>
+                            ))}
+                         </div>
+                      </div>
+
+                      <button className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl font-black text-white uppercase tracking-widest shadow-lg shadow-indigo-500/20 active:scale-95 transition-transform flex items-center justify-center gap-2 group">
+                         <RefreshCw size={16} className="group-hover:rotate-180 transition-transform duration-500" />
+                         Swap Assets
+                      </button>
+                   </div>
+                </div>
+             )}
+
+             {/* === MODULE C: CARDS === */}
+             {activeTab === 'cards' && (
+                <div className="p-6 h-full flex flex-col animate-in fade-in slide-in-from-right-4 duration-300">
+                   <div className="flex justify-center mb-8">
+                      <div className="flex bg-slate-900 p-1 rounded-full border border-slate-800">
+                         <button 
+                           onClick={() => setCardMode('virtual')}
+                           className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${cardMode === 'virtual' ? 'bg-white text-slate-900 shadow-lg' : 'text-slate-500'}`}
+                         >
+                           Digital
+                         </button>
+                         <button 
+                           onClick={() => setCardMode('physical')}
+                           className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${cardMode === 'physical' ? 'bg-white text-slate-900 shadow-lg' : 'text-slate-500'}`}
+                         >
+                           Metal
+                         </button>
+                      </div>
+                   </div>
+
+                   {/* Card Visual */}
+                   <div className="perspective-1000 mb-8 relative group cursor-pointer" onClick={() => setCardFrozen(!cardFrozen)}>
+                      <div className={`aspect-[1.586/1] rounded-2xl relative transition-all duration-500 overflow-hidden shadow-2xl border border-white/10 ${cardFrozen ? 'grayscale brightness-75' : ''} ${cardMode === 'physical' ? 'bg-[#1a1a1a]' : 'bg-gradient-to-br from-indigo-900 via-slate-900 to-black'}`}>
+                         
+                         {/* Card Texture */}
+                         {cardMode === 'physical' && <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>}
+                         {cardMode === 'virtual' && <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-[60px]"></div>}
+
+                         {/* Freeze Overlay */}
+                         {cardFrozen && (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center z-20 bg-black/40 backdrop-blur-[2px]">
+                               <Lock size={32} className="text-white mb-2" />
+                               <span className="text-xs font-black text-white uppercase tracking-widest border border-white px-2 py-1 rounded">Frozen</span>
+                            </div>
+                         )}
+
+                         <div className="absolute inset-0 p-6 flex flex-col justify-between z-10">
+                            <div className="flex justify-between items-start">
+                               <FluidLogo className="w-8 h-8 text-white" />
+                               <div className="flex items-center gap-1">
+                                  <div className="w-1 h-2 bg-slate-600 rounded-full"></div>
+                                  <div className="w-1 h-3 bg-white rounded-full"></div>
+                                  <div className="w-1 h-2 bg-slate-600 rounded-full"></div>
+                               </div>
+                            </div>
+
+                            <div>
+                               <div className="flex items-center justify-between mb-4">
+                                  {showCardDetails ? (
+                                     <span className="font-mono text-lg text-white tracking-widest">4920 1928 4492 1029</span>
+                                  ) : (
+                                     <span className="font-mono text-lg text-white tracking-widest">**** **** **** 1029</span>
+                                  )}
+                                  <button onClick={(e) => { e.stopPropagation(); setShowCardDetails(!showCardDetails); }} className="text-slate-400 hover:text-white">
+                                     {showCardDetails ? <EyeOff size={16} /> : <Eye size={16} />}
+                                  </button>
+                               </div>
+                               <div className="flex justify-between items-end">
+                                  <div>
+                                     <span className="text-[8px] text-slate-400 uppercase font-black block mb-0.5">Card Holder</span>
+                                     <span className="text-xs text-white font-bold tracking-wider">ALEXANDER FLUID</span>
+                                  </div>
+                                  <span className="text-[10px] font-bold text-white/50 italic">{cardMode === 'physical' ? 'STEEL' : 'VIRTUAL'}</span>
+                               </div>
+                            </div>
+                         </div>
+                      </div>
+                   </div>
+
+                   {/* Controls */}
+                   <div className="space-y-4">
+                      <div className="grid grid-cols-3 gap-3">
+                         <button className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-indigo-500/50 transition-colors">
+                            <Settings size={20} className="text-slate-400" />
+                            <span className="text-[9px] font-bold text-slate-500 uppercase">Limits</span>
+                         </button>
+                         <button className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-indigo-500/50 transition-colors">
+                            <Lock size={20} className="text-slate-400" />
+                            <span className="text-[9px] font-bold text-slate-500 uppercase">Pin</span>
+                         </button>
+                         <button className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-indigo-500/50 transition-colors">
+                            <RefreshCw size={20} className="text-slate-400" />
+                            <span className="text-[9px] font-bold text-slate-500 uppercase">Replace</span>
+                         </button>
+                      </div>
+
+                      <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-800 flex items-center justify-between">
+                         <div className="flex items-center gap-3">
+                            <div className="p-2 bg-rose-500/10 rounded-lg text-rose-500"><AlertTriangle size={18}/></div>
+                            <div>
+                               <div className="text-xs font-bold text-white">Freeze Card</div>
+                               <div className="text-[9px] text-slate-500">Temporarily disable transactions</div>
+                            </div>
+                         </div>
+                         <div 
+                           onClick={() => setCardFrozen(!cardFrozen)}
+                           className={`w-10 h-6 rounded-full p-1 transition-colors cursor-pointer ${cardFrozen ? 'bg-rose-500' : 'bg-slate-700'}`}
+                         >
+                            <div className={`w-4 h-4 bg-white rounded-full shadow-md transition-transform ${cardFrozen ? 'translate-x-4' : ''}`}></div>
+                         </div>
+                      </div>
+                   </div>
+                </div>
+             )}
+
+             {/* === MODULE D: HOSTING & DAPPS === */}
+             {activeTab === 'hosting' && (
+                <div className="p-6 h-full flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300">
+                   <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-6">Parmaweb</h2>
+                   
+                   {/* Hosting Status */}
+                   <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-6 mb-8 relative overflow-hidden">
+                      <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-3xl"></div>
+                      <div className="flex justify-between items-start mb-6">
+                         <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-emerald-500 border border-slate-700">
+                               <Cloud size={20} />
+                            </div>
+                            <div>
+                               <div className="text-sm font-bold text-white">alex.fluid</div>
+                               <div className="flex items-center gap-1.5 mt-1">
+                                  <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
+                                  <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Online</span>
+                               </div>
+                            </div>
+                         </div>
+                         <button className="p-2 bg-slate-800 rounded-lg text-slate-400 hover:text-white"><ExternalLink size={16} /></button>
+                      </div>
+                      
+                      <div className="grid grid-cols-3 gap-4">
+                         <div className="text-center">
+                            <div className="text-xs font-bold text-slate-500 uppercase mb-1">Visits</div>
+                            <div className="text-lg font-black text-white">2.4k</div>
+                         </div>
+                         <div className="text-center border-x border-slate-800">
+                            <div className="text-xs font-bold text-slate-500 uppercase mb-1">Storage</div>
+                            <div className="text-lg font-black text-white">45mb</div>
+                         </div>
+                         <div className="text-center">
+                            <div className="text-xs font-bold text-slate-500 uppercase mb-1">Cost</div>
+                            <div className="text-lg font-black text-white">$0</div>
+                         </div>
+                      </div>
+                   </div>
+
+                   {/* DApp Browser */}
+                   <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Ecosystem</h3>
+                   <div className="grid grid-cols-2 gap-4">
+                      {[
+                         { name: 'Fluid Lend', cat: 'DeFi', icon: Landmark, color: 'text-indigo-400' },
+                         { name: 'ParmaDAO', cat: 'Governance', icon: Users, color: 'text-amber-400' },
+                         { name: 'Fluid NFT', cat: 'Market', icon: Layout, color: 'text-rose-400' },
+                         { name: 'Bridge', cat: 'Utility', icon: Repeat, color: 'text-cyan-400' },
+                      ].map((app, i) => (
+                         <div key={i} className="bg-slate-900/50 border border-slate-800 p-4 rounded-2xl hover:bg-white/5 transition-colors cursor-pointer group">
+                            <div className={`w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center mb-3 ${app.color}`}>
+                               <app.icon size={16} />
+                            </div>
+                            <div className="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors">{app.name}</div>
+                            <div className="text-[10px] font-bold text-slate-500">{app.cat}</div>
+                         </div>
+                      ))}
+                   </div>
+                </div>
+             )}
+
+          </div>
+
+          {/* Bottom Navigation (Glass) */}
+          <nav className="h-20 bg-slate-950/80 backdrop-blur-xl border-t border-white/5 flex justify-between px-6 items-center relative z-50">
+             {tabs.map((tab) => (
+                <button 
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id)}
+                  className={`flex flex-col items-center gap-1 transition-all duration-300 ${activeTab === tab.id ? 'text-indigo-400 -translate-y-1' : 'text-slate-600 hover:text-slate-400'}`}
+                >
+                   <tab.icon size={22} strokeWidth={activeTab === tab.id ? 2.5 : 2} />
+                   {activeTab === tab.id && <span className="w-1 h-1 bg-indigo-500 rounded-full absolute -bottom-2"></span>}
+                </button>
+             ))}
+          </nav>
+          
+          {/* Home Indicator */}
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/20 rounded-full z-50 pointer-events-none"></div>
+
+       </div>
+    </div>
+  );
+};
+
+// Simple User Icon Component needed above
+const Users = ({size, className}: {size: number, className?: string}) => (
+   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+   </svg>
+);
+
+const User = ({size, className}: {size: number, className?: string}) => (
+   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
+   </svg>
+);
 
 export default FluidWalletApp;
