@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   Wallet as WalletIcon, RefreshCw, CreditCard, Layers, 
   Lock, Fingerprint, ScanFace, ChevronDown, Bell, 
@@ -11,7 +11,7 @@ import {
   ArrowDown, Layout, Users, ShieldCheck, AlertOctagon, FileCheck,
   Building2, Banknote, History, Flag, QrCode, UploadCloud, Rocket,
   Key, Chrome, ChevronLeft, Delete, User, Edit3, AtSign, Camera, Share2, Save, ShoppingCart, ArrowRight,
-  ShoppingBag, Coins, Monitor
+  ShoppingBag, Coins, Monitor, Play, RotateCw, Check
 } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 
@@ -42,6 +42,15 @@ interface DApp {
   icon: React.ElementType;
   category: string;
   status: 'online' | 'offline';
+  description?: string;
+}
+
+interface Deployment {
+  id: string;
+  name: string;
+  hash: string;
+  status: 'active' | 'deploying' | 'error';
+  url: string;
 }
 
 // --- Mock Data ---
@@ -75,9 +84,9 @@ const FIAT_ACCOUNTS = [
 ];
 
 const DAPPS: DApp[] = [
-  { id: '1', name: 'Fluid Swap', url: 'fluid://dex', icon: RefreshCw, category: 'DeFi', status: 'online' },
-  { id: '2', name: 'Fluid Storage', url: 'fluid://storage', icon: Database, category: 'Infrastructure', status: 'online' },
-  { id: '3', name: 'SecureChat', url: 'fluid://chat', icon: Lock, category: 'Social', status: 'online' },
+  { id: '1', name: 'Fluid Swap', url: 'fluid://dex', icon: RefreshCw, category: 'DeFi', status: 'online', description: 'Instant, low-fee token swaps.' },
+  { id: '2', name: 'Fluid Storage', url: 'fluid://storage', icon: Database, category: 'Infrastructure', status: 'online', description: 'Decentralized permanent file storage.' },
+  { id: '3', name: 'SecureChat', url: 'fluid://chat', icon: Lock, category: 'Social', status: 'online', description: 'E2E encrypted wallet-to-wallet chat.' },
 ];
 
 // --- Components ---
@@ -295,7 +304,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
   const [cardMode, setCardMode] = useState<'virtual' | 'physical'>('virtual');
   const [cardFrozen, setCardFrozen] = useState(false);
   const [showCardDetails, setShowCardDetails] = useState(false);
-  const [activeModal, setActiveModal] = useState<'send' | 'receive' | 'buy' | 'editProfile' | 'domainRegistrar' | 'cardLimits' | null>(null);
+  const [activeModal, setActiveModal] = useState<'send' | 'receive' | 'buy' | 'editProfile' | 'domainRegistrar' | 'cardLimits' | 'deploy' | 'dappStore' | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   
   // Profile State
@@ -318,6 +327,19 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
   // Domain Registrar State
   const [domainQuery, setDomainQuery] = useState('');
   const [domainSearchStatus, setDomainSearchStatus] = useState<'idle' | 'searching' | 'results'>('idle');
+
+  // Deployment State
+  const [myDeployments, setMyDeployments] = useState<Deployment[]>([
+    { id: '1', name: 'fluid-dex-v2', hash: 'ipfs://QmX...7a2', status: 'active', url: 'https://fluid.link/dex' }
+  ]);
+  const [newDeployName, setNewDeployName] = useState('');
+  const [deployStep, setDeployStep] = useState(0); // 0: input, 1: deploying, 2: success
+  const [deployLogs, setDeployLogs] = useState<string[]>([]);
+  const logsEndRef = useRef<HTMLDivElement>(null);
+
+  // DApp Store State
+  const [dAppSearch, setDAppSearch] = useState('');
+  const [selectedDAppCategory, setSelectedDAppCategory] = useState('All');
 
   // DEX States
   const [swapRoute, setSwapRoute] = useState<'fluid' | 'nexus' | 'mesh'>('fluid');
@@ -403,6 +425,46 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
       setDomainSearchStatus('results');
     }, 1500);
   };
+
+  // --- Deployment Simulation ---
+  const startDeployment = () => {
+    if (!newDeployName) return;
+    setDeployStep(1);
+    setDeployLogs(['> Initializing Fluid CLI environment...']);
+    
+    const steps = [
+        { msg: '> Cloning repository...', delay: 800 },
+        { msg: '> Installing dependencies (npm install)...', delay: 2000 },
+        { msg: '> Building optimized production bundle...', delay: 3500 },
+        { msg: '> Encrypting assets for sharding...', delay: 5000 },
+        { msg: '> Uploading to Fluid Node Grid (Shard 1/3)...', delay: 6000 },
+        { msg: '> Uploading to Fluid Node Grid (Shard 2/3)...', delay: 7000 },
+        { msg: '> Uploading to Fluid Node Grid (Shard 3/3)...', delay: 8000 },
+        { msg: '> Verifying integrity and propagation...', delay: 9000 },
+        { msg: '> Generating immutable hash...', delay: 10000 },
+        { msg: 'SUCCESS: Deployment Complete!', delay: 11000 },
+    ];
+
+    steps.forEach(({ msg, delay }) => {
+        setTimeout(() => {
+            setDeployLogs(prev => [...prev, msg]);
+            if (logsEndRef.current) {
+                logsEndRef.current.scrollIntoView({ behavior: "smooth" });
+            }
+        }, delay);
+    });
+
+    setTimeout(() => {
+        setMyDeployments(prev => [{
+            id: Date.now().toString(),
+            name: newDeployName,
+            hash: `ipfs://Qm${Math.random().toString(36).substring(7)}`,
+            status: 'active',
+            url: `https://${newDeployName}.fluid.link`
+        }, ...prev]);
+        setDeployStep(2);
+    }, 11500);
+  };
   
   // Navigation
   const tabs = [
@@ -413,20 +475,29 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
     { id: 'hosting', label: 'Fluid Host', icon: Server },
   ];
 
-  if (isLocked) {
-    return (
-       <div className="min-h-screen pt-24 pb-12 flex justify-center px-4">
-          <div className="w-full max-w-[420px] h-[850px] bg-black rounded-[3.5rem] border-8 border-slate-900 relative overflow-hidden shadow-2xl">
+  return (
+    <div className="min-h-screen pt-32 pb-24 flex flex-col items-center justify-center">
+       
+       {/* Introduction Header */}
+       <div className="text-center mb-12 max-w-2xl mx-auto px-4">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-500 text-[10px] font-bold uppercase tracking-widest mb-4">
+             <Layout size={12} /> Interactive Demo
+          </div>
+          <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter mb-6">
+             Experience the Future of DeFi
+          </h1>
+          <p className="text-lg text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
+             Take an interactive tour of the Fluid Dapp — a preview of the seamless convergence of crypto, banking, and decentralized hosting we are building.
+          </p>
+       </div>
+
+       {/* Device Chassis */}
+       {isLocked ? (
+          <div className="w-full max-w-[420px] h-[850px] bg-black rounded-[3.5rem] border-8 border-slate-900 relative overflow-hidden shadow-2xl mx-auto">
              <SecurityVault onUnlock={() => setIsLocked(false)} />
           </div>
-       </div>
-    );
-  }
-
-  return (
-    <div className="min-h-screen pt-24 pb-12 flex flex-col items-center justify-center px-4">
-       {/* Device Chassis */}
-       <div className="w-full max-w-[420px] h-[850px] bg-[#020617] rounded-[3.5rem] border-[8px] border-[#1e232f] relative overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col">
+       ) : (
+          <div className="w-full max-w-[420px] h-[850px] bg-[#020617] rounded-[3.5rem] border-[8px] border-[#1e232f] relative overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col mx-auto">
           
           {/* Dynamic Island / Status Bar */}
           <div className="absolute top-0 inset-x-0 h-14 z-50 pointer-events-none px-8 pt-5 flex justify-between items-start text-white">
@@ -1034,23 +1105,35 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                    <div className="mb-6">
                       <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">My Deployments</h3>
                       <div className="space-y-3">
-                          <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-900/50 border border-slate-800 hover:bg-slate-900 transition-colors">
-                              <div className="flex items-center gap-3">
-                                  <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
-                                      <Rocket size={18} />
-                                  </div>
-                                  <div>
-                                      <div className="text-xs font-bold text-white">fluid-dex-v2</div>
-                                      <div className="text-[9px] text-slate-500 font-mono">ipfs://QmX...7a2</div>
-                                  </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                  <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                                  <MoreHorizontal size={16} className="text-slate-500" />
-                              </div>
-                          </div>
+                          {myDeployments.map((deploy) => (
+                            <div key={deploy.id} className="flex items-center justify-between p-3 rounded-2xl bg-slate-900/50 border border-slate-800 hover:bg-slate-900 transition-colors animate-in fade-in slide-in-from-bottom-2">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-xl bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+                                        <Rocket size={18} />
+                                    </div>
+                                    <div>
+                                        <div className="text-xs font-bold text-white">{deploy.name}</div>
+                                        <div className="text-[9px] text-slate-500 font-mono truncate w-24">{deploy.hash}</div>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    {deploy.status === 'active' && <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>}
+                                    <a href={deploy.url} target="_blank" rel="noreferrer" className="text-slate-500 hover:text-white transition-colors">
+                                        <ExternalLink size={14} />
+                                    </a>
+                                </div>
+                            </div>
+                          ))}
                           
-                          <button className="w-full py-3 rounded-2xl border border-dashed border-slate-700 text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-900/50 hover:text-white hover:border-slate-600 transition-all flex items-center justify-center gap-2">
+                          <button 
+                            onClick={() => {
+                                setNewDeployName('');
+                                setDeployStep(0);
+                                setDeployLogs([]);
+                                setActiveModal('deploy');
+                            }}
+                            className="w-full py-3 rounded-2xl border border-dashed border-slate-700 text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-900/50 hover:text-white hover:border-slate-600 transition-all flex items-center justify-center gap-2"
+                          >
                                <UploadCloud size={14} /> Deploy New Site
                           </button>
                       </div>
@@ -1061,18 +1144,25 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                       <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Fluid Host Browser</h3>
                       <div className="grid grid-cols-3 gap-3">
                           {DAPPS.map(app => (
-                              <button key={app.id} className="flex flex-col items-center gap-2 p-3 bg-slate-900/30 border border-slate-800 rounded-2xl hover:bg-slate-800 hover:border-slate-700 transition-all group">
+                              <button 
+                                key={app.id} 
+                                onClick={() => setActiveModal('dappStore')}
+                                className="flex flex-col items-center gap-2 p-3 bg-slate-900/30 border border-slate-800 rounded-2xl hover:bg-slate-800 hover:border-slate-700 transition-all group"
+                              >
                                   <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-white border border-white/5 group-hover:scale-110 transition-transform">
                                       <app.icon size={18} />
                                   </div>
                                   <span className="text-[9px] font-bold text-slate-400 group-hover:text-white">{app.name}</span>
                               </button>
                           ))}
-                          <button className="flex flex-col items-center gap-2 p-3 border border-dashed border-slate-800 rounded-2xl hover:bg-slate-900/50 transition-all">
-                              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-600">
+                          <button 
+                            onClick={() => setActiveModal('dappStore')}
+                            className="flex flex-col items-center gap-2 p-3 border border-dashed border-slate-800 rounded-2xl hover:bg-slate-900/50 transition-all group"
+                          >
+                              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-slate-600 group-hover:text-white transition-colors">
                                   <Search size={18} />
                               </div>
-                              <span className="text-[9px] font-bold text-slate-600">Explore</span>
+                              <span className="text-[9px] font-bold text-slate-600 group-hover:text-white transition-colors">Explore</span>
                           </button>
                       </div>
                    </div>
@@ -1208,6 +1298,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
              )}
 
           </div>
+          )}
           
           {/* --- ACTION MODALS --- */}
           {activeModal && (
@@ -1223,11 +1314,169 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                        {activeModal === 'editProfile' && 'Edit Profile'}
                        {activeModal === 'domainRegistrar' && 'Domain Registrar'}
                        {activeModal === 'cardLimits' && 'Spending Limits'}
+                       {activeModal === 'deploy' && 'Deploy dApp'}
+                       {activeModal === 'dappStore' && 'dApp Store'}
                      </h3>
                      <button onClick={() => { setActiveModal(null); setDomainSearchStatus('idle'); setDomainQuery(''); }} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white">
                         <X size={16} />
                      </button>
                   </div>
+
+                  {activeModal === 'deploy' && (
+                    <div className="flex flex-col h-full overflow-hidden">
+                        {deployStep === 0 && (
+                            <div className="space-y-6 flex-grow animate-in fade-in">
+                                <div className="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl flex gap-3">
+                                    <Rocket className="text-indigo-500 shrink-0" size={20} />
+                                    <p className="text-[10px] text-indigo-200/80 leading-relaxed">
+                                        Deploy standard React/Next.js projects directly from GitHub. Your site will be hosted permanently on the Fluid Node Network.
+                                    </p>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Project Name</label>
+                                        <input 
+                                            type="text" 
+                                            placeholder="my-awesome-dapp" 
+                                            value={newDeployName}
+                                            onChange={(e) => setNewDeployName(e.target.value)}
+                                            className="w-full bg-black/20 border border-white/10 rounded-xl py-4 px-4 text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition-all"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">GitHub Repository URL</label>
+                                        <input 
+                                            type="text" 
+                                            placeholder="https://github.com/username/repo" 
+                                            className="w-full bg-black/20 border border-white/10 rounded-xl py-4 px-4 text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition-all"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Framework Preset</label>
+                                        <div className="flex gap-2">
+                                            {['Next.js', 'React', 'Vite', 'Static'].map(fw => (
+                                                <button key={fw} className="flex-1 py-2 bg-slate-800 rounded-lg text-[10px] font-bold text-slate-400 hover:text-white hover:bg-slate-700 transition-colors border border-white/5 focus:border-indigo-500">{fw}</button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button 
+                                    onClick={startDeployment}
+                                    disabled={!newDeployName}
+                                    className="w-full py-4 mt-auto bg-indigo-600 text-white font-black rounded-xl uppercase tracking-widest hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                >
+                                    <Terminal size={16} /> Initialize Deploy
+                                </button>
+                            </div>
+                        )}
+
+                        {deployStep === 1 && (
+                            <div className="flex flex-col h-full animate-in fade-in">
+                                <div className="flex-grow bg-black rounded-2xl border border-white/10 p-4 font-mono text-[10px] text-slate-300 overflow-y-auto mb-4 custom-scrollbar">
+                                    <div className="flex gap-2 mb-2 pb-2 border-b border-white/10 text-slate-500">
+                                        <div className="w-2 h-2 rounded-full bg-red-500"></div>
+                                        <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
+                                        <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                                        <span className="ml-2">fluid-cli deploy --prod</span>
+                                    </div>
+                                    <div className="space-y-1">
+                                        {deployLogs.map((log, i) => (
+                                            <div key={i} className={`${i === deployLogs.length - 1 ? 'text-white font-bold animate-pulse' : 'text-slate-400'}`}>
+                                                {log}
+                                            </div>
+                                        ))}
+                                        <div ref={logsEndRef} />
+                                    </div>
+                                </div>
+                                <div className="text-center text-[10px] text-slate-500 uppercase font-black tracking-widest animate-pulse">
+                                    Building & Sharding...
+                                </div>
+                            </div>
+                        )}
+
+                        {deployStep === 2 && (
+                            <div className="flex flex-col items-center justify-center h-full animate-in zoom-in-95 duration-500 text-center space-y-6">
+                                <div className="w-24 h-24 rounded-full bg-emerald-500/20 flex items-center justify-center text-emerald-500 shadow-[0_0_40px_rgba(16,185,129,0.3)]">
+                                    <Check size={48} />
+                                </div>
+                                <div>
+                                    <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-2">Deployed!</h2>
+                                    <p className="text-slate-400 text-sm">Your decentralized site is live.</p>
+                                </div>
+                                <div className="w-full bg-black/30 p-4 rounded-xl border border-emerald-500/20 flex items-center justify-between">
+                                    <span className="text-emerald-400 font-mono text-xs">{`https://${newDeployName}.fluid.link`}</span>
+                                    <ExternalLink size={16} className="text-slate-500 hover:text-white cursor-pointer" />
+                                </div>
+                                <button 
+                                    onClick={() => setActiveModal(null)}
+                                    className="px-8 py-3 bg-white text-slate-900 font-black rounded-xl uppercase tracking-widest hover:scale-105 transition-transform"
+                                >
+                                    Done
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                  )}
+
+                  {activeModal === 'dappStore' && (
+                    <div className="flex flex-col h-full overflow-hidden">
+                        {/* Search */}
+                        <div className="mb-4 relative">
+                            <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                            <input 
+                                type="text" 
+                                value={dAppSearch}
+                                onChange={(e) => setDAppSearch(e.target.value)}
+                                placeholder="Search apps, protocols..." 
+                                className="w-full bg-black/20 border border-white/10 rounded-xl py-3 pl-10 pr-4 text-sm font-bold text-white focus:outline-none focus:border-indigo-500 transition-all"
+                            />
+                        </div>
+
+                        {/* Categories */}
+                        <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar mb-2">
+                            {['All', 'DeFi', 'NFT', 'Social', 'Games', 'Utils'].map(cat => (
+                                <button 
+                                    key={cat}
+                                    onClick={() => setSelectedDAppCategory(cat)}
+                                    className={`px-4 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider whitespace-nowrap transition-colors border ${selectedDAppCategory === cat ? 'bg-white text-slate-900 border-white' : 'bg-transparent text-slate-500 border-slate-800 hover:border-slate-600'}`}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* List */}
+                        <div className="flex-grow overflow-y-auto space-y-3 pr-1 custom-scrollbar">
+                            {DAPPS.filter(app => (selectedDAppCategory === 'All' || app.category === selectedDAppCategory) && app.name.toLowerCase().includes(dAppSearch.toLowerCase())).map(app => (
+                                <div key={app.id} className="flex items-center gap-4 p-3 bg-slate-900/50 border border-slate-800 rounded-2xl hover:border-indigo-500/30 transition-all group cursor-pointer">
+                                    <div className="w-12 h-12 bg-slate-800 rounded-xl flex items-center justify-center text-white border border-white/5 shrink-0 group-hover:scale-105 transition-transform">
+                                        <app.icon size={20} />
+                                    </div>
+                                    <div className="flex-grow">
+                                        <div className="flex justify-between items-start">
+                                            <h4 className="text-sm font-bold text-white">{app.name}</h4>
+                                            <span className="text-[9px] font-bold text-slate-500 bg-slate-900 px-1.5 py-0.5 rounded border border-slate-800">{app.category}</span>
+                                        </div>
+                                        <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5">{app.description}</p>
+                                    </div>
+                                    <button className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-500/20">
+                                        <ArrowRight size={14} />
+                                    </button>
+                                </div>
+                            ))}
+                            {/* Promo Banner */}
+                            <div className="mt-4 p-4 bg-gradient-to-r from-purple-900/40 to-indigo-900/40 border border-purple-500/20 rounded-2xl flex items-center justify-between">
+                                <div>
+                                    <div className="text-xs font-bold text-white mb-1">Submit your dApp</div>
+                                    <div className="text-[9px] text-purple-300">Join the Fluid ecosystem today.</div>
+                                </div>
+                                <button className="px-3 py-1.5 bg-purple-500 hover:bg-purple-400 text-white text-[9px] font-bold rounded-lg uppercase tracking-wider transition-colors">Apply</button>
+                            </div>
+                        </div>
+                    </div>
+                  )}
 
                   {activeModal === 'send' && (
                      <div className="space-y-4 flex-grow">
@@ -1310,167 +1559,6 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                           Continue to Payment
                         </button>
                      </div>
-                  )}
-
-                  {activeModal === 'editProfile' && (
-                     <div className="space-y-5 flex-grow overflow-y-auto custom-scrollbar pr-1">
-                        <div className="flex justify-center mb-4 relative">
-                           <img 
-                              src={tempProfile.avatar} 
-                              alt="Avatar" 
-                              className="w-24 h-24 rounded-3xl bg-slate-800 object-cover border-4 border-slate-800 shadow-xl" 
-                           />
-                           <button className="absolute -bottom-2 -right-2 w-8 h-8 bg-indigo-500 rounded-xl flex items-center justify-center text-white border-2 border-slate-900 shadow-lg hover:bg-indigo-400 transition-colors">
-                              <Camera size={14} />
-                           </button>
-                        </div>
-                        
-                        <div>
-                           <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Display Name</label>
-                           <div className="flex items-center bg-black/20 rounded-xl border border-white/10 p-3 focus-within:border-indigo-500/50 transition-colors">
-                              <User size={16} className="text-slate-500 mr-3" />
-                              <input 
-                                 type="text" 
-                                 value={tempProfile.name}
-                                 onChange={(e) => setTempProfile({...tempProfile, name: e.target.value})}
-                                 className="bg-transparent w-full text-sm text-white outline-none font-bold" 
-                              />
-                           </div>
-                        </div>
-
-                        <div>
-                           <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Fluid Handle (Wallet Alias)</label>
-                           <div className="flex items-center bg-black/20 rounded-xl border border-white/10 p-3 focus-within:border-indigo-500/50 transition-colors">
-                              <AtSign size={16} className="text-indigo-500 mr-3" />
-                              <input 
-                                 type="text" 
-                                 value={tempProfile.handle}
-                                 onChange={(e) => setTempProfile({...tempProfile, handle: e.target.value})}
-                                 placeholder="username"
-                                 className="bg-transparent w-full text-sm text-white outline-none font-bold" 
-                              />
-                              {tempProfile.handle && <CheckCircle2 size={16} className="text-emerald-500" />}
-                           </div>
-                           <p className="text-[9px] text-slate-500 mt-1 ml-1">This handle can be used to receive funds.</p>
-                        </div>
-
-                        <div>
-                           <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Bio</label>
-                           <textarea 
-                                 value={tempProfile.bio}
-                                 onChange={(e) => setTempProfile({...tempProfile, bio: e.target.value})}
-                                 className="w-full bg-black/20 rounded-xl border border-white/10 p-3 text-sm text-white outline-none font-medium h-20 resize-none focus:border-indigo-500/50 transition-colors" 
-                           />
-                        </div>
-
-                        <button 
-                          onClick={saveProfile}
-                          className="w-full py-4 mt-auto bg-indigo-600 text-white font-black rounded-xl uppercase tracking-widest hover:bg-indigo-500 transition-colors shadow-lg shadow-indigo-500/20 flex items-center justify-center gap-2"
-                        >
-                          <Save size={16} /> Save Profile
-                        </button>
-                     </div>
-                  )}
-
-                  {activeModal === 'domainRegistrar' && (
-                    <div className="space-y-4 flex-grow flex flex-col h-full overflow-hidden">
-                        {/* Search Header */}
-                        <div>
-                           <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Search Domain</label>
-                           <form onSubmit={handleDomainSearch} className="relative">
-                               <input 
-                                   type="text" 
-                                   value={domainQuery}
-                                   onChange={(e) => setDomainQuery(e.target.value)}
-                                   placeholder="findyourname" 
-                                   className="w-full bg-black/20 border border-white/10 rounded-xl py-4 pl-4 pr-12 text-lg font-bold text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-all"
-                               />
-                               <button 
-                                   type="submit"
-                                   className="absolute right-2 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center bg-indigo-600 rounded-lg text-white hover:bg-indigo-500 transition-colors"
-                               >
-                                   <Search size={16} />
-                               </button>
-                           </form>
-                        </div>
-
-                        {/* Results Area */}
-                        <div className="flex-grow overflow-y-auto custom-scrollbar -mr-2 pr-2">
-                            {domainSearchStatus === 'idle' && (
-                                <div className="flex flex-col items-center justify-center h-40 text-center opacity-50">
-                                    <Globe size={40} className="mb-3 text-slate-600" />
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Register your<br/>Web3 Identity</p>
-                                </div>
-                            )}
-
-                            {domainSearchStatus === 'searching' && (
-                                <div className="flex flex-col items-center justify-center h-40 text-center">
-                                    <div className="w-8 h-8 border-4 border-indigo-500/30 border-t-indigo-500 rounded-full animate-spin mb-4"></div>
-                                    <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Checking Availability...</p>
-                                </div>
-                            )}
-
-                            {domainSearchStatus === 'results' && (
-                                <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                                    {/* Exclusive .fluid Result */}
-                                    <div className="p-4 bg-gradient-to-r from-indigo-900/40 to-purple-900/40 border border-indigo-500/30 rounded-2xl relative overflow-hidden group">
-                                        <div className="absolute top-0 right-0 p-2">
-                                             <div className="bg-emerald-500/20 text-emerald-500 text-[9px] font-black uppercase px-2 py-0.5 rounded-full border border-emerald-500/20">Available</div>
-                                        </div>
-                                        <div className="flex justify-between items-end mb-3 mt-1">
-                                            <div>
-                                                <div className="flex items-center gap-1.5">
-                                                    <span className="text-xl font-black text-white">{domainQuery.split('.')[0]}<span className="text-indigo-400">.fluid</span></span>
-                                                </div>
-                                                <span className="text-[9px] text-slate-400 font-bold block mt-0.5">Permanent Fluid Handle</span>
-                                            </div>
-                                            <div className="text-right">
-                                                <div className="text-xl font-black text-emerald-400">FREE</div>
-                                                <div className="text-[9px] text-slate-500 line-through font-bold uppercase">$500 VALUE</div>
-                                            </div>
-                                        </div>
-                                        <button 
-                                            onClick={() => { alert(`Success! You have claimed ${domainQuery.split('.')[0]}.fluid`); setActiveModal(null); }}
-                                            className="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white font-black rounded-xl text-[10px] uppercase tracking-widest transition-colors flex items-center justify-center gap-2 shadow-lg shadow-indigo-500/20"
-                                        >
-                                            Claim Now <ArrowRight size={14} />
-                                        </button>
-                                    </div>
-
-                                    <div className="flex items-center gap-2 py-2">
-                                        <div className="h-px bg-white/5 flex-grow"></div>
-                                        <span className="text-[9px] font-bold text-slate-600 uppercase tracking-widest">Traditional TLDs</span>
-                                        <div className="h-px bg-white/5 flex-grow"></div>
-                                    </div>
-
-                                    {/* Standard TLDs */}
-                                    {[
-                                        { tld: '.com', price: '$12.99' },
-                                        { tld: '.ai', price: '$65.00' },
-                                        { tld: '.xyz', price: '$1.99' },
-                                    ].map((domain) => (
-                                        <div key={domain.tld} className="flex items-center justify-between p-3 bg-slate-900/50 border border-slate-800 rounded-xl hover:bg-slate-800 transition-colors group">
-                                             <div className="flex items-center gap-3">
-                                                <div className="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-slate-500 font-bold group-hover:text-white transition-colors">
-                                                    <Globe size={14} />
-                                                </div>
-                                                <div className="text-sm font-bold text-slate-300">{domainQuery.split('.')[0]}<span className="text-slate-500">{domain.tld}</span></div>
-                                             </div>
-                                             <div className="flex items-center gap-3">
-                                                <span className="text-xs font-bold text-white">{domain.price}</span>
-                                                <button 
-                                                    onClick={() => alert(`Added ${domainQuery.split('.')[0]}${domain.tld} to cart`)}
-                                                    className="w-8 h-8 bg-white/5 hover:bg-white/10 rounded-lg text-white flex items-center justify-center transition-colors"
-                                                >
-                                                    <ShoppingCart size={14} />
-                                                </button>
-                                             </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                        </div>
-                    </div>
                   )}
 
                   {activeModal === 'cardLimits' && (
@@ -1638,6 +1726,41 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
           {/* Home Indicator */}
           <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/20 rounded-full z-50 pointer-events-none"></div>
 
+       </div>
+
+       {/* Features Highlight (Below Simulation) */}
+       <div className="mt-24 max-w-5xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="p-6 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm hover:border-indigo-500/50 transition-colors group">
+             <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center mb-4 text-indigo-500 group-hover:scale-110 transition-transform">
+                <CreditCard size={24} />
+             </div>
+             <h3 className="text-lg font-bold text-white mb-2">Universal Access</h3>
+             <p className="text-xs text-slate-400 leading-relaxed">Spend crypto like fiat anywhere in the world with instant issuance virtual and physical metal cards.</p>
+          </div>
+
+          <div className="p-6 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm hover:border-emerald-500/50 transition-colors group">
+             <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center mb-4 text-emerald-500 group-hover:scale-110 transition-transform">
+                <RefreshCw size={24} />
+             </div>
+             <h3 className="text-lg font-bold text-white mb-2">Multi-Chain DEX</h3>
+             <p className="text-xs text-slate-400 leading-relaxed">Swap assets instantly across Ethereum, Solana, and more with our built-in aggregator engine.</p>
+          </div>
+
+          <div className="p-6 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm hover:border-blue-500/50 transition-colors group">
+             <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mb-4 text-blue-500 group-hover:scale-110 transition-transform">
+                <Server size={24} />
+             </div>
+             <h3 className="text-lg font-bold text-white mb-2">Fluid Host</h3>
+             <p className="text-xs text-slate-400 leading-relaxed">Access unstoppable decentralized applications directly within the wallet's secure browser environment.</p>
+          </div>
+
+          <div className="p-6 bg-white/5 border border-white/10 rounded-2xl backdrop-blur-sm hover:border-rose-500/50 transition-colors group">
+             <div className="w-12 h-12 bg-rose-500/10 rounded-xl flex items-center justify-center mb-4 text-rose-500 group-hover:scale-110 transition-transform">
+                <ShieldCheck size={24} />
+             </div>
+             <h3 className="text-lg font-bold text-white mb-2">ZK-Security</h3>
+             <p className="text-xs text-slate-400 leading-relaxed">Your keys never leave your device. Enhanced with biometric FaceID and Zero-Knowledge proofs.</p>
+          </div>
        </div>
     </div>
   );
