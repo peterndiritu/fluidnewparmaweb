@@ -129,6 +129,7 @@ const SecurityVault = ({ onUnlock }: { onUnlock: () => void }) => {
 const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView?: string }> = ({ onNavigate, initialView = 'assets' }) => {
   const [isLocked, setIsLocked] = useState(true);
   const [activeTab, setActiveTab] = useState(initialView);
+  const [lastActiveTab, setLastActiveTab] = useState('assets');
   const [network, setNetwork] = useState('Fluid Mainnet');
   const [cardMode, setCardMode] = useState<'virtual' | 'physical'>('virtual');
   const [cardFrozen, setCardFrozen] = useState(false);
@@ -169,6 +170,22 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
       }, 1500);
     } else {
       callback();
+    }
+  };
+
+  const handleTabChange = (tabId: string) => {
+    if (tabId !== 'settings') {
+      setLastActiveTab(tabId);
+    }
+    setActiveTab(tabId);
+  };
+  
+  const toggleSettings = () => {
+    if (activeTab === 'settings') {
+      setActiveTab(lastActiveTab);
+    } else {
+      setLastActiveTab(activeTab);
+      setActiveTab('settings');
     }
   };
   
@@ -225,7 +242,10 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
           {/* App Header (Glass) */}
           <header className="px-6 pt-16 pb-4 flex justify-between items-center z-40 bg-slate-950/50 backdrop-blur-md border-b border-white/5">
              <div className="flex items-center gap-3">
-                <button className="w-8 h-8 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400">
+                <button 
+                  onClick={toggleSettings}
+                  className="w-8 h-8 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors"
+                >
                    <Users size={14} />
                 </button>
                 <div className="flex flex-col">
@@ -240,8 +260,12 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
              </div>
              <div className="flex items-center gap-2">
                 <button 
-                  onClick={() => setActiveTab('settings')}
-                  className="w-10 h-10 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-white/20 transition-all"
+                  onClick={toggleSettings}
+                  className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${
+                    activeTab === 'settings' 
+                      ? 'bg-indigo-600 border-indigo-500 text-white shadow-[0_0_15px_rgba(79,70,229,0.3)]' 
+                      : 'bg-slate-900 border-white/10 text-slate-400 hover:text-white hover:border-white/20'
+                  }`}
                 >
                    <Settings size={18} />
                 </button>
@@ -663,7 +687,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
              {tabs.map((tab) => (
                 <button 
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
+                  onClick={() => handleTabChange(tab.id)}
                   className={`flex flex-col items-center gap-1 transition-all duration-300 ${activeTab === tab.id ? 'text-indigo-400 -translate-y-1' : 'text-slate-600 hover:text-slate-400'}`}
                 >
                    <tab.icon size={22} strokeWidth={activeTab === tab.id ? 2.5 : 2} />
