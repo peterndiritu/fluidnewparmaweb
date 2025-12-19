@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, Mail, Facebook } from 'lucide-react';
+import { Download, Mail } from 'lucide-react';
 
 const Footer: React.FC = () => {
   const logoPathData = `
@@ -27,10 +27,9 @@ const Footer: React.FC = () => {
   };
 
   const socialLinks = [
-    { name: 'X', url: 'https://twitter.com/fluid' },
-    { name: 'Facebook', url: 'https://facebook.com/fluid' },
-    { name: 'Telegram', url: 'https://t.me/fluid' },
-    { name: 'Discord', url: 'https://discord.gg/fluid' },
+    { name: 'X', url: 'https://x.com/fluidchain' },
+    { name: 'Telegram', url: 'https://t.me/fluidchain' },
+    { name: 'Discord', url: 'https://discord.gg/cXes68B3Y' },
   ];
 
   return (

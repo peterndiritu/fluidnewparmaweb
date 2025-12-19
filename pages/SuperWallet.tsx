@@ -10,7 +10,7 @@ import {
   ChevronRight, Terminal, Cloud, Smartphone, Repeat,
   ArrowDown, Layout, Users, ShieldCheck, AlertOctagon, FileCheck,
   Building2, Banknote, History, Flag, QrCode, UploadCloud, Rocket,
-  Key, Chrome
+  Key, Chrome, ChevronLeft, Delete
 } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 
@@ -91,75 +91,196 @@ const FluidLogo = ({ className }: { className?: string }) => (
 
 // --- Security Vault Overlay ---
 const SecurityVault = ({ onUnlock }: { onUnlock: () => void }) => {
-  const [status, setStatus] = useState<'idle' | 'scanning' | 'success'>('idle');
+  const [view, setView] = useState<'main' | 'input' | 'passkey_scan'>('main');
+  const [authMethod, setAuthMethod] = useState<'phone' | 'google' | null>(null);
+  const [inputCode, setInputCode] = useState('');
+  const [status, setStatus] = useState<'idle' | 'scanning' | 'success' | 'verifying' | 'error'>('idle');
 
-  const handleAuth = () => {
+  // Handles Biometric (Immediate) and Passkey (Simulated System Dialog)
+  const handleDirectAuth = (method: 'biometric' | 'passkey') => {
+    if (method === 'passkey') setView('passkey_scan');
+    
     setStatus('scanning');
+    
+    // Simulate auth delay
     setTimeout(() => {
       setStatus('success');
       setTimeout(onUnlock, 800);
     }, 1500);
   };
 
+  // Switch to Input View for Code-based Auth
+  const handleCodeAuth = (method: 'phone' | 'google') => {
+    setAuthMethod(method);
+    setView('input');
+    setInputCode('');
+    setStatus('idle');
+  };
+
+  const handleKeyPress = (num: string) => {
+    if (inputCode.length < 6) {
+      setInputCode(prev => prev + num);
+    }
+  };
+
+  const handleDelete = () => {
+    setInputCode(prev => prev.slice(0, -1));
+  };
+
+  const verifyCode = () => {
+    if (inputCode.length !== 6) return;
+    setStatus('verifying');
+    setTimeout(() => {
+      // Mock validation
+      if (inputCode === '123456') { // Mock correct code
+        setStatus('success');
+        setTimeout(onUnlock, 800);
+      } else {
+        setStatus('error');
+        setTimeout(() => setStatus('idle'), 1000);
+        setInputCode('');
+      }
+    }, 1000);
+  };
+
+  // Submit automatically when 6 digits are entered
+  useEffect(() => {
+    if (inputCode.length === 6) verifyCode();
+  }, [inputCode]);
+
   return (
     <div className="absolute inset-0 z-50 bg-[#020617] flex flex-col items-center justify-center p-6 text-center">
       <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-64 h-64 bg-indigo-500/10 rounded-full blur-[100px] pointer-events-none"></div>
 
-      <div className="relative mb-8">
-         <div className={`w-24 h-24 rounded-[2rem] bg-slate-900 border border-slate-800 flex items-center justify-center shadow-2xl relative overflow-hidden transition-all duration-500 ${status === 'scanning' ? 'border-emerald-500/50 shadow-emerald-500/20' : ''}`}>
-            {status === 'scanning' && <div className="absolute inset-0 bg-emerald-500/10 animate-pulse"></div>}
-            {status === 'success' ? (
-               <CheckCircle2 size={40} className="text-emerald-500 animate-in zoom-in" />
-            ) : (
-               <FluidLogo className="w-12 h-12 text-white" />
-            )}
-         </div>
-      </div>
+      {view === 'main' || view === 'passkey_scan' ? (
+        <>
+          <div className="relative mb-8">
+             <div className={`w-24 h-24 rounded-[2rem] bg-slate-900 border border-slate-800 flex items-center justify-center shadow-2xl relative overflow-hidden transition-all duration-500 ${status === 'scanning' ? 'border-emerald-500/50 shadow-emerald-500/20' : ''}`}>
+                {status === 'scanning' && <div className="absolute inset-0 bg-emerald-500/10 animate-pulse"></div>}
+                {status === 'success' ? (
+                   <CheckCircle2 size={40} className="text-emerald-500 animate-in zoom-in" />
+                ) : (
+                   <FluidLogo className="w-12 h-12 text-white" />
+                )}
+             </div>
+          </div>
 
-      <h1 className="text-2xl font-black text-white uppercase tracking-tight mb-2">FLUID DAPP</h1>
-      <p className="text-slate-500 text-sm mb-8 max-w-xs mx-auto">Select authentication method to activate session.</p>
+          <h1 className="text-2xl font-black text-white uppercase tracking-tight mb-2">FLUID DAPP</h1>
+          <p className="text-slate-500 text-sm mb-8 max-w-xs mx-auto">
+            {view === 'passkey_scan' ? 'Follow system prompt to authenticate.' : 'Select authentication method to activate session.'}
+          </p>
 
-      {/* Primary Biometric Button */}
-      <button 
-        onClick={handleAuth}
-        className="group relative px-8 py-4 bg-slate-900 rounded-2xl border border-slate-800 hover:border-emerald-500/50 transition-all w-full max-w-xs overflow-hidden mb-6"
-      >
-        <div className="absolute inset-0 bg-emerald-500/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
-        <div className="relative flex items-center justify-center gap-3">
-          {status === 'scanning' ? (
-             <>
-               <ScanFace size={20} className="text-emerald-500 animate-pulse" />
-               <span className="text-emerald-500 font-bold uppercase tracking-wider text-xs">Verifying...</span>
-             </>
-          ) : (
-             <>
-               <Fingerprint size={20} className="text-slate-400 group-hover:text-emerald-500 transition-colors" />
-               <span className="text-slate-300 font-bold uppercase tracking-wider text-xs group-hover:text-white">Biometric Login</span>
-             </>
+          {/* Primary Biometric Button */}
+          {view === 'main' && (
+            <button 
+              onClick={() => handleDirectAuth('biometric')}
+              className="group relative px-8 py-4 bg-slate-900 rounded-2xl border border-slate-800 hover:border-emerald-500/50 transition-all w-full max-w-xs overflow-hidden mb-6"
+            >
+              <div className="absolute inset-0 bg-emerald-500/5 translate-y-full group-hover:translate-y-0 transition-transform duration-500"></div>
+              <div className="relative flex items-center justify-center gap-3">
+                 <Fingerprint size={20} className="text-slate-400 group-hover:text-emerald-500 transition-colors" />
+                 <span className="text-slate-300 font-bold uppercase tracking-wider text-xs group-hover:text-white">Biometric Login</span>
+              </div>
+            </button>
           )}
-        </div>
-      </button>
 
-      {/* Alternative Auth Methods */}
-      <div className="grid grid-cols-3 gap-3 w-full max-w-xs">
-         <button onClick={handleAuth} className="flex flex-col items-center justify-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-colors group">
-            <Key size={20} className="text-slate-400 group-hover:text-white transition-colors" />
-            <span className="text-[9px] font-bold text-slate-500 group-hover:text-slate-300 uppercase">Passkey</span>
-         </button>
-         <button onClick={handleAuth} className="flex flex-col items-center justify-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-colors group">
-            <Smartphone size={20} className="text-slate-400 group-hover:text-white transition-colors" />
-            <span className="text-[9px] font-bold text-slate-500 group-hover:text-slate-300 uppercase">Phone</span>
-         </button>
-         <button onClick={handleAuth} className="flex flex-col items-center justify-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-colors group">
-            <Chrome size={20} className="text-slate-400 group-hover:text-white transition-colors" />
-            <span className="text-[9px] font-bold text-slate-500 group-hover:text-slate-300 uppercase">Google</span>
-         </button>
-      </div>
+          {/* Alternative Auth Methods */}
+          {view === 'main' && (
+            <div className="grid grid-cols-3 gap-3 w-full max-w-xs">
+               <button onClick={() => handleDirectAuth('passkey')} className="flex flex-col items-center justify-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-colors group">
+                  <Key size={20} className="text-slate-400 group-hover:text-white transition-colors" />
+                  <span className="text-[9px] font-bold text-slate-500 group-hover:text-slate-300 uppercase">Passkey</span>
+               </button>
+               <button onClick={() => handleCodeAuth('phone')} className="flex flex-col items-center justify-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-colors group">
+                  <Smartphone size={20} className="text-slate-400 group-hover:text-white transition-colors" />
+                  <span className="text-[9px] font-bold text-slate-500 group-hover:text-slate-300 uppercase">Phone</span>
+               </button>
+               <button onClick={() => handleCodeAuth('google')} className="flex flex-col items-center justify-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-colors group">
+                  <Chrome size={20} className="text-slate-400 group-hover:text-white transition-colors" />
+                  <span className="text-[9px] font-bold text-slate-500 group-hover:text-slate-300 uppercase">Google</span>
+               </button>
+            </div>
+          )}
+          
+          {view === 'passkey_scan' && (
+             <div className="animate-pulse flex flex-col items-center gap-4">
+                <ScanFace size={48} className="text-emerald-500" />
+                <span className="text-emerald-500 font-bold uppercase tracking-widest text-xs">Waiting for Passkey...</span>
+                <button onClick={() => setView('main')} className="text-slate-500 hover:text-white text-xs font-bold mt-4">Cancel</button>
+             </div>
+          )}
+        </>
+      ) : (
+        // --- Input View for Phone/Google ---
+        <div className="w-full max-w-xs flex flex-col items-center animate-in fade-in slide-in-from-bottom-8 duration-300">
+           <button onClick={() => setView('main')} className="absolute top-6 left-6 text-slate-500 hover:text-white">
+              <ChevronLeft size={24} />
+           </button>
+
+           <div className="w-16 h-16 bg-slate-900 rounded-2xl flex items-center justify-center mb-6 text-emerald-500 border border-slate-800">
+              {authMethod === 'phone' ? <Smartphone size={28} /> : <Chrome size={28} />}
+           </div>
+
+           <h2 className="text-xl font-black text-white uppercase tracking-tight mb-2">
+              {authMethod === 'phone' ? 'SMS Code' : 'Authenticator'}
+           </h2>
+           <p className="text-slate-500 text-xs mb-8">
+              {authMethod === 'phone' 
+                ? 'Enter the code sent to +1 *** *** 9928' 
+                : 'Enter the code from your Google Auth app'}
+           </p>
+
+           {/* Code Display */}
+           <div className="flex gap-3 mb-8">
+              {[0, 1, 2, 3, 4, 5].map((i) => (
+                 <div key={i} className={`w-10 h-12 rounded-xl border flex items-center justify-center text-xl font-bold transition-all ${
+                    inputCode[i] 
+                    ? 'border-emerald-500/50 bg-emerald-500/10 text-white' 
+                    : 'border-slate-800 bg-slate-900 text-slate-700'
+                 } ${status === 'error' ? 'border-rose-500 text-rose-500' : ''}`}>
+                    {inputCode[i] || ''}
+                 </div>
+              ))}
+           </div>
+
+           {/* Feedback */}
+           {status === 'verifying' && <div className="text-emerald-500 text-xs font-bold uppercase tracking-widest animate-pulse mb-4">Verifying...</div>}
+           {status === 'error' && <div className="text-rose-500 text-xs font-bold uppercase tracking-widest mb-4">Invalid Code</div>}
+
+           {/* Keypad */}
+           <div className="grid grid-cols-3 gap-4 w-full px-4">
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((num) => (
+                 <button 
+                   key={num}
+                   onClick={() => handleKeyPress(num.toString())}
+                   className="h-14 rounded-2xl bg-slate-900/50 hover:bg-slate-800 text-white font-bold text-lg transition-colors border border-white/5 active:scale-95"
+                 >
+                    {num}
+                 </button>
+              ))}
+              <div className="h-14"></div>
+              <button 
+                 onClick={() => handleKeyPress('0')}
+                 className="h-14 rounded-2xl bg-slate-900/50 hover:bg-slate-800 text-white font-bold text-lg transition-colors border border-white/5 active:scale-95"
+              >
+                 0
+              </button>
+              <button 
+                 onClick={handleDelete}
+                 className="h-14 rounded-2xl bg-slate-900/50 hover:bg-slate-800 text-slate-400 hover:text-white flex items-center justify-center transition-colors border border-white/5 active:scale-95"
+              >
+                 <Delete size={20} />
+              </button>
+           </div>
+        </div>
+      )}
       
-      <div className="mt-8">
-        <button className="text-[10px] font-bold text-slate-600 uppercase tracking-widest hover:text-white transition-colors">Emergency Kit</button>
-      </div>
+      {view === 'main' && (
+        <div className="mt-8">
+          <button className="text-[10px] font-bold text-slate-600 uppercase tracking-widest hover:text-white transition-colors">Emergency Kit</button>
+        </div>
+      )}
     </div>
   );
 };

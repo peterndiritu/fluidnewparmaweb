@@ -225,7 +225,14 @@ const DocsPage: React.FC = () => {
           <h3 className="text-2xl font-bold text-white mb-4 uppercase tracking-tighter">Still have questions?</h3>
           <p className="text-slate-400 mb-8 max-w-md mx-auto text-sm font-medium">Our developers are here to help you get started.</p>
           <div className="flex flex-wrap justify-center gap-4">
-            <button className="px-8 py-3 bg-white text-slate-900 font-bold rounded-xl hover:bg-slate-100 transition-all shadow-lg text-xs uppercase tracking-widest">Join Discord</button>
+            <a 
+              href="https://discord.gg/cXes68B3Y" 
+              target="_blank" 
+              rel="noreferrer"
+              className="px-8 py-3 bg-white text-slate-900 font-bold rounded-xl hover:bg-slate-100 transition-all shadow-lg text-xs uppercase tracking-widest flex items-center"
+            >
+              Join Discord
+            </a>
             <button className="px-8 py-3 bg-slate-900 text-white font-bold rounded-xl border border-slate-700 hover:bg-slate-800 transition-all text-xs uppercase tracking-widest">Support</button>
           </div>
         </div>
