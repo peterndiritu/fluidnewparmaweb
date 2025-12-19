@@ -8,7 +8,8 @@ import {
   ExternalLink, Eye, EyeOff, X, Activity, AlertTriangle,
   Landmark, CreditCard as CardIcon, Power, Settings,
   ChevronRight, Terminal, Cloud, Smartphone, Repeat,
-  ArrowDown, Layout, Users, ShieldCheck, AlertOctagon, FileCheck
+  ArrowDown, Layout, Users, ShieldCheck, AlertOctagon, FileCheck,
+  Building2, Banknote, History, Flag
 } from 'lucide-react';
 import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
 
@@ -54,6 +55,12 @@ const TRANSACTIONS: Transaction[] = [
   { id: '1', type: 'swap', title: 'Swap ETH to FLD', subtitle: 'Fluid DEX • Aggregator', amount: '+4,200 FLD', status: 'confirmed', time: '2 min ago' },
   { id: '2', type: 'receive', title: 'Received SOL', subtitle: 'From 8x...92a', amount: '+120 SOL', status: 'confirmed', time: '1 hour ago' },
   { id: '3', type: 'contract', title: 'Contract Interaction', subtitle: 'Parmaweb Hosting', amount: '-50 FLD', status: 'pending', time: 'Just now' },
+];
+
+const FIAT_ACCOUNTS = [
+   { currency: 'USD', symbol: '$', balance: '12,450.00', bank: 'Fluid US', type: 'Checking', flag: '🇺🇸', details: { route: '021000021', acct: '9876543210' } },
+   { currency: 'EUR', symbol: '€', balance: '4,200.50', bank: 'Fluid EU', type: 'IBAN', flag: '🇪🇺', details: { route: 'FLUDDEFF', acct: 'DE89 3704 0044 0532 0130 00' } },
+   { currency: 'GBP', symbol: '£', balance: '850.00', bank: 'Fluid UK', type: 'Sort Code', flag: '🇬🇧', details: { route: '04-00-04', acct: '12345678' } },
 ];
 
 // --- Components ---
@@ -137,6 +144,10 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
   
   // DEX States
   const [swapRoute, setSwapRoute] = useState<'fluid' | 'nexus' | 'mesh'>('fluid');
+
+  // Fiat States
+  const [activeFiatIndex, setActiveFiatIndex] = useState(0);
+  const [showAccountDetails, setShowAccountDetails] = useState(false);
 
   // Security Settings State
   const [securitySettings, setSecuritySettings] = useState({
@@ -596,6 +607,130 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                    </div>
                 </div>
              )}
+             
+             {/* === MODULE: FIAT INTEGRATION === */}
+             {activeTab === 'fiat' && (
+                <div className="p-6 h-full flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300">
+                   <div className="flex items-center justify-between mb-6">
+                      <h2 className="text-2xl font-black text-white uppercase tracking-tight">Fiat Gateway</h2>
+                      <div className="px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded text-[9px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1">
+                         <Globe size={10} /> Global Accounts
+                      </div>
+                   </div>
+
+                   {/* Global Account Card */}
+                   <div className="bg-gradient-to-br from-emerald-900 to-slate-900 border border-white/10 rounded-[2rem] p-6 mb-6 relative overflow-hidden shadow-2xl">
+                      <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-500/20 rounded-full blur-[60px] pointer-events-none"></div>
+                      <div className="absolute bottom-0 left-0 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none"></div>
+                      
+                      <div className="relative z-10">
+                         <div className="flex justify-between items-start mb-6">
+                             <div className="p-2 bg-white/10 rounded-xl backdrop-blur-md">
+                                <Building2 size={20} className="text-emerald-400" />
+                             </div>
+                             <div className="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded-full border border-white/5">
+                                 <span className="text-xl">{FIAT_ACCOUNTS[activeFiatIndex].flag}</span>
+                                 <span className="text-xs font-bold text-white">{FIAT_ACCOUNTS[activeFiatIndex].currency}</span>
+                                 <ChevronDown size={12} className="text-slate-400" />
+                             </div>
+                         </div>
+
+                         <div className="mb-6">
+                             <span className="text-[10px] font-bold text-emerald-200/60 uppercase tracking-widest mb-1 block">Total Balance</span>
+                             <h1 className="text-4xl font-black text-white tracking-tighter">
+                                {FIAT_ACCOUNTS[activeFiatIndex].symbol}{FIAT_ACCOUNTS[activeFiatIndex].balance}
+                             </h1>
+                         </div>
+
+                         {/* Accounts Carousel Dots */}
+                         <div className="flex gap-1.5 justify-center mb-6">
+                            {FIAT_ACCOUNTS.map((_, i) => (
+                               <button 
+                                 key={i} 
+                                 onClick={() => setActiveFiatIndex(i)}
+                                 className={`h-1.5 rounded-full transition-all ${i === activeFiatIndex ? 'w-6 bg-emerald-400' : 'w-1.5 bg-white/20'}`}
+                               />
+                            ))}
+                         </div>
+
+                         <div className="grid grid-cols-2 gap-3">
+                             <button className="py-3 bg-white text-emerald-900 font-bold rounded-xl text-xs uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-emerald-50 transition-colors">
+                                <ArrowDownLeft size={16} /> Add Funds
+                             </button>
+                             <button className="py-3 bg-white/10 text-white font-bold rounded-xl text-xs uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-white/20 transition-colors border border-white/10">
+                                <ArrowUpRight size={16} /> Withdraw
+                             </button>
+                         </div>
+                      </div>
+                   </div>
+
+                   {/* Banking Details */}
+                   <div className="mb-6">
+                      <div className="flex justify-between items-center mb-4">
+                         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Banking Details</h3>
+                         <button 
+                           onClick={() => setShowAccountDetails(!showAccountDetails)}
+                           className="text-[9px] font-bold text-indigo-400 uppercase tracking-wider hover:text-white transition-colors"
+                         >
+                            {showAccountDetails ? 'Hide' : 'Reveal'}
+                         </button>
+                      </div>
+
+                      <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 space-y-4 relative overflow-hidden">
+                         {!showAccountDetails && (
+                            <div className="absolute inset-0 backdrop-blur-md bg-slate-900/10 flex items-center justify-center z-10">
+                               <div className="flex flex-col items-center gap-2">
+                                  <Lock size={24} className="text-slate-500" />
+                                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Tap Reveal to View</span>
+                               </div>
+                            </div>
+                         )}
+                         <div className="flex justify-between items-center pb-3 border-b border-white/5">
+                            <span className="text-xs text-slate-500 font-bold">Bank Name</span>
+                            <div className="flex items-center gap-2">
+                               <span className="text-sm text-white font-mono">{FIAT_ACCOUNTS[activeFiatIndex].bank}</span>
+                               <Copy size={12} className="text-slate-600" />
+                            </div>
+                         </div>
+                         <div className="flex justify-between items-center pb-3 border-b border-white/5">
+                             <span className="text-xs text-slate-500 font-bold">{FIAT_ACCOUNTS[activeFiatIndex].type === 'IBAN' ? 'IBAN' : 'Routing Number'}</span>
+                             <div className="flex items-center gap-2">
+                                <span className="text-sm text-white font-mono">{FIAT_ACCOUNTS[activeFiatIndex].details.route}</span>
+                                <Copy size={12} className="text-slate-600" />
+                             </div>
+                         </div>
+                         <div className="flex justify-between items-center">
+                             <span className="text-xs text-slate-500 font-bold">Account Number</span>
+                             <div className="flex items-center gap-2">
+                                <span className="text-sm text-white font-mono">{FIAT_ACCOUNTS[activeFiatIndex].details.acct}</span>
+                                <Copy size={12} className="text-slate-600" />
+                             </div>
+                         </div>
+                      </div>
+                   </div>
+
+                   {/* Linked Banks List */}
+                   <div>
+                       <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Linked Accounts</h3>
+                       <div className="space-y-3">
+                           <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-900/50 border border-slate-800">
+                               <div className="flex items-center gap-3">
+                                   <div className="w-10 h-10 rounded-xl bg-blue-900/30 flex items-center justify-center text-blue-500 font-black text-sm">C</div>
+                                   <div>
+                                       <div className="text-xs font-bold text-white">Chase Bank</div>
+                                       <div className="text-[9px] text-slate-500 font-bold">**** 8842</div>
+                                   </div>
+                               </div>
+                               <div className="px-2 py-1 bg-emerald-500/10 text-emerald-500 text-[9px] font-black uppercase rounded tracking-wider">Verified</div>
+                           </div>
+                           
+                           <button className="w-full py-3 rounded-2xl border border-dashed border-slate-700 text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-900/50 hover:text-white hover:border-slate-600 transition-all flex items-center justify-center gap-2">
+                               <Building2 size={14} /> Link New Account
+                           </button>
+                       </div>
+                   </div>
+                </div>
+             )}
 
              {/* === MODULE D: HOSTING & DAPPS === */}
              {activeTab === 'hosting' && (
@@ -703,12 +838,5 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
     </div>
   );
 };
-
-// Simple User Icon Component needed above
-const User = ({size, className}: {size: number, className?: string}) => (
-   <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
-      <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>
-   </svg>
-);
 
 export default FluidWalletApp;
