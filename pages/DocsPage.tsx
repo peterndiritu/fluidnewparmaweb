@@ -63,7 +63,7 @@ const DocsPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen pt-32 pb-24 relative overflow-hidden flex flex-col lg:flex-row max-w-7xl mx-auto px-4 gap-8">
+    <div className="min-h-screen pt-32 pb-24 relative flex flex-col lg:flex-row max-w-7xl mx-auto px-4 gap-8">
       
       {/* Left Sidebar Dropdown Navigation */}
       <aside className="lg:w-64 flex-shrink-0 hidden lg:block">

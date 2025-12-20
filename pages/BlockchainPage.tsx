@@ -3,17 +3,23 @@ import {
   Zap, Shield, Layers, Code2, Globe, Cpu, 
   CheckCircle, Wifi, Copy, Check, Wallet, 
   RefreshCw, Smartphone, ChevronDown, List, Activity, Server, Database,
-  LayoutGrid
+  LayoutGrid, Search, HardDrive, Construction, FileText
 } from 'lucide-react';
 
 const BlockchainPage: React.FC = () => {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [openDropdown, setOpenDropdown] = useState<string | null>('overview');
+  const [showDevMessage, setShowDevMessage] = useState(false);
 
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
     setCopiedField(field);
     setTimeout(() => setCopiedField(null), 2000);
+  };
+
+  const handleDevClick = () => {
+    setShowDevMessage(true);
+    setTimeout(() => setShowDevMessage(false), 3000);
   };
 
   const menuItems = [
@@ -29,7 +35,7 @@ const BlockchainPage: React.FC = () => {
       label: "Throughput", 
       value: "2,000,000+", 
       trend: "+∞%", 
-      color: "cyan",
+      color: "cyan", 
       desc: "Peak transactions per second"
     },
     { 
@@ -37,7 +43,7 @@ const BlockchainPage: React.FC = () => {
       label: "Scalability", 
       value: "Sharded", 
       trend: "Linear", 
-      color: "blue",
+      color: "blue", 
       desc: "Horizontal network expansion"
     },
     { 
@@ -45,7 +51,7 @@ const BlockchainPage: React.FC = () => {
       label: "Finality", 
       value: "~1 Second", 
       trend: "Instant", 
-      color: "purple",
+      color: "purple", 
       desc: "Time to immutable confirmation"
     },
     { 
@@ -53,7 +59,7 @@ const BlockchainPage: React.FC = () => {
       label: "Mobile", 
       value: "Native", 
       trend: "Optimized", 
-      color: "orange",
+      color: "orange", 
       desc: "Direct-to-consumer architecture"
     }
   ];
@@ -64,8 +70,18 @@ const BlockchainPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen pt-28 pb-16 flex flex-col lg:flex-row max-w-7xl mx-auto px-4 gap-8">
+    <div className="min-h-screen pt-28 pb-16 flex flex-col lg:flex-row max-w-7xl mx-auto px-4 gap-8 relative">
       
+      {/* Dev Toast */}
+      {showDevMessage && (
+        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 animate-fade-in-up">
+            <div className="bg-amber-500/10 border border-amber-500/20 text-amber-500 px-6 py-3 rounded-full backdrop-blur-md shadow-xl flex items-center gap-3 font-bold">
+                <Construction size={18} />
+                <span>Feature Under Development</span>
+            </div>
+        </div>
+      )}
+
       {/* Left Sidebar Dropdown Navigation */}
       <aside className="lg:w-64 flex-shrink-0 hidden lg:block">
         <div className="sticky top-32 w-full">
@@ -130,12 +146,30 @@ const BlockchainPage: React.FC = () => {
           <p className="text-xl text-slate-600 dark:text-slate-400 mb-10 leading-relaxed font-medium">
              Fluid Chain is a high-performance Layer-1 blockchain designed for infinite scalability, sub-second finality, and zero-downtime decentralized hosting.
           </p>
-          <div className="flex flex-col sm:flex-row lg:justify-start justify-center gap-4">
-               <button className="px-8 py-4 bg-blue-600 text-white font-bold rounded-full hover:bg-blue-500 transition-colors shadow-lg shadow-blue-500/25">
-                  Start Building
+          <div className="flex flex-col sm:flex-row lg:justify-start justify-center gap-4 flex-wrap">
+               <button 
+                  onClick={handleDevClick}
+                  className="px-8 py-4 bg-blue-600 text-white font-bold rounded-full hover:bg-blue-500 transition-colors shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"
+               >
+                  <Code2 size={20} /> Start Building
                </button>
-               <button className="px-8 py-4 bg-transparent border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-bold rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
-                  Read Whitepaper
+               
+               <button 
+                  onClick={handleDevClick}
+                  className="px-8 py-4 bg-slate-800 text-white font-bold rounded-full hover:bg-slate-700 transition-colors border border-slate-700 flex items-center justify-center gap-2"
+               >
+                  <Search size={20} /> Fluidscan Explorer
+               </button>
+
+               <button 
+                  onClick={handleDevClick}
+                  className="px-8 py-4 bg-slate-800 text-white font-bold rounded-full hover:bg-slate-700 transition-colors border border-slate-700 flex items-center justify-center gap-2"
+               >
+                  <HardDrive size={20} /> Run Node
+               </button>
+
+               <button className="px-8 py-4 bg-transparent border border-slate-300 dark:border-slate-700 text-slate-900 dark:text-white font-bold rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex items-center justify-center gap-2">
+                  <FileText size={20} /> Read Whitepaper
                </button>
           </div>
         </section>

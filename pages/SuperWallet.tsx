@@ -1,20 +1,19 @@
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   Wallet as WalletIcon, RefreshCw, CreditCard, Layers, 
   Lock, Fingerprint, ScanFace, ChevronDown, Bell, 
-  Search, ArrowUpRight, ArrowDownLeft, ArrowLeftRight, 
-  Zap, Shield, Globe, Cpu, Server, Database, 
+  Search, ArrowUpRight, ArrowDownLeft, 
+  Zap, Shield, Globe, Server, 
   Wifi, Battery, Signal, MoreHorizontal, Copy, CheckCircle2,
-  ExternalLink, Eye, EyeOff, X, Activity, AlertTriangle,
-  Landmark, CreditCard as CardIcon, Power, Settings,
-  ChevronRight, Terminal, Cloud, Smartphone, Repeat,
-  ArrowDown, Layout, Users, ShieldCheck, AlertOctagon, FileCheck,
-  Building2, Banknote, History, Flag, QrCode, UploadCloud, Rocket,
-  Key, Chrome, ChevronLeft, Delete, User, Edit3, AtSign, Camera, Share2, Save, ShoppingCart, ArrowRight,
-  ShoppingBag, Coins, Monitor, Play, RotateCw, Check, LayoutGrid, MessageSquare, Send, Paperclip, Smile, Phone,
-  Trash2, Asterisk
+  Eye, EyeOff, Activity, 
+  Settings, ChevronRight, Cloud, Smartphone,
+  Grid, Home, MessageSquare, Send, Paperclip, Phone,
+  Delete, Key, Chrome, ChevronLeft, Coins, Check, X,
+  Landmark, Banknote, QrCode, UploadCloud, Terminal, HardDrive, History,
+  Apple, ShieldAlert, Monitor, AlertTriangle, Pen, Camera, User, Mail, AtSign,
+  MapPin, Package, Truck, Unlock, Sliders, Calendar, Filter
 } from 'lucide-react';
-import { AreaChart, Area, ResponsiveContainer, Tooltip, XAxis } from 'recharts';
+import { AreaChart, Area, ResponsiveContainer } from 'recharts';
 
 // --- Types & Interfaces ---
 interface Asset {
@@ -26,16 +25,6 @@ interface Asset {
   color: string;
 }
 
-interface Transaction {
-  id: string;
-  type: 'receive' | 'send' | 'swap' | 'contract';
-  title: string;
-  subtitle: string;
-  amount: string;
-  status: 'confirmed' | 'pending';
-  time: string;
-}
-
 interface DApp {
   id: string;
   name: string;
@@ -45,14 +34,6 @@ interface DApp {
   status: 'online' | 'offline';
   description?: string;
   action?: () => void;
-}
-
-interface Deployment {
-  id: string;
-  name: string;
-  hash: string;
-  status: 'active' | 'deploying' | 'error';
-  url: string;
 }
 
 interface ChatMessage {
@@ -73,32 +54,49 @@ interface ChatContact {
   online: boolean;
 }
 
-interface Notification {
-  id: string;
-  title: string;
-  message: string;
-  time: string;
-  type: 'info' | 'alert' | 'success';
-  read: boolean;
+interface FiatAccount {
+  currency: 'USD' | 'EUR' | 'GBP';
+  balance: string;
+  symbol: string;
+  iban?: string;
+  bankName: string;
+  flag: string;
 }
 
-interface NetworkOption {
+interface Transaction {
+  id: string;
+  type: 'send' | 'receive' | 'swap' | 'buy';
+  amount: string;
+  symbol: string;
+  value: string;
+  date: string;
+  status: 'completed' | 'pending' | 'failed';
+  counterparty?: string;
+  icon?: React.ElementType;
+}
+
+interface DeployedSite {
   id: string;
   name: string;
-  short: string;
-  icon: string;
-  color: string;
+  domain: string;
+  status: 'active' | 'deploying';
+  visits: string;
+}
+
+interface UserProfile {
+  name: string;
+  handle: string;
+  email: string;
+  avatar: string;
+  bio: string;
+}
+
+interface FluidWalletAppProps {
+  onNavigate: (page: string) => void;
+  initialView?: string;
 }
 
 // --- Mock Data ---
-const NETWORKS: NetworkOption[] = [
-  { id: 'eth', name: 'Ethereum', short: 'ETH', icon: 'https://cryptologos.cc/logos/ethereum-eth-logo.png?v=026', color: 'bg-indigo-500' },
-  { id: 'sol', name: 'Solana', short: 'SOL', icon: 'https://cryptologos.cc/logos/solana-sol-logo.png?v=026', color: 'bg-purple-500' },
-  { id: 'btc', name: 'Bitcoin', short: 'BTC', icon: 'https://cryptologos.cc/logos/bitcoin-btc-logo.png?v=026', color: 'bg-orange-500' },
-  { id: 'bsc', name: 'BNB Chain', short: 'BSC', icon: 'https://cryptologos.cc/logos/bnb-bnb-logo.png?v=026', color: 'bg-yellow-500' },
-  { id: 'poly', name: 'Polygon', short: 'MATIC', icon: 'https://cryptologos.cc/logos/polygon-matic-logo.png?v=026', color: 'bg-violet-500' },
-];
-
 const CHART_DATA = [
   { time: '00:00', value: 12400 },
   { time: '04:00', value: 12800 },
@@ -116,16 +114,24 @@ const ASSETS: Asset[] = [
   { symbol: 'USDT', name: 'Tether', amount: '5,000', value: '$5,000.00', change: '0.0%', color: 'bg-emerald-400' },
 ];
 
-const TRANSACTIONS: Transaction[] = [
-  { id: '1', type: 'swap', title: 'Swap ETH to FLD', subtitle: 'Fluid DEX • Aggregator', amount: '+4,200 FLD', status: 'confirmed', time: '2 min ago' },
-  { id: '2', type: 'receive', title: 'Received SOL', subtitle: 'From 8x...92a', amount: '+120 SOL', status: 'confirmed', time: '1 hour ago' },
-  { id: '3', type: 'contract', title: 'Contract Interaction', subtitle: 'Fluid Host', amount: '-50 FLD', status: 'pending', time: 'Just now' },
+const FIAT_ACCOUNTS: FiatAccount[] = [
+  { currency: 'USD', balance: '12,450.00', symbol: '$', bankName: 'Fluid US', flag: '🇺🇸', iban: 'US89 3704 0044 0532 0130 00' },
+  { currency: 'EUR', balance: '4,200.50', symbol: '€', bankName: 'Fluid EU', flag: '🇪🇺', iban: 'DE89 3704 0044 0532 0130 00' },
 ];
 
-const FIAT_ACCOUNTS = [
-   { currency: 'USD', symbol: '$', balance: '12,450.00', bank: 'Fluid US', type: 'Checking', flag: '🇺🇸', details: { route: '021000021', acct: '9876543210' } },
-   { currency: 'EUR', symbol: '€', balance: '4,200.50', bank: 'Fluid EU', type: 'IBAN', flag: '🇪🇺', details: { route: 'FLUDDEFF', acct: 'DE89 3704 0044 0532 0130 00' } },
-   { currency: 'GBP', symbol: '£', balance: '850.00', bank: 'Fluid UK', type: 'Sort Code', flag: '🇬🇧', details: { route: '04-00-04', acct: '12345678' } },
+const TRANSACTIONS: Transaction[] = [
+  { id: '1', type: 'receive', amount: '450', symbol: 'FLD', value: '$225.00', date: 'Just now', status: 'completed', counterparty: 'Staking Pool' },
+  { id: '2', type: 'swap', amount: '1.2', symbol: 'ETH', value: '$3,650.00', date: '2h ago', status: 'completed', counterparty: 'Fluid DEX' },
+  { id: '3', type: 'send', amount: '500', symbol: 'USDT', value: '$500.00', date: 'Yesterday', status: 'completed', counterparty: '0x7a...992c' },
+  { id: '4', type: 'buy', amount: '0.5', symbol: 'ETH', value: '$1,500.00', date: 'Oct 24', status: 'completed', counterparty: 'Apple Pay' },
+  { id: '5', type: 'send', amount: '25', symbol: 'SOL', value: '$1,800.00', date: 'Oct 22', status: 'failed', counterparty: 'Bridge' },
+  { id: '6', type: 'receive', amount: '1000', symbol: 'FLD', value: '$500.00', date: 'Oct 20', status: 'completed', counterparty: 'Airdrop' },
+  { id: '7', type: 'swap', amount: '500', symbol: 'USDC', value: '$500.00', date: 'Oct 18', status: 'completed', counterparty: 'Uniswap' },
+];
+
+const DEPLOYED_SITES: DeployedSite[] = [
+  { id: '1', name: 'My Portfolio', domain: 'alex.fluid', status: 'active', visits: '1.2k' },
+  { id: '2', name: 'DeFi Dashboard', domain: 'defi.fluid', status: 'active', visits: '850' },
 ];
 
 const CONTACTS: ChatContact[] = [
@@ -136,17 +142,8 @@ const CONTACTS: ChatContact[] = [
 
 const DAPPS: DApp[] = [
   { id: '1', name: 'Fluid DEX', url: 'https://fluid.link/dex', icon: RefreshCw, category: 'DeFi', status: 'online', description: 'Swap tokens instantly with zero slippage.' },
-  { id: '2', name: 'Fluid Host', url: 'https://fluid.link/host', icon: Server, category: 'Utils', status: 'online', description: 'Decentralized hosting for your dApps.' },
-  { id: '3', name: 'SecureChat', url: 'https://chat.fluid.link', icon: MessageSquare, category: 'Social', status: 'online', description: 'End-to-end encrypted wallet messaging.' },
-  { id: '4', name: 'NFT Market', url: 'https://nft.fluid.link', icon: Layers, category: 'NFT', status: 'online', description: 'Trade digital collectibles on Fluid.' },
-  { id: '5', name: 'Fluid Lend', url: 'https://lend.fluid.link', icon: Coins, category: 'DeFi', status: 'online', description: 'Borrow and lend assets.' },
-  { id: '6', name: 'Name Service', url: 'https://fns.fluid.link', icon: Globe, category: 'Utils', status: 'online', description: 'Register your .fluid domain.' },
-];
-
-const NOTIFICATIONS: Notification[] = [
-  { id: '1', title: 'Staking Reward', message: 'You received 450 FLD from pooling.', time: '2m ago', type: 'success', read: false },
-  { id: '2', title: 'Security Alert', message: 'New login detected from Frankfurt, DE.', time: '1h ago', type: 'alert', read: false },
-  { id: '3', title: 'System Update', message: 'Fluid Node V2.1 is live.', time: '5h ago', type: 'info', read: true },
+  { id: '2', name: 'SecureChat', url: 'https://chat.fluid.link', icon: MessageSquare, category: 'Social', status: 'online', description: 'End-to-end encrypted wallet messaging.' },
+  { id: '3', name: 'NFT Market', url: 'https://nft.fluid.link', icon: Layers, category: 'NFT', status: 'online', description: 'Trade digital collectibles on Fluid.' },
 ];
 
 // --- Components ---
@@ -156,6 +153,18 @@ const FluidLogo = ({ className }: { className?: string }) => (
     <path d="M45 22H80C83.3137 22 86 24.6863 86 28V32C86 35.3137 83.3137 38 80 38H40L45 22Z" fill="currentColor" />
     <path d="M30 44H70C73.3137 44 76 46.6863 76 50V54C76 57.3137 73.3137 60 70 60H25L30 44Z" fill="currentColor" />
     <path d="M15 66H60C63.3137 66 66 68.6863 66 72V76C66 79.3137 83.3137 82 60 82H10L15 66Z" fill="currentColor" />
+  </svg>
+);
+
+const CardChip = ({ className, size = 32 }: { className?: string, size?: number }) => (
+  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" className={className}>
+    <rect x="2" y="4" width="20" height="16" rx="4" stroke="currentColor" strokeWidth="1.5" className="opacity-80" />
+    <path d="M2 12H22" stroke="currentColor" strokeWidth="1" className="opacity-50" />
+    <path d="M12 4V20" stroke="currentColor" strokeWidth="1" className="opacity-50" />
+    <path d="M8 4V12" stroke="currentColor" strokeWidth="1" className="opacity-50" />
+    <path d="M16 4V12" stroke="currentColor" strokeWidth="1" className="opacity-50" />
+    <path d="M8 12V20" stroke="currentColor" strokeWidth="1" className="opacity-50" />
+    <path d="M16 12V20" stroke="currentColor" strokeWidth="1" className="opacity-50" />
   </svg>
 );
 
@@ -173,10 +182,9 @@ const SecurityVault = ({ onUnlock }: { onUnlock: () => void }) => {
     
     setTimeout(() => {
       setStatus('success');
-      // Transition to Welcome screen
       setTimeout(() => {
         setStatus('welcome');
-        setTimeout(onUnlock, 1800); // Allow time to read welcome message
+        setTimeout(onUnlock, 1800);
       }, 800);
     }, 1200);
   };
@@ -395,578 +403,485 @@ const SecureChatApp = ({ onBack }: { onBack: () => void }) => {
           {activeChat ? (
             <div className="flex items-center gap-3">
               <div className="relative">
-                <img src={activeChat.avatar} className="w-10 h-10 rounded-full bg-slate-800" />
-                {activeChat.online && <div className="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-500 rounded-full border-2 border-slate-900"></div>}
+                <img src={activeChat.avatar} className="w-10 h-10 rounded-full bg-slate-800" alt="Avatar" />
+                {activeChat.online && <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-[#020617]"></div>}
               </div>
               <div>
-                <div className="text-sm font-bold text-white">{activeChat.name}</div>
-                <div className="text-[10px] text-emerald-500 flex items-center gap-1 font-bold"><Lock size={8} /> Encrypted</div>
+                <div className="font-bold text-white text-sm">{activeChat.name}</div>
+                <div className="text-[10px] text-emerald-500 font-bold uppercase tracking-wider">Online Encrypted</div>
               </div>
             </div>
           ) : (
-            <div>
-              <h2 className="text-lg font-black text-white tracking-tight">SecureChat</h2>
-              <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest flex items-center gap-1">
-                <ShieldCheck size={10} className="text-emerald-500" /> Wallet-to-Wallet
-              </div>
-            </div>
+            <span className="font-black text-lg text-white">Secure Chat</span>
           )}
         </div>
-        {activeChat && (
-          <div className="flex gap-2">
-             <button className="p-2 text-slate-400 hover:text-white"><Phone size={20}/></button>
-             <button className="p-2 text-slate-400 hover:text-white"><MoreHorizontal size={20}/></button>
-          </div>
-        )}
+        <div className="flex gap-2">
+            <button className="p-2 bg-slate-800 rounded-full text-slate-400"><Phone size={18}/></button>
+            <button className="p-2 bg-slate-800 rounded-full text-slate-400"><MoreHorizontal size={18}/></button>
+        </div>
       </div>
 
-      {/* Content */}
-      <div className="flex-grow overflow-y-auto no-scrollbar bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-90">
-        {!activeChat ? (
-          <div className="p-2">
-             <div className="px-4 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">Recent Chats</div>
-             <div className="space-y-1">
-               {CONTACTS.map(contact => (
-                 <button key={contact.id} onClick={() => setActiveChat(contact)} className="w-full flex items-center gap-4 p-3 rounded-2xl hover:bg-white/5 transition-colors group text-left">
-                    <div className="relative">
-                       <img src={contact.avatar} className="w-12 h-12 rounded-full bg-slate-800" />
-                       {contact.online && <div className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 rounded-full border-2 border-slate-900"></div>}
+      {activeChat ? (
+        <>
+           <div className="flex-grow overflow-y-auto p-4 space-y-4 custom-scrollbar">
+              <div className="flex justify-center my-4">
+                 <div className="px-3 py-1 bg-slate-900 rounded-full text-[10px] text-slate-500 font-bold uppercase tracking-widest border border-slate-800">
+                    End-to-End Encrypted via Fluid Node
+                 </div>
+              </div>
+              {messages.map((msg) => (
+                 <div key={msg.id} className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[80%] p-3 rounded-2xl text-sm leading-relaxed ${
+                       msg.sender === 'me' 
+                       ? 'bg-emerald-600 text-white rounded-tr-sm' 
+                       : 'bg-slate-800 text-slate-200 rounded-tl-sm border border-slate-700'
+                    }`}>
+                       {msg.text}
+                       <div className={`text-[9px] mt-1 flex items-center justify-end gap-1 ${msg.sender === 'me' ? 'text-emerald-200' : 'text-slate-500'}`}>
+                          {msg.time}
+                          {msg.sender === 'me' && (
+                             msg.status === 'read' ? <div className="flex"><Check size={10}/><Check size={10} className="-ml-1"/></div> : <Check size={10}/>
+                          )}
+                       </div>
                     </div>
-                    <div className="flex-grow min-w-0">
+                 </div>
+              ))}
+              <div ref={messagesEndRef} />
+           </div>
+           
+           <form onSubmit={sendMessage} className="p-3 bg-slate-900 border-t border-slate-800">
+              <div className="flex items-center gap-2 bg-slate-950 p-2 rounded-2xl border border-slate-800 focus-within:border-emerald-500/50 transition-colors">
+                 <button type="button" className="p-2 text-slate-500 hover:text-white"><Paperclip size={20}/></button>
+                 <input 
+                    type="text" 
+                    value={inputText}
+                    onChange={(e) => setInputText(e.target.value)}
+                    placeholder="Type a secure message..."
+                    className="flex-grow bg-transparent text-white placeholder-slate-500 text-sm focus:outline-none"
+                 />
+                 <button type="submit" className="p-2 bg-emerald-500 text-white rounded-xl hover:bg-emerald-400 transition-colors disabled:opacity-50 disabled:grayscale">
+                    <Send size={18} />
+                 </button>
+              </div>
+           </form>
+        </>
+      ) : (
+        <div className="p-4 space-y-2">
+           <div className="relative mb-4">
+              <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+              <input type="text" placeholder="Search contacts..." className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-emerald-500/50" />
+           </div>
+           
+           <div className="space-y-1">
+              {CONTACTS.map(contact => (
+                 <button 
+                    key={contact.id} 
+                    onClick={() => setActiveChat(contact)}
+                    className="w-full flex items-center gap-3 p-3 rounded-2xl hover:bg-slate-900 transition-colors group"
+                 >
+                    <div className="relative">
+                       <img src={contact.avatar} className="w-12 h-12 rounded-full bg-slate-800 border-2 border-[#020617] group-hover:border-slate-800 transition-colors" alt={contact.name} />
+                       {contact.online && <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-emerald-500 rounded-full border-2 border-[#020617]"></div>}
+                    </div>
+                    <div className="flex-grow text-left overflow-hidden">
                        <div className="flex justify-between items-center mb-0.5">
-                          <span className="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors">{contact.name}</span>
-                          <span className="text-[10px] font-medium text-slate-500">{contact.time}</span>
+                          <span className="font-bold text-white text-sm truncate">{contact.name}</span>
+                          <span className="text-[10px] text-slate-500 font-bold">{contact.time}</span>
                        </div>
                        <div className="flex justify-between items-center">
-                          <p className="text-xs text-slate-400 truncate pr-4">{contact.lastMessage}</p>
-                          {contact.unread > 0 && <div className="w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center text-[10px] font-bold text-white">{contact.unread}</div>}
+                          <span className="text-xs text-slate-400 truncate max-w-[140px] group-hover:text-slate-300">{contact.lastMessage}</span>
+                          {contact.unread > 0 && (
+                             <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-[10px] font-bold text-black">
+                                {contact.unread}
+                             </div>
+                          )}
                        </div>
                     </div>
                  </button>
-               ))}
-             </div>
-          </div>
-        ) : (
-          <div className="p-4 space-y-4 min-h-full flex flex-col justify-end">
-             <div className="text-center text-[10px] text-slate-600 font-bold uppercase tracking-widest my-4">Today</div>
-             {messages.map((msg) => (
-                <div key={msg.id} className={`flex ${msg.sender === 'me' ? 'justify-end' : 'justify-start'}`}>
-                   <div className={`max-w-[80%] p-3 rounded-2xl ${msg.sender === 'me' ? 'bg-indigo-600 text-white rounded-tr-sm' : 'bg-slate-800 text-slate-200 rounded-tl-sm'}`}>
-                      <p className="text-sm font-medium leading-relaxed">{msg.text}</p>
-                      <div className={`text-[9px] mt-1 flex items-center justify-end gap-1 ${msg.sender === 'me' ? 'text-indigo-200' : 'text-slate-500'}`}>
-                         {msg.time}
-                         {msg.sender === 'me' && <Check size={10} />}
-                      </div>
-                   </div>
-                </div>
-             ))}
-             <div ref={messagesEndRef} />
-          </div>
-        )}
-      </div>
-
-      {/* Input Area (Only in Chat) */}
-      {activeChat && (
-        <form onSubmit={sendMessage} className="p-3 bg-slate-900 border-t border-white/5 flex items-center gap-2">
-           <button type="button" className="p-2 text-slate-400 hover:text-white bg-slate-800 rounded-full"><Paperclip size={18}/></button>
-           <input 
-             type="text" 
-             value={inputText}
-             onChange={(e) => setInputText(e.target.value)}
-             placeholder="Type a message..." 
-             className="flex-grow bg-black/20 border border-white/10 rounded-full py-2.5 px-4 text-sm text-white focus:outline-none focus:border-indigo-500 transition-all"
-           />
-           <button type="submit" className="p-2.5 bg-indigo-600 text-white rounded-full hover:bg-indigo-500 transition-colors shadow-lg disabled:opacity-50" disabled={!inputText.trim()}>
-              <Send size={18} className={inputText.trim() ? 'ml-0.5' : ''} />
-           </button>
-        </form>
+              ))}
+           </div>
+        </div>
       )}
     </div>
   );
 };
 
-// --- Main Wallet Application ---
-const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView?: string }> = ({ onNavigate, initialView = 'assets' }) => {
-  const [isLocked, setIsLocked] = useState(true);
-  const [activeTab, setActiveTab] = useState(initialView);
-  const [activeApp, setActiveApp] = useState<string | null>(null); // 'chat', etc.
-  const [lastActiveTab, setLastActiveTab] = useState('assets');
-  const [network, setNetwork] = useState('Fluid Mainnet');
-  const [cardMode, setCardMode] = useState<'virtual' | 'physical'>('virtual');
-  const [cardFrozen, setCardFrozen] = useState(false);
-  const [showCardDetails, setShowCardDetails] = useState(false);
-  const [activeModal, setActiveModal] = useState<'send' | 'receive' | 'buy' | 'editProfile' | 'domainRegistrar' | 'cardLimits' | 'deploy' | 'dappStore' | 'notifications' | 'requestCard' | 'changePin' | 'deleteCard' | null>(null);
-  const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
-  
-  // Send / Receive Chain State
-  const [selectedChain, setSelectedChain] = useState<NetworkOption>(NETWORKS[0]);
+// --- Main Fluid Wallet App Container ---
+const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView = 'home' }) => {
+  const [activeTab, setActiveTab] = useState(initialView === 'assets' ? 'home' : initialView);
+  const [currentTime, setCurrentTime] = useState('');
+  const [locked, setLocked] = useState(true);
 
-  // Card & Security State
-  const [hasCard, setHasCard] = useState(true);
-  const [cardPin, setCardPin] = useState('');
-  const [confirmCardPin, setConfirmCardPin] = useState('');
-  const [actualCardPin, setActualCardPin] = useState('1234');
-  const [cvv, setCvv] = useState('***');
-  const [isCvvVisible, setIsCvvVisible] = useState(false);
-  const [showNotifications, setShowNotifications] = useState(false);
+  // Expanded View State to include new actions
+  const [viewState, setViewState] = useState<'home' | 'swap' | 'cards' | 'dapps' | 'chat' | 'send' | 'receive' | 'buy' | 'hosting' | 'fiat' | 'settings' | 'history'>('home');
 
-  // Change PIN Flow State
-  const [oldPinInput, setOldPinInput] = useState('');
-  const [newPinInput, setNewPinInput] = useState('');
-  const [confirmNewPinInput, setConfirmNewPinInput] = useState('');
-
-  // Profile State
-  const [profile, setProfile] = useState({
-    name: 'Alexander Fluid',
-    handle: 'alex.fluid',
-    bio: 'DeFi Native & Fluid Validator 💧',
-    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alexander&backgroundColor=b6e3f4'
+  // User Profile State
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showAddBankModal, setShowAddBankModal] = useState(false); // New state for Add Bank Modal
+  const [userProfile, setUserProfile] = useState<UserProfile>({
+    name: 'Alex Fluid',
+    handle: 'alex.fluid.eth',
+    email: 'alex@fluid.link',
+    avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=Alexander&backgroundColor=b6e3f4',
+    bio: 'Crypto enthusiast & DeFi explorer'
   });
-  const [tempProfile, setTempProfile] = useState(profile);
 
-  // Card Limits State
-  const [cardLimits, setCardLimits] = useState({
-    online: 5000,
-    inStore: 2500,
-    atm: 1000
-  });
-  const [tempCardLimits, setTempCardLimits] = useState(cardLimits);
-
-  // Domain Registrar State
-  const [domainQuery, setDomainQuery] = useState('');
-  const [domainSearchStatus, setDomainSearchStatus] = useState<'idle' | 'searching' | 'results'>('idle');
-
-  // Deployment State
-  const [myDeployments, setMyDeployments] = useState<Deployment[]>([
-    { id: '1', name: 'fluid-dex-v2', hash: 'ipfs://QmX...7a2', status: 'active', url: 'https://fluid.link/dex' }
-  ]);
-  const [newDeployName, setNewDeployName] = useState('');
-  const [deployStep, setDeployStep] = useState(0); 
-  const [deployLogs, setDeployLogs] = useState<string[]>([]);
-  const logsEndRef = useRef<HTMLDivElement>(null);
-
-  // DApp Store State
-  const [dAppSearch, setDAppSearch] = useState('');
-  const [selectedDAppCategory, setSelectedDAppCategory] = useState('All');
-
-  // DEX States
-  const [swapRoute, setSwapRoute] = useState<'fluid' | 'nexus' | 'mesh'>('fluid');
-
-  // Fiat States
-  const [activeFiatIndex, setActiveFiatIndex] = useState(0);
-  const [showAccountDetails, setShowAccountDetails] = useState(false);
+  // History State
+  const [historyFilter, setHistoryFilter] = useState<'all' | 'send' | 'receive' | 'swap' | 'buy'>('all');
+  const [historySearch, setHistorySearch] = useState('');
 
   // Security Settings State
-  const [securitySettings, setSecuritySettings] = useState({
-    viewCardDetails: true,
+  const [biometricSettings, setBiometricSettings] = useState({
+    viewCard: true,
+    adjustLimits: true,
     initiateSwap: false,
-    changeLimits: true,
     sendCrypto: true,
-    buyCrypto: true,
-    generateCvv: true,
+    buyCrypto: true
   });
-  
-  const securityScore = useMemo(() => {
-    let score = 50; 
-    if (!isLocked) score += 10;
-    if (securitySettings.viewCardDetails) score += 10;
-    if (securitySettings.initiateSwap) score += 10;
-    if (securitySettings.changeLimits) score += 10;
-    if (securitySettings.sendCrypto) score += 5;
-    if (securitySettings.buyCrypto) score += 5;
-    if (profile.handle.endsWith('.fluid')) score += 10; 
-    return Math.min(score, 100);
-  }, [securitySettings, isLocked, profile.handle]);
 
-  // Auth Simulation
-  const [verifyingAction, setVerifyingAction] = useState<string | null>(null);
+  // Card State
+  const [cardTab, setCardTab] = useState<'digital' | 'metal'>('digital'); 
+  const [hasPhysicalCard, setHasPhysicalCard] = useState(false);
+  const [showCardDetails, setShowCardDetails] = useState(false);
+  const [cardViewMode, setCardViewMode] = useState<'main' | 'history' | 'manage' | 'order'>('main');
+  const [selectedDesign, setSelectedDesign] = useState<'steel' | 'gold' | 'black'>('black');
+  const [isFrozen, setIsFrozen] = useState(false);
+  const [orderStep, setOrderStep] = useState(1); // 1: Design, 2: Shipping, 3: Success
 
-  const handleSecureAction = (actionType: keyof typeof securitySettings | 'generic', callback: () => void) => {
-    const shouldVerify = actionType === 'generic' ? true : securitySettings[actionType];
-    
-    if (shouldVerify) {
-      setVerifyingAction(typeof actionType === 'string' ? actionType : 'Verify');
-      setTimeout(() => {
-        setVerifyingAction(null);
-        callback();
-      }, 1500);
-    } else {
-      callback();
-    }
-  };
-
-  const handleGenerateCvv = () => {
-    handleSecureAction('generateCvv', () => {
-        // Generate random 3 digit number
-        const randomCvv = Math.floor(100 + Math.random() * 900).toString();
-        setCvv(randomCvv);
-        setIsCvvVisible(true);
-        // Hide after 30 seconds
-        setTimeout(() => {
-            setIsCvvVisible(false);
-            setCvv('***');
-        }, 30000);
-    });
-  };
-
-  const handleCreateCard = () => {
-    if (cardPin.length !== 4 || cardPin !== confirmCardPin) return;
-    setActualCardPin(cardPin);
-    setHasCard(true);
-    setActiveModal(null);
-    setCardPin('');
-    setConfirmCardPin('');
-  };
-
-  const handleChangePin = () => {
-    if (oldPinInput !== actualCardPin) {
-      alert("Incorrect current PIN.");
-      return;
-    }
-    if (newPinInput.length !== 4 || newPinInput !== confirmNewPinInput) {
-      alert("New PINs do not match or are invalid length.");
-      return;
-    }
-    setActualCardPin(newPinInput);
-    setActiveModal(null);
-    setOldPinInput('');
-    setNewPinInput('');
-    setConfirmNewPinInput('');
-    alert("PIN Updated Successfully");
-  };
-
-  const handleDeleteCard = () => {
-    setHasCard(false);
-    setCardMode('virtual'); // Reset to virtual default
-    setCardFrozen(false);
-    setActiveModal(null);
-  };
-
-  const handleTabChange = (tabId: string) => {
-    if (tabId !== 'settings') {
-      setLastActiveTab(tabId);
-    }
-    setActiveTab(tabId);
-  };
-  
-  const toggleSettings = () => {
-    if (activeTab === 'settings') {
-      setActiveTab(lastActiveTab);
-    } else {
-      setLastActiveTab(activeTab);
-      setActiveTab('settings');
-    }
-  };
-
-  const handleDomainSearch = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!domainQuery.trim()) return;
-    setDomainSearchStatus('searching');
-    setTimeout(() => {
-      setDomainSearchStatus('results');
-    }, 1500);
-  };
-
-  // --- Deployment Simulation ---
-  const startDeployment = () => {
-    if (!newDeployName) return;
-    setDeployStep(1);
-    setDeployLogs(['> Initializing Fluid CLI environment...']);
-    
-    const steps = [
-        { msg: '> Cloning repository...', delay: 800 },
-        { msg: '> Installing dependencies (npm install)...', delay: 2000 },
-        { msg: '> Building optimized production bundle...', delay: 3500 },
-        { msg: '> Encrypting assets for sharding...', delay: 5000 },
-        { msg: '> Uploading to Fluid Node Grid (Shard 1/3)...', delay: 6000 },
-        { msg: '> Uploading to Fluid Node Grid (Shard 2/3)...', delay: 7000 },
-        { msg: '> Uploading to Fluid Node Grid (Shard 3/3)...', delay: 8000 },
-        { msg: '> Verifying integrity and propagation...', delay: 9000 },
-        { msg: '> Generating immutable hash...', delay: 10000 },
-        { msg: 'SUCCESS: Deployment Complete!', delay: 11000 },
-    ];
-
-    steps.forEach(({ msg, delay }) => {
-        setTimeout(() => {
-            setDeployLogs(prev => [...prev, msg]);
-            if (logsEndRef.current) {
-                logsEndRef.current.scrollIntoView({ behavior: "smooth" });
-            }
-        }, delay);
-    });
-
-    setTimeout(() => {
-        setMyDeployments(prev => [{
-            id: Date.now().toString(),
-            name: newDeployName,
-            hash: `ipfs://Qm${Math.random().toString(36).substring(7)}`,
-            status: 'active',
-            url: `https://${newDeployName}.fluid.link`
-        }, ...prev]);
-        setDeployStep(2);
-    }, 11500);
-  };
-
-  // Prepare DApps with Actions
-  const DAPPS_WITH_ACTIONS: DApp[] = DAPPS.map(app => {
-    if (app.id === '3') { // SecureChat ID
-        return { ...app, action: () => { setActiveModal(null); setActiveApp('chat'); } };
-    }
-    return app;
-  });
-  
-  // Navigation
-  const tabs = [
-    { id: 'assets', label: 'Wallet', icon: WalletIcon },
-    { id: 'dex', label: 'DEX', icon: RefreshCw },
-    { id: 'cards', label: 'Cards', icon: CreditCard },
-    { id: 'fiat', label: 'Fiat', icon: Landmark },
-    { id: 'hosting', label: 'Fluid Host', icon: Server },
+  // Mock Transactions
+  const CARD_TXS = [
+    { id: 1, merchant: 'Netflix Subscription', type: 'Subscription', amount: '-$15.99', date: 'Today, 9:41 AM', icon: 'N', bg: 'bg-red-600' },
+    { id: 2, merchant: 'Apple Store', type: 'Electronics', amount: '-$2,499.00', date: 'Yesterday', icon: 'A', bg: 'bg-white text-black' },
+    { id: 3, merchant: 'Uber Rides', type: 'Transport', amount: '-$24.50', date: 'Oct 24', icon: 'U', bg: 'bg-black text-white' },
+    { id: 4, merchant: 'Starbucks', type: 'Food & Drink', amount: '-$8.75', date: 'Oct 23', icon: 'S', bg: 'bg-green-700' },
   ];
 
-  const unreadNotifications = NOTIFICATIONS.filter(n => !n.read).length;
+  // Helper to get card gradient
+  const getCardStyle = (design: string) => {
+    switch (design) {
+        case 'gold': return 'bg-gradient-to-br from-yellow-300 via-yellow-500 to-yellow-700 border-yellow-400/50 text-yellow-950';
+        case 'steel': return 'bg-gradient-to-br from-slate-300 via-slate-400 to-slate-500 border-slate-300/50 text-slate-900';
+        default: return 'bg-gradient-to-br from-slate-800 via-slate-900 to-black border-slate-700 text-white';
+    }
+  };
+
+  useEffect(() => {
+    // Sync initialView props with internal state
+    if (initialView === 'dex') setViewState('swap');
+    else if (initialView === 'cards') setViewState('cards');
+    else if (initialView === 'dapps') setViewState('dapps');
+    else if (initialView === 'hosting') setViewState('hosting');
+    else if (initialView === 'chat') setViewState('chat');
+    else setViewState('home');
+  }, [initialView]);
+
+  useEffect(() => {
+    const updateTime = () => {
+      const now = new Date();
+      setCurrentTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    };
+    updateTime();
+    const interval = setInterval(updateTime, 60000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const handleTabChange = (tab: string) => {
+    // Map tabs to views
+    if (tab === 'home') setViewState('home');
+    if (tab === 'swap') setViewState('swap');
+    if (tab === 'cards') setViewState('cards');
+    if (tab === 'dapps') setViewState('dapps');
+  };
+
+  const getActiveTab = () => {
+    if (['home', 'send', 'receive', 'buy', 'fiat', 'settings', 'history'].includes(viewState)) return 'home';
+    if (viewState === 'hosting') return 'dapps';
+    return viewState;
+  };
+
+  const filteredHistory = TRANSACTIONS.filter(tx => {
+    const matchesFilter = historyFilter === 'all' || tx.type === historyFilter;
+    const matchesSearch = !historySearch || 
+        tx.symbol.toLowerCase().includes(historySearch.toLowerCase()) || 
+        (tx.counterparty && tx.counterparty.toLowerCase().includes(historySearch.toLowerCase()));
+    return matchesFilter && matchesSearch;
+  });
+
+  const DAPPS_EXPANDED: DApp[] = [
+    ...DAPPS,
+    { id: 'host-internal', name: 'Fluid Host', url: 'fluid://host', icon: Server, category: 'Utils', status: 'online', description: 'Manage your decentralized sites.', action: () => setViewState('hosting') }
+  ];
 
   return (
-    <div className="min-h-screen pt-32 pb-24 flex flex-col items-center justify-center">
-       
-       {/* Introduction Header */}
-       <div className="text-center mb-12 max-w-2xl mx-auto px-4">
-          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-500 text-[10px] font-bold uppercase tracking-widest mb-4">
-             <Layout size={12} /> Interactive Demo
-          </div>
-          <h1 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white tracking-tighter mb-6">
-             Experience the Future of DeFi
-          </h1>
-          <p className="text-lg text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
-             Take an interactive tour of the Fluid Dapp — a preview of the seamless convergence of crypto, banking, and decentralized hosting we are building.
-          </p>
-       </div>
-
-       {/* Device Chassis */}
-       {isLocked ? (
-          <div className="w-full max-w-[420px] h-[850px] bg-black rounded-[3.5rem] border-8 border-slate-900 relative overflow-hidden shadow-2xl mx-auto">
-             <SecurityVault onUnlock={() => setIsLocked(false)} />
-          </div>
-       ) : (
-          <div className="w-full max-w-[420px] h-[850px] bg-[#020617] rounded-[3.5rem] border-[8px] border-[#1e232f] relative overflow-hidden shadow-[0_0_50px_rgba(0,0,0,0.5)] flex flex-col mx-auto transition-colors duration-500">
+    <div className="min-h-screen pt-24 pb-12 flex items-center justify-center bg-transparent">
+       <div className="relative w-full max-w-[380px] h-[800px] bg-slate-900 rounded-[3rem] border-[8px] border-slate-800 shadow-2xl overflow-hidden ring-1 ring-white/10">
           
-          {/* Dynamic Island / Status Bar */}
-          <div className="absolute top-0 inset-x-0 h-14 z-50 pointer-events-none px-8 pt-5 flex justify-between items-start text-white">
-             <span className="text-xs font-bold tracking-widest ml-2">9:41</span>
-             
-             {/* Dynamic Island Area */}
-             <div className={`absolute top-3 left-1/2 -translate-x-1/2 bg-black rounded-full flex items-center justify-center gap-2 px-3 transition-all duration-300 ${verifyingAction ? 'w-40 h-10' : 'w-32 h-8'}`}>
-                {verifyingAction ? (
-                  <>
-                    <ScanFace size={16} className="text-emerald-500 animate-pulse" />
-                    <span className="text-[10px] font-bold text-white uppercase tracking-wider animate-in fade-in">Verifying...</span>
-                  </>
-                ) : (
-                  <>
-                    <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></div>
-                    <span className="text-[8px] font-bold text-slate-500 uppercase tracking-tighter">Secure Enclave</span>
-                  </>
-                )}
-             </div>
-
-             <div className="flex gap-1.5 mr-2">
+          {/* Status Bar */}
+          <div className="absolute top-0 inset-x-0 h-14 bg-slate-900/90 backdrop-blur-md z-50 flex items-center justify-between px-6 pt-2">
+             <span className="text-xs font-bold text-white">{currentTime}</span>
+             <div className="absolute left-1/2 -translate-x-1/2 top-0 w-32 h-7 bg-black rounded-b-2xl"></div>
+             <div className="flex items-center gap-1.5 text-white">
                 <Signal size={12} />
                 <Wifi size={12} />
                 <Battery size={12} />
              </div>
           </div>
 
-          {/* App Header (Glass) - Hide if Active App is Full Screen */}
-          {!activeApp && (
-            <header className="px-6 pt-16 pb-4 flex justify-between items-center z-40 bg-slate-950/50 backdrop-blur-md border-b border-white/5 relative">
-                <div className="flex items-center gap-3">
-                    <button 
-                    onClick={toggleSettings}
-                    className="w-8 h-8 rounded-full bg-slate-900 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors overflow-hidden"
-                    >
-                    <img src={profile.avatar} alt="User" className="w-full h-full object-cover" />
-                    </button>
-                    <div className="flex flex-col">
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Network</span>
-                    <button 
-                        onClick={() => setNetwork(prev => prev === 'Fluid Mainnet' ? 'Ethereum' : 'Fluid Mainnet')}
-                        className="flex items-center gap-1 text-xs font-black text-white"
-                    >
-                        {network} <ChevronDown size={10} className="text-slate-500" />
-                    </button>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    <button 
-                    onClick={toggleSettings}
-                    className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${
-                        activeTab === 'settings' 
-                        ? 'bg-indigo-600 border-indigo-500 text-white shadow-[0_0_15px_rgba(79,70,229,0.3)]' 
-                        : 'bg-slate-900 border-white/10 text-slate-400 hover:text-white hover:border-white/20'
-                    }`}
-                    >
-                    <Settings size={18} />
-                    </button>
-                    <div className="relative">
-                        <button 
-                            onClick={() => setShowNotifications(!showNotifications)}
-                            className={`w-10 h-10 rounded-full border flex items-center justify-center transition-all ${showNotifications ? 'bg-slate-800 text-white border-white/30' : 'bg-slate-900 border-white/10 text-slate-400 hover:text-white hover:border-white/20'}`}
-                        >
-                            <Bell size={18} />
-                            {unreadNotifications > 0 && <span className="absolute top-2 right-2.5 w-1.5 h-1.5 bg-rose-500 rounded-full border border-slate-900"></span>}
-                        </button>
-                        
-                        {/* Notification Dropdown */}
-                        {showNotifications && (
-                            <div className="absolute right-0 top-12 w-64 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-2 z-50 animate-in fade-in zoom-in-95 origin-top-right">
-                                <div className="px-3 py-2 border-b border-white/5 flex justify-between items-center">
-                                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Notifications</span>
-                                    <button className="text-[9px] text-indigo-400 font-bold hover:text-white">Clear All</button>
-                                </div>
-                                <div className="max-h-48 overflow-y-auto no-scrollbar py-1">
-                                    {NOTIFICATIONS.map(n => (
-                                        <div key={n.id} className="p-2 hover:bg-white/5 rounded-xl transition-colors cursor-pointer group">
-                                            <div className="flex justify-between items-start mb-1">
-                                                <span className="text-xs font-bold text-white group-hover:text-indigo-400 transition-colors">{n.title}</span>
-                                                <span className="text-[9px] text-slate-600">{n.time}</span>
-                                            </div>
-                                            <p className="text-[10px] text-slate-400 leading-tight">{n.message}</p>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </header>
-          )}
+          {/* Locked State Overlay */}
+          {locked && <SecurityVault onUnlock={() => setLocked(false)} />}
 
-          {/* Main Scrollable Content */}
-          <div className={`flex-grow overflow-y-auto no-scrollbar relative bg-[#020617] scroll-smooth ${activeApp ? 'pt-10' : ''}`}>
-             {!activeApp && <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none"></div>}
+          {/* Edit Profile Modal */}
+          {showProfileModal && (
+            <div className="absolute inset-0 z-[60] bg-slate-950 flex flex-col animate-in slide-in-from-bottom duration-300">
+               {/* Modal Header */}
+               <div className="p-6 flex items-center justify-between border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10">
+                  <h3 className="text-lg font-black text-white uppercase tracking-tight flex items-center gap-2">
+                     <User size={18} className="text-blue-500" /> Edit Profile
+                  </h3>
+                  <button onClick={() => setShowProfileModal(false)} className="p-2 bg-slate-900 rounded-full border border-slate-800 text-slate-400 hover:text-white transition-colors">
+                     <X size={20} />
+                  </button>
+               </div>
 
-             {/* === MODULE: SECURE CHAT (SUPER APP) === */}
-             {activeApp === 'chat' ? (
-                <SecureChatApp onBack={() => setActiveApp(null)} />
-             ) : (
-             <>
-             {/* === MODULE A: DASHBOARD === */}
-             {activeTab === 'assets' && (
-               <div className="p-6 space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  {/* Portfolio Card */}
-                  <div className="relative">
-                     <div className="text-center mb-6">
-                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-[0.2em] mb-1 block">Total Balance</span>
-                        <h1 className="text-4xl font-black text-white tracking-tighter">$84,592.45</h1>
-                        <div className="flex items-center justify-center gap-2 mt-2">
-                           <span className="px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-[10px] font-bold uppercase tracking-wider">+2.4% (24H)</span>
+               {/* Modal Content */}
+               <div className="p-6 flex-grow overflow-y-auto custom-scrollbar space-y-6">
+                  {/* Avatar Edit */}
+                  <div className="flex justify-center mb-2 relative group">
+                     <div className="w-32 h-32 rounded-full bg-slate-900 border-4 border-slate-800 overflow-hidden relative shadow-2xl">
+                        <img src={userProfile.avatar} alt={userProfile.name} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer">
+                           <Camera size={32} className="text-white drop-shadow-md" />
                         </div>
                      </div>
-                     
-                     {/* Chart */}
-                     <div className="h-32 w-full -mx-2">
-                        <ResponsiveContainer width="100%" height="100%">
-                           <AreaChart data={CHART_DATA}>
-                              <defs>
-                                 <linearGradient id="colorVal" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="5%" stopColor="#6366f1" stopOpacity={0.3}/>
-                                    <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                                 </linearGradient>
-                              </defs>
-                              <Area 
-                                type="monotone" 
-                                dataKey="value" 
-                                stroke="#6366f1" 
-                                strokeWidth={2}
-                                fillOpacity={1} 
-                                fill="url(#colorVal)" 
-                              />
-                           </AreaChart>
-                        </ResponsiveContainer>
+                     <button className="absolute bottom-0 right-1/2 translate-x-12 translate-y-2 p-2.5 bg-blue-600 rounded-full text-white border-4 border-slate-950 hover:bg-blue-500 transition-colors shadow-lg">
+                        <Pen size={14} />
+                     </button>
+                  </div>
+
+                  {/* Form Fields */}
+                  <div className="space-y-4">
+                     <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase ml-2 mb-1 block">Display Name</label>
+                        <div className="relative">
+                           <User size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                           <input 
+                              type="text" 
+                              value={userProfile.name}
+                              onChange={(e) => setUserProfile({...userProfile, name: e.target.value})}
+                              className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3.5 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-blue-500 transition-all font-bold"
+                           />
+                        </div>
                      </div>
 
-                     {/* Global Actions */}
-                     <div className="grid grid-cols-4 gap-3 mt-4">
-                        <button onClick={() => setActiveModal('send')} className="flex flex-col items-center gap-2 group">
-                          <div className="w-14 h-14 rounded-[1.2rem] bg-slate-900 border border-white/5 flex items-center justify-center shadow-lg group-active:scale-95 transition-all group-hover:border-white/20">
-                             <ArrowUpRight size={20} className="text-white" />
-                          </div>
-                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Send</span>
-                        </button>
+                     <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase ml-2 mb-1 block">Fluid Handle</label>
+                        <div className="relative">
+                           <AtSign size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                           <input 
+                              type="text" 
+                              value={userProfile.handle}
+                              readOnly
+                              className="w-full bg-slate-950 border border-slate-800 rounded-xl py-3.5 pl-10 pr-4 text-sm text-slate-400 focus:outline-none cursor-not-allowed font-mono"
+                           />
+                           <span className="absolute right-4 top-1/2 -translate-y-1/2 text-[10px] text-emerald-500 font-bold uppercase bg-emerald-500/10 px-2 py-0.5 rounded">Verified</span>
+                        </div>
+                     </div>
 
-                        <button onClick={() => setActiveModal('receive')} className="flex flex-col items-center gap-2 group">
-                          <div className="w-14 h-14 rounded-[1.2rem] bg-slate-900 border border-white/5 flex items-center justify-center shadow-lg group-active:scale-95 transition-all group-hover:border-white/20">
-                             <ArrowDownLeft size={20} className="text-white" />
-                          </div>
-                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Receive</span>
-                        </button>
+                     <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase ml-2 mb-1 block">Bio</label>
+                        <textarea 
+                           value={userProfile.bio}
+                           onChange={(e) => setUserProfile({...userProfile, bio: e.target.value})}
+                           className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-blue-500 transition-all min-h-[80px] resize-none"
+                           placeholder="Tell us about yourself..."
+                        />
+                     </div>
 
-                        <button onClick={() => setActiveModal('buy')} className="flex flex-col items-center gap-2 group">
-                          <div className="w-14 h-14 rounded-[1.2rem] bg-slate-900 border border-white/5 flex items-center justify-center shadow-lg group-active:scale-95 transition-all group-hover:border-white/20">
-                             <CreditCard size={20} className="text-emerald-400" />
-                          </div>
-                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Buy</span>
-                        </button>
+                     <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase ml-2 mb-1 block">Email (Private)</label>
+                        <div className="relative">
+                           <Mail size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                           <input 
+                              type="email" 
+                              value={userProfile.email}
+                              onChange={(e) => setUserProfile({...userProfile, email: e.target.value})}
+                              className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3.5 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                           />
+                        </div>
+                     </div>
+                  </div>
+               </div>
 
-                        <button onClick={() => setActiveTab('dex')} className="flex flex-col items-center gap-2 group">
-                          <div className="w-14 h-14 rounded-[1.2rem] bg-slate-900 border border-white/5 flex items-center justify-center shadow-lg group-active:scale-95 transition-all group-hover:border-white/20">
-                             <ArrowLeftRight size={20} className="text-indigo-400" />
-                          </div>
-                          <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Swap</span>
+               {/* Modal Footer */}
+               <div className="p-6 border-t border-slate-800 bg-slate-900/50 backdrop-blur-md">
+                  <button 
+                     onClick={() => setShowProfileModal(false)}
+                     className="w-full py-4 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-black text-sm rounded-xl shadow-lg shadow-blue-500/20 transition-all uppercase tracking-wider"
+                  >
+                     Save Changes
+                  </button>
+               </div>
+            </div>
+          )}
+
+          {/* Add Bank Account Modal */}
+          {showAddBankModal && (
+            <div className="absolute inset-0 z-[70] bg-slate-950 flex flex-col animate-in slide-in-from-bottom duration-300">
+               <div className="p-6 flex items-center justify-between border-b border-slate-800 bg-slate-900/50 backdrop-blur-md sticky top-0 z-10">
+                  <h3 className="text-lg font-black text-white uppercase tracking-tight">Link Bank Account</h3>
+                  <button onClick={() => setShowAddBankModal(false)} className="p-2 bg-slate-900 rounded-full border border-slate-800 text-slate-400 hover:text-white transition-colors">
+                     <X size={20} />
+                  </button>
+               </div>
+               <div className="p-6 flex-grow overflow-y-auto">
+                  <p className="text-sm text-slate-400 mb-6">Connect your traditional bank account to enable seamless fiat on/off ramps.</p>
+                  <div className="space-y-4">
+                     <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase ml-2 mb-1 block">Account Holder</label>
+                        <input type="text" className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-blue-500" placeholder="John Doe" />
+                     </div>
+                     <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase ml-2 mb-1 block">IBAN / Account Number</label>
+                        <input type="text" className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-blue-500" placeholder="US89..." />
+                     </div>
+                     <div>
+                        <label className="text-xs font-bold text-slate-500 uppercase ml-2 mb-1 block">Bank Name</label>
+                        <input type="text" className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 px-4 text-sm text-white focus:outline-none focus:border-blue-500" placeholder="Chase Bank" />
+                     </div>
+                  </div>
+                  <button onClick={() => setShowAddBankModal(false)} className="w-full py-4 mt-8 bg-blue-600 text-white font-bold rounded-xl shadow-lg shadow-blue-500/20">Link Account</button>
+               </div>
+            </div>
+          )}
+
+          {/* Main Content Area */}
+          <div className="h-full pt-16 pb-20 overflow-y-auto custom-scrollbar bg-slate-950">
+             
+             {/* HOME TAB */}
+             {viewState === 'home' && (
+               <div className="px-5 space-y-6 animate-in fade-in duration-300">
+                  {/* Header */}
+                  <div className="flex justify-between items-center">
+                     <button onClick={() => setShowProfileModal(true)} className="flex items-center gap-3 group text-left">
+                        <div className="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-500 to-cyan-400 p-0.5 group-hover:scale-105 transition-transform">
+                           <img src={userProfile.avatar} alt="Profile" className="w-full h-full rounded-full bg-slate-900 object-cover" />
+                        </div>
+                        <div>
+                           <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider group-hover:text-blue-400 transition-colors">Welcome Back</div>
+                           <div className="text-sm font-black text-white">{userProfile.name}</div>
+                        </div>
+                     </button>
+                     <div className="flex gap-2">
+                        <button onClick={() => setViewState('history')} className="p-2 rounded-full bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors" title="Transaction History">
+                           <History size={18}/>
+                        </button>
+                        <button onClick={() => setViewState('chat')} className="p-2 rounded-full bg-slate-900 border border-slate-800 text-slate-400 hover:text-emerald-500 hover:border-emerald-500/50 transition-colors relative">
+                          <MessageSquare size={18}/>
+                          <div className="absolute top-1 right-1 w-2 h-2 bg-emerald-500 rounded-full"></div>
+                        </button>
+                        <button onClick={() => setViewState('settings')} className="p-2 rounded-full bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors">
+                           <Settings size={18}/>
                         </button>
                      </div>
                   </div>
 
-                  {/* Asset List */}
-                  <div>
-                     <div className="flex justify-between items-center mb-4">
-                        <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Assets</h3>
+                  {/* Balance Card */}
+                  <div className="p-6 rounded-[2rem] bg-gradient-to-br from-blue-600 to-indigo-700 shadow-lg shadow-blue-500/20 text-white relative overflow-hidden group">
+                     <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
+                     <div className="relative z-10">
+                        <span className="text-xs font-medium text-blue-200">Total Balance</span>
+                        <div className="text-3xl font-black mt-1 mb-6">$67,190.50</div>
+                        <div className="flex gap-3">
+                           <button onClick={() => setViewState('receive')} className="flex-1 bg-white/20 hover:bg-white/30 transition-colors py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 backdrop-blur-sm">
+                              <ArrowDownLeft size={14} /> Receive
+                           </button>
+                           <button onClick={() => setViewState('send')} className="flex-1 bg-white/20 hover:bg-white/30 transition-colors py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 backdrop-blur-sm">
+                              <ArrowUpRight size={14} /> Send
+                           </button>
+                        </div>
                      </div>
-                     <div className="space-y-3">
-                        {ASSETS.map((asset) => (
-                           <div key={asset.symbol} className="flex items-center justify-between p-4 bg-slate-900/50 backdrop-blur-md border border-white/5 rounded-2xl hover:bg-white/5 transition-colors cursor-pointer group">
-                              <div className="flex items-center gap-4">
-                                 <div className={`w-10 h-10 rounded-xl ${asset.color} flex items-center justify-center text-white font-bold shadow-lg`}>
-                                    {asset.symbol === 'FLD' ? <FluidLogo className="w-6 h-6" /> : <Coins size={20} />}
+                  </div>
+
+                  {/* Actions Grid - Updated */}
+                  <div className="grid grid-cols-4 gap-2">
+                     {[
+                        { label: 'Send', icon: ArrowUpRight, color: 'text-blue-400', action: () => setViewState('send') },
+                        { label: 'Receive', icon: ArrowDownLeft, color: 'text-emerald-400', action: () => setViewState('receive') },
+                        { label: 'Buy', icon: CreditCard, color: 'text-purple-400', action: () => setViewState('buy') },
+                        { label: 'Bank', icon: Landmark, color: 'text-amber-400', action: () => setViewState('fiat') },
+                     ].map((action, i) => (
+                        <button key={i} onClick={action.action} className="flex flex-col items-center gap-2 p-3 rounded-2xl bg-slate-900 border border-slate-800 hover:bg-slate-800 transition-colors">
+                           <action.icon size={20} className={action.color} />
+                           <span className="text-[10px] font-bold text-slate-400">{action.label}</span>
+                        </button>
+                     ))}
+                  </div>
+
+                  {/* Chart */}
+                  <div className="h-32 -mx-5 px-5">
+                     <ResponsiveContainer width="100%" height="100%">
+                        <AreaChart data={CHART_DATA}>
+                           <defs>
+                              <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                                 <stop offset="5%" stopColor="#10b981" stopOpacity={0.3}/>
+                                 <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                              </linearGradient>
+                           </defs>
+                           <Area type="monotone" dataKey="value" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorValue)" />
+                        </AreaChart>
+                     </ResponsiveContainer>
+                  </div>
+
+                  {/* Fiat Accounts Section */}
+                  <div>
+                     <div className="flex justify-between items-center mb-3">
+                        <h3 className="font-bold text-white text-sm">Fiat Accounts</h3>
+                        <button onClick={() => setShowAddBankModal(true)} className="text-xs font-bold text-blue-500 flex items-center gap-1">
+                           + Add New
+                        </button>
+                     </div>
+                     <div className="flex gap-3 overflow-x-auto pb-2 -mx-5 px-5 no-scrollbar">
+                        {FIAT_ACCOUNTS.map((account, i) => (
+                           <div key={i} className="min-w-[160px] p-4 bg-slate-900 border border-slate-800 rounded-2xl relative overflow-hidden flex flex-col justify-between h-24">
+                              <div className="flex justify-between items-start z-10">
+                                 <div className="flex items-center gap-2">
+                                    <span className="text-xl">{account.flag}</span>
+                                    <span className="text-xs font-bold text-white">{account.currency}</span>
                                  </div>
-                                 <div>
-                                    <div className="text-sm font-bold text-white group-hover:text-indigo-400 transition-colors">{asset.name}</div>
-                                    <div className="text-[10px] font-bold text-slate-500">{asset.amount} {asset.symbol}</div>
-                                 </div>
+                                 <Landmark size={14} className="text-slate-500" />
                               </div>
-                              <div className="text-right">
-                                 <div className="text-sm font-bold text-white">{asset.value}</div>
-                                 <div className={`text-[10px] font-bold ${asset.change.startsWith('+') ? 'text-emerald-500' : 'text-rose-500'}`}>{asset.change}</div>
+                              <div className="z-10">
+                                 <div className="text-[10px] text-slate-500 font-medium truncate mb-0.5">{account.bankName}</div>
+                                 <div className="text-sm font-black text-white">{account.symbol}{account.balance}</div>
                               </div>
+                              {/* Decor */}
+                              <div className="absolute -bottom-4 -right-4 w-16 h-16 bg-white/5 rounded-full blur-xl"></div>
                            </div>
                         ))}
                      </div>
                   </div>
 
-                  {/* Ledger */}
+                  {/* Assets List */}
                   <div>
-                     <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Ledger</h3>
+                     <div className="flex justify-between items-center mb-3">
+                        <h3 className="font-bold text-white text-sm">Crypto Assets</h3>
+                        <span className="text-xs font-bold text-blue-500">See All</span>
+                     </div>
                      <div className="space-y-3">
-                        {TRANSACTIONS.map((tx) => (
-                           <div 
-                             key={tx.id} 
-                             onClick={() => setSelectedTransaction(tx)}
-                             className="flex items-start gap-4 p-3 rounded-2xl hover:bg-white/5 transition-colors cursor-pointer"
-                           >
-                              <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center text-slate-400 shrink-0">
-                                 {tx.type === 'swap' && <RefreshCw size={14} />}
-                                 {tx.type === 'receive' && <ArrowDownLeft size={14} />}
-                                 {tx.type === 'contract' && <Terminal size={14} />}
+                        {ASSETS.map((asset) => (
+                           <div key={asset.symbol} className="flex items-center justify-between p-3 rounded-2xl bg-slate-900/50 border border-slate-800">
+                              <div className="flex items-center gap-3">
+                                 <div className={`w-10 h-10 rounded-xl ${asset.color} flex items-center justify-center text-white font-bold shadow-lg`}>
+                                    {asset.symbol === 'FLD' ? <FluidLogo className="w-5 h-5" /> : asset.symbol[0]}
+                                 </div>
+                                 <div>
+                                    <div className="font-bold text-white text-sm">{asset.name}</div>
+                                    <div className="text-xs text-slate-500">{asset.amount} {asset.symbol}</div>
+                                 </div>
                               </div>
-                              <div className="flex-grow">
-                                 <div className="flex justify-between items-center mb-0.5">
-                                    <span className="text-xs font-bold text-white">{tx.title}</span>
-                                    <span className={`text-xs font-bold ${tx.amount.startsWith('+') ? 'text-emerald-500' : 'text-white'}`}>{tx.amount}</span>
-                                 </div>
-                                 <div className="flex justify-between items-center">
-                                    <span className="text-[10px] font-medium text-slate-500">{tx.subtitle}</span>
-                                    <span className="text-[10px] font-medium text-slate-600">{tx.time}</span>
-                                 </div>
+                              <div className="text-right">
+                                 <div className="font-bold text-white text-sm">{asset.value}</div>
+                                 <div className={`text-[10px] font-bold ${asset.change.startsWith('+') ? 'text-emerald-400' : 'text-rose-400'}`}>{asset.change}</div>
                               </div>
                            </div>
                         ))}
@@ -975,1159 +890,900 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                </div>
              )}
 
-             {/* === MODULE B: DEX === */}
-             {activeTab === 'dex' && (
-                <div className="p-6 h-full flex flex-col animate-in fade-in zoom-in-95 duration-300">
-                   <div className="mb-6 flex justify-between items-center">
-                      <h2 className="text-2xl font-black text-white uppercase tracking-tight">Fluid DEX</h2>
-                      <div className="px-2 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded text-[9px] font-black text-indigo-500 uppercase tracking-widest flex items-center gap-1">
-                         <Shield size={10} /> MEV Protected
-                      </div>
+             {/* TRANSACTION HISTORY VIEW */}
+             {viewState === 'history' && (
+                <div className="px-5 h-full flex flex-col animate-in slide-in-from-right duration-300 pb-24">
+                   {/* Header */}
+                   <div className="flex items-center gap-2 mb-6">
+                      <button onClick={() => setViewState('home')} className="p-2 bg-slate-900 rounded-full border border-slate-800 text-slate-400 hover:text-white"><ChevronLeft size={20}/></button>
+                      <h2 className="text-xl font-black text-white">Transaction History</h2>
                    </div>
 
-                   {/* Swap Interface */}
-                   <div className="bg-slate-900/50 border border-white/5 rounded-[2rem] p-6 relative overflow-hidden backdrop-blur-xl mb-6">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/10 rounded-full blur-[50px] pointer-events-none"></div>
-                      
-                      {/* From */}
-                      <div className="mb-2">
-                         <div className="flex justify-between mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            <span>You Pay</span>
-                            <span>Bal: 12.5 ETH</span>
-                         </div>
-                         <div className="flex items-center justify-between bg-black/20 rounded-2xl p-4 border border-white/5">
-                            <input type="number" defaultValue="1.5" className="bg-transparent text-2xl font-black text-white outline-none w-32" />
-                            <div className="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-xl border border-white/10">
-                               <div className="w-5 h-5 rounded-full bg-indigo-500"></div>
-                               <span className="text-xs font-bold text-white">ETH</span>
-                               <ChevronDown size={12} className="text-slate-500" />
-                            </div>
-                         </div>
+                   {/* Search & Filters */}
+                   <div className="space-y-4 mb-6">
+                      <div className="relative">
+                         <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                         <input 
+                            type="text" 
+                            placeholder="Search transactions..." 
+                            className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-blue-500 transition-all"
+                            value={historySearch}
+                            onChange={(e) => setHistorySearch(e.target.value)}
+                         />
                       </div>
-
-                      {/* Divider */}
-                      <div className="flex justify-center -my-3 relative z-10">
-                         <div className="bg-slate-800 border border-slate-700 p-2 rounded-xl text-indigo-400 shadow-lg">
-                            <ArrowDown size={16} />
-                         </div>
-                      </div>
-
-                      {/* To */}
-                      <div className="mt-2 mb-6">
-                         <div className="flex justify-between mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-wider">
-                            <span>You Receive</span>
-                            <span className="text-emerald-500">Best Price</span>
-                         </div>
-                         <div className="flex items-center justify-between bg-black/20 rounded-2xl p-4 border border-white/5">
-                            <span className="text-2xl font-black text-emerald-400">8,420.50</span>
-                            <div className="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-xl border border-white/10">
-                               <div className="w-5 h-5 rounded-full bg-emerald-500"></div>
-                               <span className="text-xs font-bold text-white">FLD</span>
-                               <ChevronDown size={12} className="text-slate-500" />
-                            </div>
-                         </div>
-                      </div>
-
-                      {/* Route Selection */}
-                      <div className="bg-black/20 rounded-xl p-3 border border-white/5 mb-6">
-                         <div className="flex justify-between items-center mb-3">
-                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Routing Engine</span>
-                            <Zap size={12} className="text-amber-500" />
-                         </div>
-                         <div className="space-y-2">
-                            {[
-                               { id: 'fluid', label: 'Fluid Hub', fee: '$2.40', time: '1s', best: true },
-                               { id: 'nexus', label: 'Nexus Liq', fee: '$2.45', time: '3s', best: false },
-                               { id: 'mesh', label: 'Mesh Route', fee: '$3.10', time: '5s', best: false },
-                            ].map(route => (
-                               <button 
-                                 key={route.id}
-                                 onClick={() => setSwapRoute(route.id as any)}
-                                 className={`w-full flex items-center justify-between p-2 rounded-lg border transition-all ${swapRoute === route.id ? 'bg-indigo-500/10 border-indigo-500/50' : 'bg-transparent border-transparent opacity-50'}`}
-                               >
-                                  <div className="flex items-center gap-2">
-                                     <div className={`w-2 h-2 rounded-full ${route.best ? 'bg-emerald-500' : 'bg-slate-600'}`}></div>
-                                     <span className="text-[10px] font-bold text-white">{route.label}</span>
-                                     {route.best && <span className="text-[8px] bg-emerald-500/20 text-emerald-500 px-1 rounded uppercase font-black">Best</span>}
-                                  </div>
-                                  <div className="text-[10px] font-mono text-slate-400">{route.fee} • ~{route.time}</div>
-                               </button>
-                            ))}
-                         </div>
-                      </div>
-
-                      <button 
-                        onClick={() => handleSecureAction('initiateSwap', () => alert("Swap Initiated"))}
-                        className="w-full py-4 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-xl font-black text-white uppercase tracking-widest shadow-lg shadow-indigo-500/20 active:scale-95 transition-transform flex items-center justify-center gap-2 group"
-                      >
-                         <RefreshCw size={16} className="group-hover:rotate-180 transition-transform duration-500" />
-                         Swap Assets
-                      </button>
-                   </div>
-                </div>
-             )}
-
-             {/* === MODULE C: CARDS === */}
-             {activeTab === 'cards' && (
-                <div className="p-6 h-full flex flex-col animate-in fade-in slide-in-from-right-4 duration-300">
-                   {!hasCard ? (
-                        <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
-                            <div className="w-24 h-24 bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-full flex items-center justify-center border border-indigo-500/20 mb-4 animate-pulse">
-                                <CreditCard size={48} className="text-indigo-400" />
-                            </div>
-                            <div>
-                                <h2 className="text-2xl font-black text-white uppercase tracking-tight">No Active Card</h2>
-                                <p className="text-slate-400 text-sm mt-2 max-w-[200px] mx-auto">Get a virtual card instantly to spend your crypto anywhere.</p>
-                            </div>
+                      <div className="flex gap-2 overflow-x-auto pb-1 no-scrollbar">
+                         {['all', 'send', 'receive', 'swap', 'buy'].map((filter) => (
                             <button 
-                                onClick={() => setActiveModal('requestCard')}
-                                className="px-8 py-4 bg-white text-slate-900 font-black rounded-xl uppercase tracking-widest hover:bg-indigo-50 transition-colors shadow-lg shadow-indigo-500/20 flex items-center gap-2"
+                               key={filter}
+                               onClick={() => setHistoryFilter(filter as any)}
+                               className={`px-4 py-2 rounded-lg text-xs font-bold uppercase tracking-wider whitespace-nowrap transition-colors ${
+                                  historyFilter === filter 
+                                  ? 'bg-blue-600 text-white' 
+                                  : 'bg-slate-900 border border-slate-800 text-slate-500 hover:text-slate-300'
+                               }`}
                             >
-                                <Lock size={16} /> Request Card
+                               {filter}
                             </button>
-                        </div>
-                   ) : (
-                   <>
-                   <div className="flex justify-center mb-8">
-                      <div className="flex bg-slate-900 p-1 rounded-full border border-slate-800">
-                         <button 
-                           onClick={() => setCardMode('virtual')}
-                           className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${cardMode === 'virtual' ? 'bg-white text-slate-900 shadow-lg' : 'text-slate-500'}`}
-                         >
-                           Digital
-                         </button>
-                         <button 
-                           onClick={() => setCardMode('physical')}
-                           className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${cardMode === 'physical' ? 'bg-white text-slate-900 shadow-lg' : 'text-slate-500'}`}
-                         >
-                           Metal
-                         </button>
+                         ))}
                       </div>
                    </div>
 
-                   {/* Card Visual */}
-                   <div className="perspective-1000 mb-8 relative group cursor-pointer" onClick={() => setCardFrozen(!cardFrozen)}>
-                      <div className={`aspect-[1.586/1] rounded-2xl relative transition-all duration-500 overflow-hidden shadow-2xl border border-white/10 ${cardFrozen ? 'grayscale brightness-75' : ''} ${cardMode === 'physical' ? 'bg-[#1a1a1a]' : 'bg-gradient-to-br from-indigo-900 via-slate-900 to-black'}`}>
-                         
-                         {/* Card Texture */}
-                         {cardMode === 'physical' && <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>}
-                         {cardMode === 'virtual' && <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/20 rounded-full blur-[60px]"></div>}
-
-                         {/* Watermark Logo */}
-                         <div className="absolute inset-0 flex items-center justify-center opacity-[0.03] pointer-events-none">
-                            <FluidLogo className="w-64 h-64 text-white" />
-                         </div>
-
-                         {/* Freeze Overlay */}
-                         {cardFrozen && (
-                            <div className="absolute inset-0 flex flex-col items-center justify-center z-20 bg-black/40 backdrop-blur-[2px]">
-                               <Lock size={32} className="text-white mb-2" />
-                               <span className="text-xs font-black text-white uppercase tracking-widest border border-white px-2 py-1 rounded">Frozen</span>
-                            </div>
-                         )}
-
-                         <div className="absolute inset-0 p-6 flex flex-col justify-between z-10">
-                            <div className="flex justify-between items-start">
-                               <FluidLogo className="w-8 h-8 text-white" />
-                               <div className="flex items-center gap-1">
-                                  <div className="w-1 h-2 bg-slate-600 rounded-full"></div>
-                                  <div className="w-1 h-3 bg-white rounded-full"></div>
-                                  <div className="w-1 h-2 bg-slate-600 rounded-full"></div>
-                               </div>
-                            </div>
-
-                            <div>
-                               <div className="flex items-center justify-between mb-4">
-                                  {showCardDetails ? (
-                                     <div className="flex items-center gap-4">
-                                        <span className="font-mono text-lg text-white tracking-widest">4920 1928 4492 1029</span>
-                                        <div className="flex items-center gap-2">
-                                            <span className="text-[10px] text-slate-400 font-bold">CVV</span>
-                                            {isCvvVisible ? (
-                                                <span className="font-mono text-white font-bold">{cvv}</span>
-                                            ) : (
-                                                <button onClick={(e) => { e.stopPropagation(); handleGenerateCvv(); }} className="px-1.5 py-0.5 bg-white/10 rounded text-[9px] text-white hover:bg-white/20">Show</button>
-                                            )}
-                                        </div>
-                                     </div>
-                                  ) : (
-                                     <span className="font-mono text-lg text-white tracking-widest">**** **** **** 1029</span>
-                                  )}
-                                  <button 
-                                    onClick={(e) => { 
-                                      e.stopPropagation(); 
-                                      if (!showCardDetails) {
-                                        handleSecureAction('viewCardDetails', () => setShowCardDetails(true));
-                                      } else {
-                                        setShowCardDetails(false);
-                                      }
-                                    }} 
-                                    className="text-slate-400 hover:text-white"
-                                  >
-                                     {showCardDetails ? <EyeOff size={16} /> : <Eye size={16} />}
-                                  </button>
-                               </div>
-                               <div className="flex justify-between items-end">
-                                  <div>
-                                     <span className="text-[8px] text-slate-400 uppercase font-black block mb-0.5">Card Holder</span>
-                                     <span className="text-xs text-white font-bold tracking-wider">{profile.name.toUpperCase()}</span>
+                   {/* Transaction List */}
+                   <div className="space-y-3 overflow-y-auto custom-scrollbar flex-grow">
+                      {filteredHistory.length > 0 ? (
+                         filteredHistory.map((tx) => (
+                            <div key={tx.id} className="flex items-center justify-between p-4 bg-slate-900/50 border border-slate-800 rounded-2xl hover:bg-slate-900 transition-colors">
+                               <div className="flex items-center gap-4">
+                                  <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white font-bold text-xs shadow-lg ${
+                                     tx.type === 'receive' ? 'bg-emerald-500' :
+                                     tx.type === 'send' ? 'bg-blue-500' :
+                                     tx.type === 'swap' ? 'bg-purple-500' : 'bg-slate-700'
+                                  }`}>
+                                     {tx.type === 'receive' ? <ArrowDownLeft size={18} /> :
+                                      tx.type === 'send' ? <ArrowUpRight size={18} /> :
+                                      tx.type === 'swap' ? <RefreshCw size={18} /> : <CreditCard size={18} />}
                                   </div>
-                                  <span className="text-[10px] font-bold text-white/50 italic">{cardMode === 'physical' ? 'STEEL' : 'VIRTUAL'}</span>
-                               </div>
-                            </div>
-                         </div>
-                      </div>
-                   </div>
-                   {/* ... controls ... */}
-                   <div className="space-y-4">
-                      <div className="grid grid-cols-4 gap-2">
-                         <button 
-                           onClick={handleGenerateCvv}
-                           className="flex flex-col items-center justify-center gap-2 p-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-indigo-500/50 transition-colors group"
-                         >
-                            <RotateCw size={20} className="text-slate-400 group-hover:text-white transition-colors group-active:rotate-180 duration-500" />
-                            <span className="text-[9px] font-bold text-slate-500 uppercase group-hover:text-white transition-colors">CVV</span>
-                         </button>
-                         <button 
-                           onClick={() => handleSecureAction('changeLimits', () => {
-                              setTempCardLimits(cardLimits);
-                              setActiveModal('cardLimits');
-                           })}
-                           className="flex flex-col items-center justify-center gap-2 p-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-indigo-500/50 transition-colors group"
-                         >
-                            <Settings size={20} className="text-slate-400 group-hover:text-white transition-colors" />
-                            <span className="text-[9px] font-bold text-slate-500 uppercase group-hover:text-white transition-colors">Limits</span>
-                         </button>
-                         <button 
-                            onClick={() => setActiveModal('changePin')}
-                            className="flex flex-col items-center justify-center gap-2 p-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-indigo-500/50 transition-colors group"
-                         >
-                            <Lock size={20} className="text-slate-400 group-hover:text-white transition-colors" />
-                            <span className="text-[9px] font-bold text-slate-500 uppercase group-hover:text-white transition-colors">Pin</span>
-                         </button>
-                         <button 
-                            onClick={() => setActiveModal('deleteCard')}
-                            className="flex flex-col items-center justify-center gap-2 p-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-rose-500/50 hover:bg-rose-500/5 transition-colors group"
-                         >
-                            <Trash2 size={20} className="text-slate-400 group-hover:text-rose-500 transition-colors" />
-                            <span className="text-[9px] font-bold text-slate-500 group-hover:text-rose-500 uppercase transition-colors">Delete</span>
-                         </button>
-                      </div>
-
-                      <div className="p-4 rounded-2xl bg-slate-900/50 border border-slate-800 flex items-center justify-between">
-                         <div className="flex items-center gap-3">
-                            <div className="p-2 bg-rose-500/10 rounded-lg text-rose-500"><AlertTriangle size={18}/></div>
-                            <div>
-                               <div className="text-xs font-bold text-white">Freeze Card</div>
-                               <div className="text-[9px] text-slate-500">Temporarily disable transactions</div>
-                            </div>
-                         </div>
-                         <div 
-                           onClick={() => setCardFrozen(!cardFrozen)}
-                           className={`w-10 h-6 rounded-full p-1 transition-colors cursor-pointer ${cardFrozen ? 'bg-rose-500' : 'bg-slate-700'}`}
-                         >
-                            <div className={`w-4 h-4 bg-white rounded-full shadow-md transition-transform ${cardFrozen ? 'translate-x-4' : ''}`}></div>
-                         </div>
-                      </div>
-                   </div>
-                   </>
-                   )}
-                </div>
-             )}
-
-             {/* === MODULE F: FIAT === */}
-             {activeTab === 'fiat' && (
-                <div className="p-6 h-full flex flex-col animate-in fade-in slide-in-from-right-4 duration-300">
-                   <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-2xl font-black text-white uppercase tracking-tight">Fiat Gateway</h2>
-                      <div className="px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded text-[9px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1">
-                         <Landmark size={10} /> Multi-Currency
-                      </div>
-                   </div>
-
-                   <div className="space-y-4">
-                      {FIAT_ACCOUNTS.map((account, idx) => (
-                         <div key={account.currency} className="bg-slate-900/50 border border-slate-800 rounded-[2rem] p-5 relative overflow-hidden group hover:border-indigo-500/30 transition-all">
-                            {/* Background Elements */}
-                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-[50px] group-hover:bg-indigo-500/10 transition-colors pointer-events-none"></div>
-                            
-                            <div className="flex justify-between items-start mb-4 relative z-10">
-                               <div className="flex items-center gap-3">
-                                  <div className="text-2xl">{account.flag}</div>
                                   <div>
-                                     <div className="text-sm font-black text-white">{account.currency} Account</div>
-                                     <div className="text-[10px] text-slate-500 font-bold">{account.bank} • {account.type}</div>
+                                     <div className="font-bold text-white text-sm capitalize flex items-center gap-1.5">
+                                        {tx.type} {tx.symbol}
+                                        {tx.status === 'pending' && <span className="w-1.5 h-1.5 bg-amber-500 rounded-full animate-pulse" title="Pending"></span>}
+                                        {tx.status === 'failed' && <span className="w-1.5 h-1.5 bg-rose-500 rounded-full" title="Failed"></span>}
+                                     </div>
+                                     <div className="text-[10px] text-slate-500 font-medium">
+                                        {tx.date} • {tx.counterparty || 'Unknown'}
+                                     </div>
                                   </div>
                                </div>
                                <div className="text-right">
-                                  <div className="text-lg font-black text-white">{account.symbol}{account.balance}</div>
-                                  <div className="text-[9px] font-bold text-emerald-500 flex items-center justify-end gap-1"><CheckCircle2 size={10}/> Active</div>
-                               </div>
-                            </div>
-
-                            <div className="bg-black/20 rounded-xl p-3 border border-white/5 relative z-10">
-                               <div className="flex justify-between items-center">
-                                  <div className="flex flex-col">
-                                     <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider mb-1">Account Details</span>
-                                     {showAccountDetails && activeFiatIndex === idx ? (
-                                        <div className="text-xs font-mono text-white tracking-wide">
-                                           <div className="flex justify-between w-full gap-4">
-                                              <span>R: {account.details.route}</span>
-                                              <span>A: {account.details.acct}</span>
-                                           </div>
-                                        </div>
-                                     ) : (
-                                        <div className="flex gap-2">
-                                           <div className="h-4 w-12 bg-slate-800 rounded animate-pulse"></div>
-                                           <div className="h-4 w-20 bg-slate-800 rounded animate-pulse"></div>
-                                        </div>
-                                     )}
+                                  <div className={`font-bold text-sm ${tx.type === 'receive' ? 'text-emerald-400' : 'text-white'}`}>
+                                     {tx.type === 'receive' ? '+' : '-'}{tx.amount} {tx.symbol}
                                   </div>
-                                  <button 
-                                    onClick={() => {
-                                       if (showAccountDetails && activeFiatIndex === idx) {
-                                          setShowAccountDetails(false);
-                                       } else {
-                                          setActiveFiatIndex(idx);
-                                          handleSecureAction('viewCardDetails', () => setShowAccountDetails(true));
-                                       }
-                                    }}
-                                    className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
-                                  >
-                                     {showAccountDetails && activeFiatIndex === idx ? <EyeOff size={14} /> : <Eye size={14} />}
-                                  </button>
+                                  <div className="text-[10px] text-slate-500 font-medium">{tx.value}</div>
                                </div>
                             </div>
+                         ))
+                      ) : (
+                         <div className="flex flex-col items-center justify-center h-48 text-center text-slate-500">
+                            <Filter size={32} className="mb-2 opacity-50" />
+                            <p className="text-sm font-bold">No transactions found</p>
+                            <p className="text-xs">Try adjusting your filters</p>
+                         </div>
+                      )}
+                   </div>
+                </div>
+             )}
 
-                            <div className="flex gap-2 mt-4 relative z-10">
-                               <button className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-[10px] font-bold text-white border border-white/5 transition-colors flex items-center justify-center gap-2">
-                                  <ArrowDownLeft size={12} className="text-emerald-500" /> Deposit
-                               </button>
-                               <button className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-[10px] font-bold text-white border border-white/5 transition-colors flex items-center justify-center gap-2">
-                                  <ArrowUpRight size={12} className="text-rose-500" /> Withdraw
-                               </button>
+             {/* SETTINGS VIEW */}
+             {viewState === 'settings' && (
+                <div className="px-5 h-full flex flex-col animate-in slide-in-from-right duration-300 pb-24">
+                   {/* Header */}
+                   <div className="flex items-center gap-2 mb-6">
+                      <button onClick={() => setViewState('home')} className="p-2 bg-slate-900 rounded-full border border-slate-800 text-slate-400 hover:text-white"><ChevronLeft size={20}/></button>
+                      <h2 className="text-xl font-black text-white">Settings</h2>
+                   </div>
+
+                   {/* Profile Card */}
+                   <div className="bg-slate-900 rounded-2xl p-4 flex items-center gap-4 mb-6 border border-slate-800 relative overflow-hidden">
+                      <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-transparent pointer-events-none"></div>
+                      <div className="w-12 h-12 rounded-full bg-slate-800 border-2 border-slate-700 p-0.5 relative z-10">
+                         <img src={userProfile.avatar} alt="User" className="w-full h-full rounded-full" />
+                      </div>
+                      <div className="relative z-10">
+                         <div className="font-bold text-white">{userProfile.name}</div>
+                         <div className="text-xs text-slate-500">{userProfile.handle}</div>
+                      </div>
+                      <button onClick={() => setShowProfileModal(true)} className="ml-auto p-2 bg-slate-950 rounded-full text-slate-400 border border-slate-800 hover:text-white transition-colors relative z-10"><Pen size={14}/></button>
+                   </div>
+
+                   {/* Security Score */}
+                   <div className="mb-8 relative overflow-hidden rounded-3xl bg-gradient-to-br from-indigo-900 to-slate-900 border border-indigo-500/30 p-6 shadow-xl">
+                      <div className="flex justify-between items-start relative z-10">
+                         <div>
+                            <h3 className="text-white font-bold text-lg">Security Score</h3>
+                            <p className="text-indigo-300 text-xs mt-1">Wallet protection level</p>
+                         </div>
+                         <div className="text-3xl font-black text-white">85<span className="text-sm text-indigo-400">/100</span></div>
+                      </div>
+                      
+                      {/* Progress Bar */}
+                      <div className="w-full bg-slate-950/50 h-2 rounded-full mt-4 mb-2 overflow-hidden border border-white/5">
+                         <div className="bg-emerald-500 h-full w-[85%] shadow-[0_0_10px_rgba(16,185,129,0.5)]"></div>
+                      </div>
+                      
+                      {/* Insight */}
+                      <div className="flex items-center gap-2 mt-3 bg-amber-500/10 p-2 rounded-lg border border-amber-500/20">
+                         <AlertTriangle size={14} className="text-amber-500" />
+                         <span className="text-[10px] text-amber-200 font-bold uppercase tracking-wide">Action Required: Cloud Backup</span>
+                      </div>
+                   </div>
+
+                   {/* Biometric Triggers */}
+                   <h3 className="text-slate-500 text-[10px] font-black uppercase tracking-widest mb-3 ml-2 flex items-center gap-2">
+                      <Fingerprint size={12} /> Biometric Triggers
+                   </h3>
+                   <div className="bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden mb-8 shadow-lg">
+                      {Object.entries(biometricSettings).map(([key, value]) => (
+                         <div key={key} className="flex items-center justify-between p-4 border-b border-slate-800 last:border-0 hover:bg-slate-800/50 transition-colors">
+                            <div className="flex flex-col">
+                               <span className="text-sm font-bold text-white capitalize mb-0.5">
+                                  {key === 'viewCard' ? 'View Card Number' : key === 'adjustLimits' ? 'Adjust Limits' : key === 'initiateSwap' ? 'Initiate Swaps' : key.replace(/([A-Z])/g, ' $1').trim()}
+                               </span>
+                               <span className="text-[10px] text-slate-500 font-medium">
+                                  Require auth to {key === 'viewCard' ? 'unmask PAN' : key === 'adjustLimits' ? 'increase spend limits' : key === 'initiateSwap' ? 'trade tokens' : key === 'sendCrypto' ? 'outgoing transfers' : 'flat on-ramp'}
+                               </span>
                             </div>
+                            <button 
+                              onClick={() => setBiometricSettings(prev => ({...prev, [key]: !value}))}
+                              className={`w-11 h-6 rounded-full p-1 transition-colors duration-300 relative ${value ? 'bg-emerald-500' : 'bg-slate-700'}`}
+                            >
+                               <div className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform duration-300 absolute top-1 ${value ? 'left-6' : 'left-1'}`}></div>
+                            </button>
                          </div>
                       ))}
                    </div>
 
-                   <div className="mt-6 p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center gap-4">
-                      <div className="p-2 bg-indigo-500 rounded-xl text-white shadow-lg"><Globe size={18}/></div>
-                      <div>
-                         <h4 className="text-xs font-bold text-white mb-0.5">Global Transfers</h4>
-                         <p className="text-[10px] text-indigo-200/70">Send fiat internationally with low fees using Fluid Bridge.</p>
+                   {/* Other Settings */}
+                   <div className="bg-slate-900 rounded-3xl border border-slate-800 p-4 flex items-center justify-between mb-4 shadow-lg">
+                      <div className="flex items-center gap-4">
+                         <div className="w-10 h-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-500">
+                            <Monitor size={20} />
+                         </div>
+                         <div>
+                            <div className="text-sm font-bold text-white">Desktop App</div>
+                            <div className="text-[10px] text-slate-500">Sync with Windows/Mac/Linux</div>
+                         </div>
                       </div>
-                      <button className="ml-auto px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[9px] font-bold rounded-lg uppercase tracking-wider transition-colors">Start</button>
+                      <button className="px-4 py-2 bg-slate-800 rounded-lg text-[10px] font-bold text-white border border-slate-700">DOWNLOAD</button>
+                   </div>
+
+                   <div className="bg-slate-900 rounded-3xl border border-slate-800 overflow-hidden shadow-lg mb-8">
+                      <div className="p-4 flex items-center justify-between border-b border-slate-800">
+                         <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Notifications</span>
+                         <button className="text-[10px] text-blue-500 font-bold">Clear All</button>
+                      </div>
+                      <div className="p-4 space-y-4">
+                         <div className="flex justify-between items-start">
+                            <div>
+                               <div className="text-xs font-bold text-white">Staking Reward</div>
+                               <div className="text-[10px] text-slate-500">You received 450 FLD from pooling.</div>
+                            </div>
+                            <span className="text-[10px] text-slate-600">2m ago</span>
+                         </div>
+                         <div className="flex justify-between items-start">
+                            <div>
+                               <div className="text-xs font-bold text-white">Security Alert</div>
+                               <div className="text-[10px] text-slate-500">New login detected from Frankfurt, DE.</div>
+                            </div>
+                            <span className="text-[10px] text-slate-600">1h ago</span>
+                         </div>
+                         <div className="flex justify-between items-start">
+                            <div>
+                               <div className="text-xs font-bold text-white">System Update</div>
+                               <div className="text-[10px] text-slate-500">Fluid Node V2.1 is live.</div>
+                            </div>
+                            <span className="text-[10px] text-slate-600">5h ago</span>
+                         </div>
+                      </div>
                    </div>
                 </div>
              )}
 
-             {/* === MODULE D: HOSTING & FLUID HOST === */}
-             {activeTab === 'hosting' && (
-                <div className="p-6 h-full flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300">
-                   <div className="flex items-center justify-between mb-6">
-                      <h2 className="text-2xl font-black text-white uppercase tracking-tight">Fluid Host</h2>
-                      <div className="px-2 py-1 bg-blue-500/10 border border-blue-500/20 rounded text-[9px] font-black text-blue-500 uppercase tracking-widest flex items-center gap-1">
-                         <Globe size={10} /> Decentralized
+             {/* SEND VIEW */}
+             {viewState === 'send' && (
+                <div className="px-5 h-full flex flex-col animate-in slide-in-from-right duration-300">
+                   <div className="flex items-center gap-2 mb-6">
+                      <button onClick={() => setViewState('home')} className="p-2 bg-slate-900 rounded-full border border-slate-800 text-slate-400 hover:text-white"><ChevronLeft size={20}/></button>
+                      <h2 className="text-xl font-black text-white">Send Crypto</h2>
+                   </div>
+
+                   <div className="bg-slate-900 rounded-[2rem] p-6 border border-slate-800 mb-4 text-center">
+                      <span className="text-slate-500 text-xs font-bold uppercase tracking-widest">Enter Amount</span>
+                      <div className="text-4xl font-black text-white my-2">$0.00</div>
+                      <span className="text-slate-500 text-xs font-bold">Balance: $22,500.00</span>
+                   </div>
+
+                   <div className="space-y-4">
+                      <div>
+                         <label className="text-xs font-bold text-slate-400 ml-2 uppercase">Recipient Address</label>
+                         <div className="flex items-center gap-2 mt-2">
+                            <input type="text" placeholder="0x..." className="w-full bg-slate-900 border border-slate-800 rounded-xl p-4 text-white text-sm font-mono focus:border-blue-500 outline-none" />
+                            <button className="p-4 bg-slate-900 border border-slate-800 rounded-xl text-slate-400 hover:text-blue-500"><ScanFace size={20}/></button>
+                         </div>
+                      </div>
+
+                      <div>
+                         <label className="text-xs font-bold text-slate-400 ml-2 uppercase">Select Asset</label>
+                         <div className="mt-2 space-y-2">
+                            {ASSETS.slice(0,2).map((asset) => (
+                               <button key={asset.symbol} className="w-full flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800 hover:border-blue-500 transition-colors">
+                                  <div className="flex items-center gap-3">
+                                     <div className={`w-8 h-8 rounded-lg ${asset.color} flex items-center justify-center text-white text-xs font-bold`}>{asset.symbol[0]}</div>
+                                     <span className="font-bold text-white text-sm">{asset.name}</span>
+                                  </div>
+                                  <span className="text-xs font-bold text-slate-400">{asset.amount} {asset.symbol}</span>
+                               </button>
+                            ))}
+                         </div>
                       </div>
                    </div>
 
-                   {/* Node Status Card - Modernized */}
-                   <div className="bg-gradient-to-br from-[#0B0F19] to-[#02040A] border border-blue-500/10 rounded-[2rem] p-6 mb-6 relative overflow-hidden shadow-2xl group">
-                       <div className="absolute top-0 right-0 w-64 h-64 bg-blue-500/5 rounded-full blur-[80px] group-hover:bg-blue-500/10 transition-colors duration-700 pointer-events-none"></div>
-                       <div className="absolute bottom-0 left-0 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] pointer-events-none"></div>
-                       
-                       <div className="flex justify-between items-start mb-6 relative z-10">
-                           <div>
-                               <div className="flex items-center gap-2 mb-2">
-                                 <span className="relative flex h-2 w-2">
-                                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                   <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                                 </span>
-                                 <span className="text-[9px] font-bold text-emerald-500 uppercase tracking-widest">System Online</span>
-                               </div>
-                               <h3 className="text-3xl font-black text-white tracking-tighter mb-1">Validator Node</h3>
-                               <p className="text-[10px] text-slate-500 font-mono flex items-center gap-2">
-                                 <Activity size={10} className="text-blue-500" /> 
-                                 Latency: 12ms
-                               </p>
-                           </div>
-                           <div className="w-12 h-12 rounded-2xl bg-slate-900/50 border border-slate-800 flex items-center justify-center text-blue-500 shadow-lg backdrop-blur-sm">
-                              <Server size={24} />
-                           </div>
-                       </div>
+                   <button className="w-full py-4 rounded-xl bg-blue-600 text-white font-black text-lg shadow-lg shadow-blue-500/20 mt-auto mb-4 flex items-center justify-center gap-2">
+                      Send Now <ArrowUpRight size={20}/>
+                   </button>
+                </div>
+             )}
 
-                       <div className="grid grid-cols-2 gap-3 relative z-10">
-                           <div className="p-3 bg-slate-900/40 rounded-xl border border-white/5 backdrop-blur-md hover:border-blue-500/20 transition-colors">
-                               <div className="flex justify-between items-center mb-3">
-                                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Storage</span>
-                                  <Database size={12} className="text-slate-500"/>
-                               </div>
-                               <div className="flex items-baseline gap-1">
-                                  <span className="text-lg font-black text-white">45.2</span>
-                                  <span className="text-[10px] font-bold text-slate-500">GB</span>
-                               </div>
-                               <div className="w-full h-1 bg-slate-800 rounded-full mt-2 overflow-hidden">
-                                   <div className="w-[15%] h-full bg-blue-500 rounded-full"></div>
-                               </div>
-                           </div>
-                           <div className="p-3 bg-slate-900/40 rounded-xl border border-white/5 backdrop-blur-md hover:border-blue-500/20 transition-colors">
-                               <div className="flex justify-between items-center mb-3">
-                                  <span className="text-[9px] text-slate-400 font-bold uppercase tracking-wider">Bandwidth</span>
-                                  <Zap size={12} className="text-slate-500"/>
-                               </div>
-                               <div className="flex items-baseline gap-1">
-                                  <span className="text-lg font-black text-white">1.2</span>
-                                  <span className="text-[10px] font-bold text-slate-500">TB</span>
-                               </div>
-                               <div className="w-full h-1 bg-slate-800 rounded-full mt-2 overflow-hidden">
-                                   <div className="w-[42%] h-full bg-emerald-500 rounded-full"></div>
-                               </div>
-                           </div>
-                       </div>
+             {/* RECEIVE VIEW */}
+             {viewState === 'receive' && (
+                <div className="px-5 h-full flex flex-col animate-in slide-in-from-right duration-300">
+                   <div className="flex items-center gap-2 mb-6">
+                      <button onClick={() => setViewState('home')} className="p-2 bg-slate-900 rounded-full border border-slate-800 text-slate-400 hover:text-white"><ChevronLeft size={20}/></button>
+                      <h2 className="text-xl font-black text-white">Receive</h2>
                    </div>
 
-                   {/* Domains Section - Enhanced */}
-                   <div className="mb-8">
+                   <div className="bg-white p-6 rounded-[2rem] mx-auto mb-8 shadow-2xl relative overflow-hidden group">
+                      <div className="absolute inset-0 bg-gradient-to-tr from-blue-500/10 to-transparent pointer-events-none"></div>
+                      <QrCode size={200} className="text-slate-900 relative z-10" />
+                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity bg-white/90 backdrop-blur-sm z-20">
+                         <span className="text-slate-900 font-bold text-sm">Scan to Pay</span>
+                      </div>
+                   </div>
+
+                   <div className="text-center mb-8">
+                      <h3 className="text-white font-bold mb-1">Alex Fluid</h3>
+                      <div className="flex items-center justify-center gap-2 bg-slate-900 border border-slate-800 py-2 px-4 rounded-xl cursor-pointer hover:bg-slate-800 transition-colors">
+                         <span className="text-slate-400 text-xs font-mono">0x71C...92A</span>
+                         <Copy size={12} className="text-blue-500" />
+                      </div>
+                      <p className="text-slate-500 text-[10px] mt-4 max-w-[200px] mx-auto">
+                         Send only ERC-20 tokens or Layer 1 assets to this address.
+                      </p>
+                   </div>
+                   
+                   <div className="space-y-2 mt-auto mb-4">
+                      <button className="w-full py-3 bg-slate-800 text-white font-bold rounded-xl border border-slate-700">Share Address</button>
+                      <button className="w-full py-3 bg-transparent text-slate-500 font-bold rounded-xl hover:text-white">Request Payment</button>
+                   </div>
+                </div>
+             )}
+
+             {/* BUY VIEW */}
+             {viewState === 'buy' && (
+                <div className="px-5 h-full flex flex-col animate-in slide-in-from-right duration-300">
+                   <div className="flex items-center gap-2 mb-6">
+                      <button onClick={() => setViewState('home')} className="p-2 bg-slate-900 rounded-full border border-slate-800 text-slate-400 hover:text-white"><ChevronLeft size={20}/></button>
+                      <h2 className="text-xl font-black text-white">Buy Crypto</h2>
+                   </div>
+
+                   <div className="bg-slate-900 rounded-[2rem] p-6 border border-slate-800 mb-6 relative overflow-hidden">
                       <div className="flex justify-between items-center mb-4">
-                         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest flex items-center gap-2">
-                            <Globe size={12} /> Your Domains
-                         </h3>
-                         <button 
-                           onClick={() => setActiveModal('domainRegistrar')}
-                           className="text-[9px] font-bold text-indigo-400 uppercase tracking-wider hover:text-white transition-colors flex items-center gap-1 group"
-                         >
-                            <span className="w-4 h-4 rounded bg-indigo-500/10 flex items-center justify-center border border-indigo-500/20 group-hover:border-indigo-500/50 text-xs">+</span> Register
-                         </button>
+                         <span className="text-slate-500 text-xs font-bold uppercase tracking-widest">You Pay</span>
+                         <div className="flex items-center gap-1 bg-slate-800 px-2 py-1 rounded-lg">
+                            <span className="text-white text-xs font-bold">USD</span>
+                            <ChevronDown size={12} className="text-slate-500" />
+                         </div>
                       </div>
-                      
-                      <div className="relative group overflow-hidden rounded-2xl cursor-pointer border border-white/5 hover:border-indigo-500/30 transition-all bg-slate-900/30">
-                          <div className="absolute inset-0 bg-gradient-to-r from-indigo-500/5 to-purple-500/5 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                          <div className="relative p-4 flex items-center justify-between">
-                              <div className="flex items-center gap-4">
-                                  <div className="w-10 h-10 rounded-xl bg-slate-900 border border-white/10 flex items-center justify-center text-indigo-400 shadow-lg group-hover:scale-110 transition-transform duration-300">
-                                      <AtSign size={18} />
+                      <div className="text-4xl font-black text-white mb-2">$1,000.00</div>
+                      <div className="w-full h-px bg-slate-800 my-4"></div>
+                      <div className="flex justify-between items-center">
+                         <span className="text-slate-500 text-xs font-bold uppercase tracking-widest">You Get</span>
+                         <div className="flex items-center gap-1 bg-slate-800 px-2 py-1 rounded-lg">
+                            <span className="text-white text-xs font-bold">ETH</span>
+                            <ChevronDown size={12} className="text-slate-500" />
+                         </div>
+                      </div>
+                      <div className="text-4xl font-black text-emerald-400 mt-2">0.345 ETH</div>
+                   </div>
+
+                   <div className="space-y-3 mb-6">
+                      <h3 className="text-slate-400 text-xs font-bold uppercase ml-2">Payment Method</h3>
+                      <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between cursor-pointer hover:border-blue-500 transition-colors">
+                         <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center"><img src="https://upload.wikimedia.org/wikipedia/commons/2/2a/Mastercard-logo.svg" className="w-5" alt="Mastercard" /></div>
+                            <div>
+                               <div className="text-white text-sm font-bold">Mastercard</div>
+                               <div className="text-slate-500 text-xs">**** 4242</div>
+                            </div>
+                         </div>
+                         <div className="w-4 h-4 rounded-full border border-blue-500 flex items-center justify-center">
+                            <div className="w-2 h-2 rounded-full bg-blue-500"></div>
+                         </div>
+                      </div>
+                      <div className="p-4 bg-slate-900 border border-slate-800 rounded-xl flex items-center justify-between cursor-pointer hover:border-blue-500 transition-colors">
+                         <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-white flex items-center justify-center"><Apple size={16} className="text-black"/></div>
+                            <div>
+                               <div className="text-white text-sm font-bold">Apple Pay</div>
+                            </div>
+                         </div>
+                         <div className="w-4 h-4 rounded-full border border-slate-600"></div>
+                      </div>
+                   </div>
+
+                   <button className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 text-white font-black text-lg shadow-lg shadow-blue-500/20 mt-auto mb-4">
+                      Purchase ETH
+                   </button>
+                </div>
+             )}
+
+             {/* FIAT (BANK) VIEW */}
+             {viewState === 'fiat' && (
+                <div className="px-5 h-full flex flex-col animate-in slide-in-from-right duration-300">
+                   <div className="flex items-center gap-2 mb-6">
+                      <button onClick={() => setViewState('home')} className="p-2 bg-slate-900 rounded-full border border-slate-800 text-slate-400 hover:text-white"><ChevronLeft size={20}/></button>
+                      <h2 className="text-xl font-black text-white">Fiat Accounts</h2>
+                   </div>
+
+                   <div className="space-y-4">
+                      {FIAT_ACCOUNTS.map((account, i) => (
+                         <div key={i} className="bg-slate-900 border border-slate-800 rounded-2xl p-5 relative overflow-hidden">
+                            <div className="flex justify-between items-start mb-4">
+                               <div className="flex items-center gap-3">
+                                  <div className="text-2xl">{account.flag}</div>
+                                  <div>
+                                     <div className="text-white font-bold">{account.currency} Account</div>
+                                     <div className="text-slate-500 text-xs">{account.bankName}</div>
+                                  </div>
+                               </div>
+                               <span className="bg-emerald-500/10 text-emerald-500 text-[10px] font-bold px-2 py-1 rounded uppercase">Active</span>
+                            </div>
+                            <div className="text-3xl font-black text-white mb-4">{account.symbol}{account.balance}</div>
+                            <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 flex justify-between items-center">
+                               <div className="font-mono text-xs text-slate-400">{account.iban}</div>
+                               <Copy size={12} className="text-slate-500" />
+                            </div>
+                         </div>
+                      ))}
+                   </div>
+                   
+                   <button className="mt-6 w-full py-3 border border-dashed border-slate-700 rounded-xl text-slate-400 font-bold hover:text-white hover:bg-slate-900 transition-colors">
+                      + Add New Currency
+                   </button>
+                </div>
+             )}
+
+             {/* SWAP TAB */}
+             {viewState === 'swap' && (
+               <div className="px-5 h-full flex flex-col animate-in slide-in-from-right duration-300">
+                  <h2 className="text-xl font-black text-white mb-6">Fluid DEX</h2>
+                  
+                  <div className="bg-slate-900 rounded-[2rem] p-4 border border-slate-800 mb-2">
+                     <div className="flex justify-between text-xs text-slate-400 mb-2">
+                        <span>Pay</span>
+                        <span>Bal: 4.2 ETH</span>
+                     </div>
+                     <div className="flex items-center justify-between">
+                        <input type="number" placeholder="0" className="bg-transparent text-3xl font-bold text-white outline-none w-1/2" />
+                        <button className="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
+                           <div className="w-5 h-5 rounded-full bg-indigo-500 flex items-center justify-center text-[8px] font-bold text-white">E</div>
+                           <span className="text-sm font-bold text-white">ETH</span>
+                           <ChevronRight size={14} className="text-slate-400 rotate-90" />
+                        </button>
+                     </div>
+                  </div>
+
+                  <div className="flex justify-center -my-4 relative z-10">
+                     <div className="bg-slate-800 p-2 rounded-xl border border-slate-700 text-blue-500 shadow-xl">
+                        <RefreshCw size={20} />
+                     </div>
+                  </div>
+
+                  <div className="bg-slate-900 rounded-[2rem] p-4 border border-slate-800 mb-6 pt-6">
+                     <div className="flex justify-between text-xs text-slate-400 mb-2">
+                        <span>Receive</span>
+                        <span>Bal: 0 FLD</span>
+                     </div>
+                     <div className="flex items-center justify-between">
+                        <input type="number" placeholder="0" className="bg-transparent text-3xl font-bold text-white outline-none w-1/2" readOnly />
+                        <button className="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700">
+                           <div className="w-5 h-5 rounded-full bg-emerald-500 flex items-center justify-center text-[8px] font-bold text-white">
+                              <FluidLogo className="w-3 h-3" />
+                           </div>
+                           <span className="text-sm font-bold text-white">FLD</span>
+                           <ChevronRight size={14} className="text-slate-400 rotate-90" />
+                        </button>
+                     </div>
+                  </div>
+
+                  <button className="w-full py-4 rounded-xl bg-gradient-to-r from-blue-600 to-cyan-500 text-white font-black text-lg shadow-lg shadow-blue-500/20 mb-8">
+                     Swap Tokens
+                  </button>
+
+                  <div className="mt-auto mb-4 bg-slate-900/50 p-4 rounded-2xl border border-slate-800">
+                     <div className="flex justify-between text-xs mb-2">
+                        <span className="text-slate-500">Rate</span>
+                        <span className="text-white font-bold">1 ETH = 3,420 FLD</span>
+                     </div>
+                     <div className="flex justify-between text-xs">
+                        <span className="text-slate-500">Network Fee</span>
+                        <span className="text-white font-bold">$1.20</span>
+                     </div>
+                  </div>
+               </div>
+             )}
+
+             {/* CARDS TAB */}
+             {viewState === 'cards' && (
+               <div className="px-5 h-full flex flex-col animate-in slide-in-from-right duration-300 pb-20">
+                  {/* Header */}
+                  <div className="flex items-center gap-2 mb-4">
+                      {cardViewMode !== 'main' && (
+                          <button onClick={() => { setCardViewMode('main'); setOrderStep(1); }} className="p-2 -ml-2 text-slate-400 hover:text-white">
+                              <ChevronLeft size={20} />
+                          </button>
+                      )}
+                      <h2 className="text-xl font-black text-white">
+                          {cardViewMode === 'history' ? 'Transaction History' : 
+                           cardViewMode === 'manage' ? 'Card Settings' : 
+                           cardViewMode === 'order' ? 'Order Physical Card' : 'My Cards'}
+                      </h2>
+                  </div>
+
+                  {/* Main Card View */}
+                  {cardViewMode === 'main' && (
+                      <>
+                          {/* Tabs */}
+                          <div className="flex p-1 bg-slate-900 rounded-xl border border-slate-800 mb-6">
+                              <button 
+                                  onClick={() => setCardTab('digital')}
+                                  className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${cardTab === 'digital' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
+                              >
+                                  DIGITAL
+                              </button>
+                              <button 
+                                  onClick={() => setCardTab('metal')}
+                                  className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${cardTab === 'metal' ? 'bg-slate-800 text-white shadow-sm' : 'text-slate-500 hover:text-slate-300'}`}
+                              >
+                                  METAL
+                              </button>
+                          </div>
+
+                          {/* Card Display */}
+                          <div className="relative perspective-1000 mb-6">
+                              {cardTab === 'metal' ? (
+                                  hasPhysicalCard ? (
+                                    <div className={`aspect-[1.58/1] ${getCardStyle(selectedDesign)} rounded-2xl p-5 border relative overflow-hidden shadow-2xl transition-all duration-500`}>
+                                        <FluidLogo className="absolute -bottom-12 -right-12 w-48 h-48 opacity-10 pointer-events-none" />
+                                        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
+                                        
+                                        <div className="flex justify-between items-start mb-8 relative z-10">
+                                            <div className="flex items-center gap-2">
+                                              <FluidLogo className="w-8 h-8" />
+                                              {selectedDesign === 'gold' && <span className="text-[10px] font-black uppercase border border-yellow-700/50 px-1 rounded text-yellow-900">24K</span>}
+                                            </div>
+                                            <CardChip size={32} className="opacity-80 rotate-90" />
+                                        </div>
+                                        
+                                        <div className="relative z-10 mt-auto">
+                                            <div className="font-mono text-xl tracking-widest mb-4 opacity-90 drop-shadow-md">
+                                                {showCardDetails ? '4829 1029 4482 1029' : '**** **** **** 1029'}
+                                            </div>
+                                            <div className="flex justify-between items-end">
+                                                <div>
+                                                    <div className="text-[8px] opacity-60 uppercase font-bold mb-0.5">Card Holder</div>
+                                                    <div className="text-sm font-bold uppercase tracking-wider">{userProfile.name}</div>
+                                                </div>
+                                                <div className="text-right">
+                                                    <div className="text-xs font-bold uppercase opacity-80">Fluid {selectedDesign}</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        {/* Metal sheen effect */}
+                                        <div className="absolute inset-0 bg-gradient-to-tr from-transparent via-white/10 to-transparent pointer-events-none"></div>
+                                    </div>
+                                  ) : (
+                                    <div className="aspect-[1.58/1] rounded-2xl bg-slate-900 border border-slate-800 flex flex-col items-center justify-center p-6 text-center shadow-2xl relative overflow-hidden group">
+                                        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>
+                                        <div className="relative z-10">
+                                            <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-500 border border-slate-700">
+                                                <CreditCard size={32} />
+                                            </div>
+                                            <h3 className="text-white font-bold text-lg mb-2">Upgrade to Metal</h3>
+                                            <p className="text-slate-400 text-xs mb-6 max-w-[200px] mx-auto">Get the premium Fluid Metal card. Worldwide shipping included.</p>
+                                            <button 
+                                                onClick={() => setCardViewMode('order')}
+                                                className="px-6 py-2 bg-white text-slate-900 rounded-full text-xs font-black uppercase tracking-wider hover:scale-105 transition-transform"
+                                            >
+                                                Order Now
+                                            </button>
+                                        </div>
+                                    </div>
+                                  )
+                              ) : (
+                                  <div className={`aspect-[1.58/1] ${getCardStyle('black')} rounded-2xl p-5 border relative overflow-hidden shadow-2xl transition-all duration-500 ${isFrozen ? 'grayscale opacity-75' : ''}`}>
+                                      {/* Watermark */}
+                                      <FluidLogo className="absolute -bottom-12 -right-12 w-48 h-48 opacity-5 pointer-events-none" />
+                                      <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 pointer-events-none"></div>
+                                      
+                                      <div className="flex justify-between items-start mb-8 relative z-10">
+                                          <FluidLogo className="w-8 h-8" />
+                                          <Signal size={20} className="opacity-50" />
+                                      </div>
+                                      
+                                      <div className="relative z-10 mb-6">
+                                          {showCardDetails ? (
+                                              <div className="font-mono text-xl tracking-widest animate-in fade-in">
+                                                  4829 1029 4482 1029
+                                              </div>
+                                          ) : (
+                                              <div className="font-mono text-xl tracking-widest">
+                                                  **** **** **** 1029
+                                              </div>
+                                          )}
+                                      </div>
+                                      
+                                      <div className="flex justify-between items-end relative z-10">
+                                          <div>
+                                              <div className="text-[8px] opacity-60 uppercase font-bold mb-1">Card Holder</div>
+                                              <div className="text-sm font-bold uppercase">{userProfile.name}</div>
+                                          </div>
+                                          <div className="text-right">
+                                              <div className="text-[8px] opacity-60 uppercase font-bold mb-1">Expires</div>
+                                              <div className="text-sm font-mono font-bold">{showCardDetails ? '12/28' : '**/**'}</div>
+                                          </div>
+                                          {showCardDetails && (
+                                              <div className="text-right ml-4">
+                                                  <div className="text-[8px] opacity-60 uppercase font-bold mb-1">CVV</div>
+                                                  <div className="text-sm font-mono font-bold">842</div>
+                                              </div>
+                                          )}
+                                      </div>
+                                      
+                                      {isFrozen && (
+                                          <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-[2px] z-20">
+                                              <div className="flex flex-col items-center gap-2">
+                                                  <Lock size={32} className="text-white" />
+                                                  <span className="text-xs font-bold text-white uppercase tracking-widest">Frozen</span>
+                                              </div>
+                                          </div>
+                                      )}
+                                  </div>
+                              )}
+                          </div>
+
+                          {/* Action Grid */}
+                          <div className="grid grid-cols-4 gap-2 mb-6">
+                              <button onClick={() => setShowCardDetails(!showCardDetails)} className="flex flex-col items-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-colors">
+                                  {showCardDetails ? <EyeOff size={20} className="text-slate-400" /> : <Eye size={20} className="text-slate-400" />}
+                                  <span className="text-[9px] font-bold text-slate-400">{showCardDetails ? 'Hide' : 'Details'}</span>
+                              </button>
+                              <button onClick={() => setCardViewMode('manage')} className="flex flex-col items-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-colors">
+                                  <Sliders size={20} className="text-slate-400" />
+                                  <span className="text-[9px] font-bold text-slate-400">Limits</span>
+                              </button>
+                              <button onClick={() => setIsFrozen(!isFrozen)} className="flex flex-col items-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-colors">
+                                  {isFrozen ? <Unlock size={20} className="text-emerald-500" /> : <Lock size={20} className="text-slate-400" />}
+                                  <span className={`text-[9px] font-bold ${isFrozen ? 'text-emerald-500' : 'text-slate-400'}`}>{isFrozen ? 'Unfreeze' : 'Freeze'}</span>
+                              </button>
+                              <button onClick={() => setCardViewMode('manage')} className="flex flex-col items-center gap-2 p-3 bg-slate-900 border border-slate-800 rounded-xl hover:bg-slate-800 transition-colors">
+                                  <Delete size={20} className="text-rose-500" />
+                                  <span className="text-[9px] font-bold text-rose-500">Block</span>
+                              </button>
+                          </div>
+
+                          {/* Recent Activity Snippet - Scrollable via parent container */}
+                          <div className="flex justify-between items-center mb-3 px-1">
+                              <h3 className="text-sm font-bold text-white">Recent Activity</h3>
+                              <button onClick={() => setCardViewMode('history')} className="text-xs font-bold text-blue-500">View All</button>
+                          </div>
+                          <div className="space-y-3">
+                              {CARD_TXS.slice(0, 2).map((tx) => (
+                                  <div key={tx.id} className="flex items-center justify-between p-3 rounded-2xl bg-slate-900/50 border border-slate-800">
+                                      <div className="flex items-center gap-3">
+                                          <div className={`w-10 h-10 rounded-xl ${tx.bg} flex items-center justify-center text-white font-bold text-xs`}>
+                                              {tx.icon}
+                                          </div>
+                                          <div>
+                                              <div className="font-bold text-white text-sm">{tx.merchant}</div>
+                                              <div className="text-[10px] text-slate-500">{tx.type} • {tx.date}</div>
+                                          </div>
+                                      </div>
+                                      <span className="font-bold text-white text-sm">{tx.amount}</span>
+                                  </div>
+                              ))}
+                          </div>
+                      </>
+                  )}
+
+                  {/* History View */}
+                  {cardViewMode === 'history' && (
+                      <div className="animate-in slide-in-from-right duration-300 h-full">
+                          <div className="space-y-3">
+                              {CARD_TXS.map((tx) => (
+                                  <div key={tx.id} className="flex items-center justify-between p-4 rounded-2xl bg-slate-900 border border-slate-800">
+                                      <div className="flex items-center gap-4">
+                                          <div className={`w-10 h-10 rounded-xl ${tx.bg} flex items-center justify-center text-white font-bold text-xs shadow-lg`}>
+                                              {tx.icon}
+                                          </div>
+                                          <div>
+                                              <div className="font-bold text-white text-sm">{tx.merchant}</div>
+                                              <div className="text-[10px] text-slate-500 font-bold uppercase tracking-wide">{tx.type}</div>
+                                          </div>
+                                      </div>
+                                      <div className="text-right">
+                                          <div className="font-bold text-white text-sm">{tx.amount}</div>
+                                          <div className="text-[10px] text-slate-500">{tx.date}</div>
+                                      </div>
+                                  </div>
+                              ))}
+                          </div>
+                      </div>
+                  )}
+
+                  {/* Manage View */}
+                  {cardViewMode === 'manage' && (
+                      <div className="animate-in slide-in-from-right duration-300 space-y-6">
+                          <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden">
+                              <div className="p-4 border-b border-slate-800 flex justify-between items-center">
+                                  <span className="font-bold text-white text-sm">Freeze Card</span>
+                                  <button onClick={() => setIsFrozen(!isFrozen)} className={`w-11 h-6 rounded-full p-1 transition-colors duration-300 relative ${isFrozen ? 'bg-emerald-500' : 'bg-slate-700'}`}>
+                                      <div className={`w-4 h-4 rounded-full bg-white shadow-sm transform transition-transform duration-300 absolute top-1 ${isFrozen ? 'left-6' : 'left-1'}`}></div>
+                                  </button>
+                              </div>
+                              <p className="p-4 text-[10px] text-slate-500 bg-slate-950/50">Temporarily disable all transactions. Recurring subscriptions may still be processed.</p>
+                          </div>
+
+                          <div>
+                              <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest mb-3 ml-2">Security</h3>
+                              <div className="space-y-2">
+                                  {['View Card Number', 'Adjust Limits', 'Change PIN', 'Reset CVV'].map(item => (
+                                      <button key={item} className="w-full flex items-center justify-between p-4 bg-slate-900 border border-slate-800 rounded-2xl hover:bg-slate-800 transition-colors">
+                                          <span className="text-sm font-bold text-white">{item}</span>
+                                          <ChevronRight size={16} className="text-slate-500" />
+                                      </button>
+                                  ))}
+                              </div>
+                          </div>
+
+                          <button className="w-full py-4 text-rose-500 font-bold text-sm bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-center gap-2 hover:bg-rose-500/10 transition-colors">
+                              <Delete size={16} /> Delete Virtual Card
+                          </button>
+                      </div>
+                  )}
+
+                  {/* Order Physical View */}
+                  {cardViewMode === 'order' && (
+                      <div className="animate-in slide-in-from-right duration-300 flex flex-col h-full">
+                          {/* Step Indicator */}
+                          <div className="flex items-center gap-2 mb-6 justify-center">
+                              <div className={`h-1 w-8 rounded-full ${orderStep >= 1 ? 'bg-white' : 'bg-slate-800'}`}></div>
+                              <div className={`h-1 w-8 rounded-full ${orderStep >= 2 ? 'bg-white' : 'bg-slate-800'}`}></div>
+                              <div className={`h-1 w-8 rounded-full ${orderStep >= 3 ? 'bg-white' : 'bg-slate-800'}`}></div>
+                          </div>
+
+                          {orderStep === 1 && (
+                              <div className="flex-1 flex flex-col min-h-0">
+                                  <div className="text-center mb-4 flex-shrink-0">
+                                      <h3 className="text-lg font-black text-white">Choose Material</h3>
+                                      <p className="text-xs text-slate-500">Select your premium card finish</p>
+                                  </div>
+                                  
+                                  {/* Scrollable Design List */}
+                                  <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 px-1 pb-4">
+                                      {['black', 'steel', 'gold'].map((design) => (
+                                          <button 
+                                              key={design}
+                                              onClick={() => setSelectedDesign(design as any)}
+                                              className={`w-full p-4 rounded-2xl border transition-all relative overflow-hidden group ${selectedDesign === design ? 'border-blue-500 ring-1 ring-blue-500' : 'border-slate-800 bg-slate-900 opacity-60 hover:opacity-100'}`}
+                                          >
+                                              <div className={`aspect-[2.5/1] ${getCardStyle(design)} rounded-xl mb-3 relative overflow-hidden flex items-center justify-center`}>
+                                                  <FluidLogo className="absolute -right-4 -bottom-8 w-24 h-24 opacity-10" />
+                                                  <div className="font-bold uppercase tracking-widest text-lg opacity-90">{design}</div>
+                                              </div>
+                                              <div className="flex justify-between items-center">
+                                                  <span className="font-bold text-white capitalize text-sm">{design} Metal</span>
+                                                  <span className="text-xs font-bold text-slate-400">{design === 'black' ? 'Free' : design === 'steel' ? '$49.99' : '$99.99'}</span>
+                                              </div>
+                                          </button>
+                                      ))}
+                                  </div>
+                                  <div className="pt-4 flex-shrink-0">
+                                      <button onClick={() => setOrderStep(2)} className="w-full py-4 bg-white text-black font-black rounded-xl">Continue</button>
+                                  </div>
+                              </div>
+                          )}
+
+                          {orderStep === 2 && (
+                              <div className="space-y-6 flex-1 overflow-y-auto custom-scrollbar">
+                                  <div className="text-center mb-4">
+                                      <h3 className="text-lg font-black text-white">Shipping Details</h3>
+                                      <p className="text-xs text-slate-500">Where should we send your card?</p>
+                                  </div>
+
+                                  <div className="space-y-4">
+                                      <div>
+                                          <label className="text-xs font-bold text-slate-500 ml-2 uppercase">Full Name</label>
+                                          <div className="flex items-center gap-2 mt-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-3">
+                                              <User size={16} className="text-slate-500" />
+                                              <input type="text" defaultValue={userProfile.name} className="bg-transparent text-white text-sm font-bold w-full outline-none" />
+                                          </div>
+                                      </div>
+                                      <div>
+                                          <label className="text-xs font-bold text-slate-500 ml-2 uppercase">Street Address</label>
+                                          <div className="flex items-center gap-2 mt-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-3">
+                                              <MapPin size={16} className="text-slate-500" />
+                                              <input type="text" placeholder="123 Blockchain Blvd" className="bg-transparent text-white text-sm font-bold w-full outline-none" />
+                                          </div>
+                                      </div>
+                                      <div className="grid grid-cols-2 gap-4">
+                                          <div>
+                                              <label className="text-xs font-bold text-slate-500 ml-2 uppercase">City</label>
+                                              <input type="text" placeholder="Crypto City" className="mt-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm font-bold w-full outline-none" />
+                                          </div>
+                                          <div>
+                                              <label className="text-xs font-bold text-slate-500 ml-2 uppercase">Zip Code</label>
+                                              <input type="text" placeholder="10101" className="mt-1 bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm font-bold w-full outline-none" />
+                                          </div>
+                                      </div>
+                                  </div>
+                                  <button onClick={() => setOrderStep(3)} className="w-full py-4 bg-white text-black font-black rounded-xl mt-auto">Confirm Order</button>
+                              </div>
+                          )}
+
+                          {orderStep === 3 && (
+                              <div className="flex flex-col items-center justify-center h-full text-center space-y-6">
+                                  <div className="w-24 h-24 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-500 mb-2 border border-emerald-500/20 animate-in zoom-in duration-500">
+                                      <Truck size={40} />
                                   </div>
                                   <div>
-                                      <div className="text-sm font-black text-white tracking-tight flex items-center gap-2">
-                                        alex.fluid 
-                                        <span className="px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-500 text-[8px] font-bold uppercase tracking-wider border border-emerald-500/10">Active</span>
+                                      <h3 className="text-2xl font-black text-white mb-2">Order Confirmed!</h3>
+                                      <p className="text-slate-400 text-sm max-w-[200px] mx-auto">Your {selectedDesign} card is being prepared. Estimated delivery: 5-7 business days.</p>
+                                  </div>
+                                  <div className="bg-slate-900 p-4 rounded-xl border border-slate-800 w-full">
+                                      <div className="flex justify-between text-xs mb-2">
+                                          <span className="text-slate-500">Order ID</span>
+                                          <span className="text-white font-mono">#ORD-992-882</span>
                                       </div>
-                                      <div className="flex items-center gap-1.5 mt-1">
-                                         <Lock size={10} className="text-slate-500" />
-                                         <span className="text-[9px] text-slate-500 font-bold uppercase tracking-wide">Permanent Lease</span>
+                                      <div className="flex justify-between text-xs">
+                                          <span className="text-slate-500">Status</span>
+                                          <span className="text-emerald-500 font-bold uppercase">Processing</span>
                                       </div>
                                   </div>
+                                  <button 
+                                    onClick={() => { setHasPhysicalCard(true); setCardTab('metal'); setCardViewMode('main'); }} 
+                                    className="w-full py-4 bg-slate-800 text-white font-bold rounded-xl border border-slate-700 hover:bg-slate-700 transition-colors"
+                                  >
+                                    Back to Wallet
+                                  </button>
                               </div>
-                              <div className="flex items-center gap-3">
-                                <div className="text-right hidden sm:block">
-                                    <div className="text-[9px] text-slate-500 font-bold uppercase tracking-wider">Expires</div>
-                                    <div className="text-xs font-black text-white">Never</div>
-                                </div>
-                                <ChevronRight size={16} className="text-slate-600 group-hover:text-white transition-colors" />
-                              </div>
-                          </div>
+                          )}
                       </div>
-                   </div>
-
-                   {/* Deployed dApps - Enhanced */}
-                   <div className="mb-8">
-                      <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <Rocket size={12} /> Deployments
-                      </h3>
-                      <div className="space-y-3">
-                          {myDeployments.map((deploy) => (
-                            <div key={deploy.id} className="group relative p-3 rounded-2xl bg-slate-900/50 border border-white/5 hover:border-blue-500/30 transition-all cursor-default overflow-hidden">
-                                <div className="absolute inset-y-0 left-0 w-1 bg-blue-500/50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                <div className="flex items-center justify-between mb-3 pl-2">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-slate-800 flex items-center justify-center text-white border border-white/5 shadow-inner">
-                                            <Layout size={18} className="text-slate-300 group-hover:text-white transition-colors" />
-                                        </div>
-                                        <div>
-                                            <div className="text-xs font-bold text-white group-hover:text-blue-400 transition-colors flex items-center gap-2">
-                                              {deploy.name}
-                                              <span className={`w-1.5 h-1.5 rounded-full ${deploy.status === 'active' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' : 'bg-amber-500'}`}></span>
-                                            </div>
-                                            <div className="flex items-center gap-1 mt-0.5">
-                                               <span className="text-[9px] text-slate-500 font-mono truncate max-w-[100px]">{deploy.url}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div className="flex gap-2">
-                                      <a href={deploy.url} target="_blank" rel="noreferrer" className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
-                                          <ExternalLink size={14} />
-                                      </a>
-                                      <button className="w-8 h-8 rounded-lg bg-white/5 hover:bg-white/10 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
-                                          <Settings size={14} />
-                                      </button>
-                                    </div>
-                                </div>
-                                <div className="pl-[54px] pr-2">
-                                   <div className="p-1.5 rounded-lg bg-black/40 border border-white/5 font-mono text-[9px] text-slate-500 flex items-center justify-between group-hover:border-white/10 transition-colors">
-                                      <span className="truncate">{deploy.hash}</span>
-                                      <Copy size={10} className="hover:text-white cursor-pointer shrink-0 ml-2" />
-                                   </div>
-                                </div>
-                            </div>
-                          ))}
-                          
-                          <button 
-                            onClick={() => {
-                                setNewDeployName('');
-                                setDeployStep(0);
-                                setDeployLogs([]);
-                                setActiveModal('deploy');
-                            }}
-                            className="w-full py-4 rounded-2xl border border-dashed border-slate-700 hover:border-blue-500/50 text-slate-500 hover:text-blue-400 text-[10px] font-bold uppercase tracking-widest hover:bg-blue-500/5 transition-all flex items-center justify-center gap-2 group"
-                          >
-                               <div className="w-6 h-6 rounded-lg bg-slate-800 group-hover:bg-blue-500/20 flex items-center justify-center transition-colors"><UploadCloud size={14} /></div>
-                               Deploy New Project
-                          </button>
-                      </div>
-                   </div>
-
-                   {/* dApp Browser - Enhanced Grid */}
-                   <div>
-                      <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                        <LayoutGrid size={12} /> App Store
-                      </h3>
-                      <div className="grid grid-cols-4 gap-3">
-                          {DAPPS_WITH_ACTIONS.map(app => (
-                              <button 
-                                key={app.id} 
-                                onClick={app.action ? app.action : () => {
-                                    if (app.id === '6') {
-                                        setActiveModal('domainRegistrar');
-                                    } else {
-                                        setActiveModal('dappStore');
-                                    }
-                                }}
-                                className="flex flex-col items-center gap-2 group relative"
-                              >
-                                  <div className="w-14 h-14 bg-slate-900 rounded-[18px] flex items-center justify-center text-white border border-white/10 shadow-lg group-hover:scale-105 group-hover:border-blue-500/50 transition-all relative overflow-hidden group-hover:shadow-blue-500/20">
-                                      <div className="absolute inset-0 bg-gradient-to-br from-white/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                      <app.icon size={24} className="text-slate-300 group-hover:text-white transition-colors" />
-                                  </div>
-                                  <span className="text-[9px] font-bold text-slate-500 group-hover:text-white line-clamp-1 transition-colors">{app.name}</span>
-                              </button>
-                          ))}
-                          <button 
-                            onClick={() => setActiveModal('dappStore')}
-                            className="flex flex-col items-center gap-2 group"
-                          >
-                              <div className="w-14 h-14 rounded-[18px] border-2 border-dashed border-slate-800 flex items-center justify-center text-slate-600 group-hover:text-white group-hover:border-white/30 group-hover:bg-white/5 transition-all">
-                                  <Search size={20} />
-                              </div>
-                              <span className="text-[9px] font-bold text-slate-600 group-hover:text-white transition-colors">Browse</span>
-                          </button>
-                      </div>
-                   </div>
-                </div>
+                  )}
+               </div>
              )}
 
-             {/* === MODULE E: SETTINGS & SECURITY === */}
-             {activeTab === 'settings' && (
-               <div className="p-6 h-full flex flex-col animate-in fade-in slide-in-from-right-4 duration-300">
-                  <h2 className="text-2xl font-black text-white uppercase tracking-tight mb-6">Settings</h2>
+             {/* DAPPS TAB */}
+             {viewState === 'dapps' && (
+               <div className="px-5 space-y-4 animate-in slide-in-from-right duration-300">
+                  <h2 className="text-xl font-black text-white">dApp Browser</h2>
+                  <div className="relative">
+                     <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500" />
+                     <input type="text" placeholder="Search or type URL" className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-sm text-white focus:outline-none focus:border-blue-500" />
+                  </div>
                   
-                  {/* Profile Card */}
-                  <div className="bg-slate-900/50 border border-slate-800 rounded-[2rem] p-6 mb-6 relative overflow-hidden backdrop-blur-md">
-                    <div className="absolute top-0 right-0 w-32 h-32 bg-indigo-500/5 rounded-full blur-[40px] pointer-events-none"></div>
-                    <div className="flex items-start justify-between mb-6 relative z-10">
-                       <div className="flex items-center gap-4">
-                          <div className="relative">
-                             <img src={profile.avatar} alt="Profile" className="w-20 h-20 rounded-2xl bg-slate-800 object-cover border-2 border-white/10" />
-                             <div className="absolute -bottom-2 -right-2 p-1.5 bg-indigo-500 rounded-lg border-4 border-slate-900 text-white shadow-lg">
-                                <ShieldCheck size={12} />
-                             </div>
-                          </div>
-                          <div>
-                             <h3 className="text-xl font-black text-white tracking-tight">{profile.name}</h3>
-                             <div className="flex items-center gap-1 text-indigo-400 font-bold text-sm bg-indigo-500/10 px-2 py-0.5 rounded-lg w-fit mt-1 border border-indigo-500/20">
-                                <AtSign size={12} /> {profile.handle}
-                             </div>
-                             <p className="text-[10px] text-slate-500 font-medium mt-2 max-w-[160px] leading-tight">{profile.bio}</p>
-                          </div>
-                       </div>
-                       <button 
-                          onClick={() => {
-                             setTempProfile(profile);
-                             setActiveModal('editProfile');
-                          }}
-                          className="w-10 h-10 rounded-xl bg-slate-800 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-700 transition-colors shadow-lg"
-                       >
-                          <Edit3 size={18} />
-                       </button>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                       <div className="bg-black/20 rounded-xl p-3 border border-white/5 flex flex-col items-center text-center">
-                          <div className="text-[9px] font-bold text-slate-500 uppercase mb-1">Fluid Score</div>
-                          <div className="text-lg font-black text-white">850</div>
-                       </div>
-                       <div className="bg-black/20 rounded-xl p-3 border border-white/5 flex flex-col items-center text-center">
-                          <div className="text-[9px] font-bold text-slate-500 uppercase mb-1">Member Since</div>
-                          <div className="text-lg font-black text-white">2024</div>
-                       </div>
-                    </div>
-                  </div>
-
-                  {/* Desktop Sync Promotion */}
-                  <div className="mb-8 p-4 bg-indigo-600/10 border border-indigo-600/20 rounded-2xl flex items-center justify-between shadow-lg">
-                      <div className="flex items-center gap-3">
-                          <div className="p-2 bg-indigo-600 rounded-xl text-white"><Monitor size={18}/></div>
-                          <div>
-                              <div className="text-xs font-bold text-white">Desktop App</div>
-                              <div className="text-[9px] text-indigo-300">Sync with Windows/Mac/Linux</div>
-                          </div>
-                      </div>
-                      <button className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 transition-colors text-white text-[9px] font-bold rounded-lg uppercase tracking-wider">Download</button>
-                  </div>
-
-                  {/* Security Score Audit */}
-                  <div className="bg-slate-900 border border-slate-800 rounded-[2rem] p-6 mb-8 relative overflow-hidden">
-                      <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-[40px] pointer-events-none"></div>
-                      <div className="flex items-center justify-between mb-6">
-                         <div>
-                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1">Audit Score</span>
-                            <div className="flex items-baseline gap-1">
-                               <span className={`text-4xl font-black ${securityScore > 80 ? 'text-emerald-500' : securityScore > 50 ? 'text-amber-500' : 'text-rose-500'}`}>
-                                  {securityScore}
-                                </span>
-                               <span className="text-slate-500 font-bold">/100</span>
-                            </div>
-                         </div>
-                         <div className={`w-14 h-14 rounded-full border-4 flex items-center justify-center ${securityScore > 80 ? 'border-emerald-500/20 text-emerald-500' : 'border-amber-500/20 text-amber-500'}`}>
-                            <ShieldCheck size={24} />
-                         </div>
-                      </div>
-                      
-                      <div className="space-y-3">
-                         <div className="flex items-center gap-3 text-xs font-bold text-slate-400">
-                            {isLocked ? <div className="w-4 h-4 rounded bg-emerald-500/20 text-emerald-500 flex items-center justify-center"><CheckCircle2 size={10}/></div> : <div className="w-4 h-4 rounded bg-rose-500/20 text-rose-500 flex items-center justify-center"><X size={10}/></div>}
-                            <span>Vault Protection Active</span>
-                         </div>
-                         <div className="flex items-center gap-3 text-xs font-bold text-slate-400">
-                            {profile.handle.endsWith('.fluid') || profile.handle.length > 3 ? <div className="w-4 h-4 rounded bg-emerald-500/20 text-emerald-500 flex items-center justify-center"><CheckCircle2 size={10}/></div> : <div className="w-4 h-4 rounded bg-slate-800 text-slate-600 flex items-center justify-center"><AlertOctagon size={10}/></div>}
-                            <span>Fluid Handle Active</span>
-                         </div>
-                         <div className="flex items-center gap-3 text-xs font-bold text-slate-400">
-                            {securitySettings.viewCardDetails ? <div className="w-4 h-4 rounded bg-emerald-500/20 text-emerald-500 flex items-center justify-center"><CheckCircle2 size={10}/></div> : <div className="w-4 h-4 rounded bg-slate-800 text-slate-600 flex items-center justify-center"><AlertOctagon size={10}/></div>}
-                            <span>Card Details Hidden</span>
-                         </div>
-                      </div>
-                  </div>
-
-                  {/* Granular Biometric Settings */}
-                  <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <Fingerprint size={12} /> Biometric Triggers
-                  </h3>
-                  <div className="space-y-3">
-                     {[
-                        { id: 'viewCardDetails', label: 'View Card Number', desc: 'Require auth to unmask PAN' },
-                        { id: 'changeLimits', label: 'Adjust Limits', desc: 'Require auth to increase spend limits' },
-                        { id: 'initiateSwap', label: 'Initiate Swaps', desc: 'Require auth for DEX trades > $100' },
-                        { id: 'sendCrypto', label: 'Send Crypto', desc: 'Require auth for outgoing transfers' },
-                        { id: 'buyCrypto', label: 'Buy Crypto', desc: 'Require auth for fiat on-ramp' },
-                     ].map((setting) => (
-                        <div key={setting.id} className="p-4 bg-slate-900/50 border border-slate-800 rounded-2xl flex items-center justify-between">
-                           <div>
-                              <div className="text-sm font-bold text-white mb-0.5">{setting.label}</div>
-                              <div className="text-[10px] text-slate-500">{setting.desc}</div>
+                  <div className="grid grid-cols-2 gap-3">
+                     {DAPPS_EXPANDED.map((app, i) => (
+                        <button key={i} onClick={app.action} className="bg-slate-900 border border-slate-800 p-4 rounded-xl flex flex-col items-center gap-3 hover:bg-slate-800 cursor-pointer transition-colors group">
+                           <div className={`p-3 rounded-full bg-slate-950 text-indigo-400 group-hover:text-white transition-colors`}>
+                              <app.icon size={20} />
                            </div>
-                           <div 
-                              onClick={() => setSecuritySettings(prev => ({...prev, [setting.id]: !prev[setting.id as keyof typeof securitySettings]}))}
-                              className={`w-10 h-6 rounded-full p-1 cursor-pointer transition-colors ${securitySettings[setting.id as keyof typeof securitySettings] ? 'bg-emerald-500' : 'bg-slate-700'}`}
-                           >
-                              <div className={`w-4 h-4 bg-white rounded-full shadow-md transition-transform ${securitySettings[setting.id as keyof typeof securitySettings] ? 'translate-x-4' : ''}`}></div>
-                           </div>
-                        </div>
+                           <span className="text-xs font-bold text-white">{app.name}</span>
+                        </button>
                      ))}
                   </div>
-                  
-                  <div className="mt-8 pt-6 border-t border-white/5 pb-20">
-                     <button className="w-full py-4 bg-slate-900 border border-slate-800 hover:border-rose-500/30 hover:bg-rose-500/10 text-rose-500 font-black rounded-xl uppercase tracking-widest transition-all text-xs flex items-center justify-center gap-2">
-                        <Power size={14} /> Lock Vault Now
-                     </button>
-                  </div>
                </div>
              )}
-             </>
-             )}
+             
+             {/* FLUID HOSTING VIEW (DApp Integration) */}
+             {viewState === 'hosting' && (
+                <div className="px-5 h-full flex flex-col animate-in slide-in-from-right duration-300">
+                   <div className="flex items-center gap-2 mb-6">
+                      <button onClick={() => setViewState('dapps')} className="p-2 bg-slate-900 rounded-full border border-slate-800 text-slate-400 hover:text-white"><ChevronLeft size={20}/></button>
+                      <h2 className="text-xl font-black text-white">Fluid Host</h2>
+                   </div>
 
-          </div>
-          
-          {/* --- ACTION MODALS --- */}
-          {activeModal && (
-            <div className="absolute inset-0 z-[60] bg-black/80 backdrop-blur-md flex items-end sm:items-center justify-center animate-in fade-in duration-200">
-               <div className="w-full h-[90%] sm:h-auto sm:max-w-xs bg-slate-900 border-t sm:border border-slate-800 rounded-t-[2rem] sm:rounded-[2rem] p-6 relative flex flex-col shadow-2xl animate-in slide-in-from-bottom-10 duration-300">
-                  <div className="w-12 h-1 bg-slate-800 rounded-full mx-auto mb-6 sm:hidden"></div>
-                  
-                  <div className="flex justify-between items-center mb-6">
-                     <h3 className="text-xl font-black text-white uppercase tracking-tight">
-                       {activeModal === 'send' && 'Send Asset'}
-                       {activeModal === 'receive' && 'Receive Asset'}
-                       {activeModal === 'buy' && 'Buy Crypto'}
-                       {activeModal === 'editProfile' && 'Edit Profile'}
-                       {activeModal === 'domainRegistrar' && 'Domain Registrar'}
-                       {activeModal === 'cardLimits' && 'Spending Limits'}
-                       {activeModal === 'deploy' && 'Deploy dApp'}
-                       {activeModal === 'dappStore' && 'dApp Store'}
-                       {activeModal === 'requestCard' && 'Request Card'}
-                       {activeModal === 'changePin' && 'Change PIN'}
-                       {activeModal === 'deleteCard' && 'Destroy Card'}
-                     </h3>
-                     <button onClick={() => { setActiveModal(null); setDomainSearchStatus('idle'); setDomainQuery(''); }} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white">
-                        <X size={16} />
-                     </button>
-                  </div>
+                   <div className="bg-indigo-600 rounded-[2rem] p-6 mb-6 text-center shadow-lg shadow-indigo-500/20">
+                      <Cloud size={40} className="text-white mx-auto mb-2 opacity-80" />
+                      <h3 className="text-white font-black text-lg">Permanent Storage</h3>
+                      <p className="text-indigo-200 text-xs mt-1">Deploy unstoppable websites.</p>
+                      <button className="mt-4 bg-white text-indigo-600 px-6 py-2 rounded-full text-xs font-bold uppercase tracking-widest hover:scale-105 transition-transform">
+                         Deploy New
+                      </button>
+                   </div>
 
-                  {activeModal === 'send' && (
-                     <div className="space-y-4 flex-grow">
-                        {/* Network Selection */}
-                        <div>
-                           <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Select Network</label>
-                           <div className="grid grid-cols-5 gap-2 mb-2">
-                              {NETWORKS.map((net) => (
-                                 <button 
-                                    key={net.id}
-                                    onClick={() => setSelectedChain(net)}
-                                    className={`flex flex-col items-center justify-center p-2 rounded-xl border transition-all ${selectedChain.id === net.id ? 'bg-slate-800 border-white/20' : 'bg-transparent border-transparent hover:bg-slate-800/50'}`}
-                                 >
-                                    <img src={net.icon} alt={net.short} className="w-6 h-6 rounded-full mb-1" />
-                                    <span className={`text-[8px] font-bold ${selectedChain.id === net.id ? 'text-white' : 'text-slate-500'}`}>{net.short}</span>
-                                 </button>
-                              ))}
-                           </div>
-                        </div>
-
-                        <div>
-                           <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Recipient Address</label>
-                           <div className="flex items-center bg-black/20 rounded-xl border border-white/10 p-3">
-                              <input type="text" placeholder={`0x... (${selectedChain.name})`} className="bg-transparent w-full text-sm text-white outline-none font-mono" />
-                              <ScanFace size={16} className="text-slate-500" />
-                           </div>
-                        </div>
-                        <div>
-                           <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Amount</label>
-                           <div className="flex items-center justify-between bg-black/20 rounded-xl border border-white/10 p-3">
-                              <input type="number" placeholder="0.0" className="bg-transparent w-full text-xl font-black text-white outline-none" />
-                              <button className="flex items-center gap-1 bg-slate-800 px-2 py-1 rounded text-xs font-bold text-white">
-                                 {selectedChain.short} <ChevronDown size={10} />
-                              </button>
-                           </div>
-                           <div className="text-right mt-1 text-[10px] text-slate-500 font-bold">Balance: 12.45 {selectedChain.short}</div>
-                        </div>
-                        <button 
-                          onClick={() => handleSecureAction('sendCrypto', () => alert("Transaction Sent"))}
-                          className={`w-full py-4 mt-auto text-white font-black rounded-xl uppercase tracking-widest transition-colors shadow-lg ${selectedChain.color}`}
-                        >
-                          Confirm Send
-                        </button>
-                     </div>
-                  )}
-
-                  {activeModal === 'receive' && (
-                     <div className="space-y-6 flex-col flex items-center flex-grow justify-center">
-                        {/* Network Selection for Receive */}
-                        <div className="w-full">
-                           <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block text-center">Select Network</label>
-                           <div className="flex justify-center gap-3">
-                              {NETWORKS.map((net) => (
-                                 <button 
-                                    key={net.id}
-                                    onClick={() => setSelectedChain(net)}
-                                    className={`w-10 h-10 rounded-full flex items-center justify-center transition-all ${selectedChain.id === net.id ? 'bg-slate-800 ring-2 ring-offset-2 ring-offset-slate-900 ring-white/20' : 'bg-slate-900 opacity-50'}`}
-                                 >
-                                    <img src={net.icon} alt={net.short} className="w-6 h-6 rounded-full" />
-                                 </button>
-                              ))}
-                           </div>
-                        </div>
-
-                        <div className={`p-1 bg-gradient-to-br rounded-[1.5rem] ${selectedChain.id === 'btc' ? 'from-orange-500 to-yellow-500' : selectedChain.id === 'sol' ? 'from-purple-500 to-cyan-500' : 'from-indigo-500 to-blue-500'}`}>
-                           <div className="bg-white p-4 rounded-[1.3rem] relative">
-                              <QrCode size={160} className="text-slate-900" />
-                              <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-                                 <img src={selectedChain.icon} className="w-10 h-10 rounded-full bg-white p-1 shadow-lg" />
-                              </div>
-                           </div>
-                        </div>
-                        <div className="w-full">
-                           <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block text-center">Your {selectedChain.name} Address</label>
-                           <button className="w-full flex items-center justify-between bg-black/20 rounded-xl border border-white/10 p-3 group hover:border-white/20 transition-colors">
-                              <span className="text-xs text-slate-300 font-mono truncate mr-2">
-                                 {selectedChain.id === 'btc' ? 'bc1q...8z92' : selectedChain.id === 'sol' ? 'An...3k9z' : '0x71C...92aF'}
-                              </span>
-                              <Copy size={14} className="text-slate-500 group-hover:text-white" />
-                           </button>
-                           {selectedChain.id !== 'eth' && selectedChain.id !== 'bsc' && selectedChain.id !== 'poly' && (
-                              <p className="text-[9px] text-rose-500 text-center mt-2 font-bold">Only send {selectedChain.name} assets to this address.</p>
-                           )}
-                        </div>
-                        <div className="flex gap-2 w-full">
-                           <button className="flex-1 py-3 bg-slate-800 rounded-xl text-xs font-bold text-white">Share</button>
-                           <button className="flex-1 py-3 bg-slate-800 rounded-xl text-xs font-bold text-white">Save Image</button>
-                        </div>
-                     </div>
-                  )}
-
-                  {activeModal === 'requestCard' && (
-                    <div className="space-y-6 flex-grow flex flex-col">
-                        <div className="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-start gap-3">
-                            <ShieldCheck size={20} className="text-indigo-500 shrink-0 mt-0.5" />
-                            <p className="text-[10px] text-indigo-200/80 leading-relaxed">
-                                Set a secure 4-digit PIN for your new virtual card. This PIN will be required for transactions.
-                            </p>
-                        </div>
-
-                        <div>
-                            <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Set New PIN</label>
-                            <div className="flex items-center bg-black/20 rounded-xl border border-white/10 p-3">
-                                <input 
-                                    type="password" 
-                                    maxLength={4}
-                                    placeholder="****" 
-                                    value={cardPin}
-                                    onChange={(e) => {
-                                        const val = e.target.value.replace(/[^0-9]/g, '');
-                                        setCardPin(val);
-                                    }}
-                                    className="bg-transparent w-full text-center text-2xl font-black text-white outline-none tracking-[1em]" 
-                                />
+                   <h3 className="text-slate-400 text-xs font-bold uppercase tracking-widest mb-3">Your Deployments</h3>
+                   <div className="space-y-3">
+                      {DEPLOYED_SITES.map((site) => (
+                         <div key={site.id} className="bg-slate-900 border border-slate-800 rounded-xl p-4 flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="w-10 h-10 bg-slate-950 rounded-lg flex items-center justify-center text-slate-500 border border-slate-800">
+                                  <Globe size={18} />
+                               </div>
+                               <div>
+                                  <div className="text-white font-bold text-sm">{site.name}</div>
+                                  <div className="text-slate-500 text-xs">{site.domain}</div>
+                               </div>
                             </div>
-                        </div>
-
-                        <div>
-                            <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Confirm PIN</label>
-                            <div className="flex items-center bg-black/20 rounded-xl border border-white/10 p-3">
-                                <input 
-                                    type="password" 
-                                    maxLength={4}
-                                    placeholder="****" 
-                                    value={confirmCardPin}
-                                    onChange={(e) => {
-                                        const val = e.target.value.replace(/[^0-9]/g, '');
-                                        setConfirmCardPin(val);
-                                    }}
-                                    className="bg-transparent w-full text-center text-2xl font-black text-white outline-none tracking-[1em]" 
-                                />
+                            <div className="flex flex-col items-end">
+                               <div className="flex items-center gap-1">
+                                  <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                  <span className="text-[10px] text-emerald-500 font-bold uppercase">Active</span>
+                               </div>
+                               <span className="text-[10px] text-slate-600 font-mono mt-1">{site.visits} visits</span>
                             </div>
-                        </div>
-
-                        <button 
-                            disabled={cardPin.length !== 4 || cardPin !== confirmCardPin}
-                            onClick={handleCreateCard}
-                            className="w-full py-4 mt-auto bg-white text-slate-900 font-black rounded-xl uppercase tracking-widest hover:bg-slate-200 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Create Virtual Card
-                        </button>
-                    </div>
-                  )}
-
-                  {activeModal === 'changePin' && (
-                    <div className="space-y-6 flex-grow flex flex-col">
-                        <div className="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-start gap-3">
-                            <Lock size={20} className="text-indigo-500 shrink-0 mt-0.5" />
-                            <p className="text-[10px] text-indigo-200/80 leading-relaxed">
-                                Enter your current PIN to authenticate changes.
-                            </p>
-                        </div>
-
-                        <div>
-                            <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Current PIN</label>
-                            <div className="flex items-center bg-black/20 rounded-xl border border-white/10 p-3">
-                                <input 
-                                    type="password" 
-                                    maxLength={4}
-                                    placeholder="****" 
-                                    value={oldPinInput}
-                                    onChange={(e) => {
-                                        const val = e.target.value.replace(/[^0-9]/g, '');
-                                        setOldPinInput(val);
-                                    }}
-                                    className="bg-transparent w-full text-center text-2xl font-black text-white outline-none tracking-[1em]" 
-                                />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">New PIN</label>
-                            <div className="flex items-center bg-black/20 rounded-xl border border-white/10 p-3">
-                                <input 
-                                    type="password" 
-                                    maxLength={4}
-                                    placeholder="****" 
-                                    value={newPinInput}
-                                    onChange={(e) => {
-                                        const val = e.target.value.replace(/[^0-9]/g, '');
-                                        setNewPinInput(val);
-                                    }}
-                                    className="bg-transparent w-full text-center text-2xl font-black text-white outline-none tracking-[1em]" 
-                                />
-                            </div>
-                        </div>
-
-                        <div>
-                            <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Confirm New PIN</label>
-                            <div className="flex items-center bg-black/20 rounded-xl border border-white/10 p-3">
-                                <input 
-                                    type="password" 
-                                    maxLength={4}
-                                    placeholder="****" 
-                                    value={confirmNewPinInput}
-                                    onChange={(e) => {
-                                        const val = e.target.value.replace(/[^0-9]/g, '');
-                                        setConfirmNewPinInput(val);
-                                    }}
-                                    className="bg-transparent w-full text-center text-2xl font-black text-white outline-none tracking-[1em]" 
-                                />
-                            </div>
-                        </div>
-
-                        <button 
-                            disabled={oldPinInput.length !== 4 || newPinInput.length !== 4 || newPinInput !== confirmNewPinInput}
-                            onClick={handleChangePin}
-                            className="w-full py-4 mt-auto bg-white text-slate-900 font-black rounded-xl uppercase tracking-widest hover:bg-slate-200 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                            Update PIN
-                        </button>
-                    </div>
-                  )}
-
-                  {activeModal === 'deleteCard' && (
-                    <div className="space-y-6 flex-grow flex flex-col justify-center text-center">
-                        <div className="w-24 h-24 rounded-full bg-rose-500/10 flex items-center justify-center mx-auto mb-4 border border-rose-500/20">
-                            <Trash2 size={48} className="text-rose-500" />
-                        </div>
-                        
-                        <div>
-                            <h3 className="text-xl font-black text-white uppercase tracking-tight mb-2">Danger Zone</h3>
-                            <p className="text-slate-400 text-sm">
-                                Are you sure you want to permanently delete your virtual card? This action cannot be undone.
-                            </p>
-                        </div>
-
-                        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-left flex gap-3">
-                            <AlertTriangle size={20} className="text-rose-500 shrink-0" />
-                            <span className="text-[10px] font-bold text-rose-300">Any active subscriptions linked to this card will fail. Funds remain in your wallet.</span>
-                        </div>
-
-                        <div className="mt-auto space-y-3">
-                            <button 
-                                onClick={handleDeleteCard}
-                                className="w-full py-4 bg-rose-600 text-white font-black rounded-xl uppercase tracking-widest hover:bg-rose-500 transition-colors shadow-lg shadow-rose-600/20"
-                            >
-                                Confirm Deletion
-                            </button>
-                            <button 
-                                onClick={() => setActiveModal(null)}
-                                className="w-full py-4 bg-slate-800 text-slate-300 font-black rounded-xl uppercase tracking-widest hover:bg-slate-700 transition-colors"
-                            >
-                                Cancel
-                            </button>
-                        </div>
-                    </div>
-                  )}
-
-                  {activeModal === 'cardLimits' && (
-                    <div className="space-y-6 flex-grow flex flex-col">
-                        <div className="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-start gap-3">
-                            <ShieldCheck size={20} className="text-indigo-500 shrink-0 mt-0.5" />
-                            <p className="text-[10px] text-indigo-200/80 leading-relaxed">
-                                Set daily spending limits for different transaction types to enhance security. Changes apply instantly.
-                            </p>
-                        </div>
-
-                        <div className="space-y-6">
-                            {/* Online */}
-                            <div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <Globe size={16} className="text-blue-400" />
-                                        <span className="text-xs font-bold text-white uppercase tracking-wider">Online</span>
-                                    </div>
-                                    <span className="text-sm font-black text-white">${tempCardLimits.online.toLocaleString()}</span>
-                                </div>
-                                <input 
-                                    type="range" 
-                                    min="0" 
-                                    max="20000" 
-                                    step="100" 
-                                    value={tempCardLimits.online}
-                                    onChange={(e) => setTempCardLimits({...tempCardLimits, online: parseInt(e.target.value)})}
-                                    className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
-                                />
-                            </div>
-
-                            {/* In-Store */}
-                            <div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <ShoppingBag size={16} className="text-purple-400" />
-                                        <span className="text-xs font-bold text-white uppercase tracking-wider">In-Store</span>
-                                    </div>
-                                    <span className="text-sm font-black text-white">${tempCardLimits.inStore.toLocaleString()}</span>
-                                </div>
-                                <input 
-                                    type="range" 
-                                    min="0" 
-                                    max="10000" 
-                                    step="100" 
-                                    value={tempCardLimits.inStore}
-                                    onChange={(e) => setTempCardLimits({...tempCardLimits, inStore: parseInt(e.target.value)})}
-                                    className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-500"
-                                />
-                            </div>
-
-                            {/* ATM */}
-                            <div>
-                                <div className="flex justify-between items-center mb-2">
-                                    <div className="flex items-center gap-2">
-                                        <Banknote size={16} className="text-emerald-400" />
-                                        <span className="text-xs font-bold text-white uppercase tracking-wider">ATM Withdrawal</span>
-                                    </div>
-                                    <span className="text-sm font-black text-white">${tempCardLimits.atm.toLocaleString()}</span>
-                                </div>
-                                <input 
-                                    type="range" 
-                                    min="0" 
-                                    max="5000" 
-                                    step="50" 
-                                    value={tempCardLimits.atm}
-                                    onChange={(e) => setTempCardLimits({...tempCardLimits, atm: parseInt(e.target.value)})}
-                                    className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
-                                />
-                            </div>
-                        </div>
-
-                        <button 
-                            onClick={() => {
-                                setCardLimits(tempCardLimits);
-                                setActiveModal(null);
-                            }}
-                            className="w-full py-4 mt-auto bg-white text-slate-900 font-black rounded-xl uppercase tracking-widest hover:bg-slate-200 transition-colors shadow-lg"
-                        >
-                            Save Limits
-                        </button>
-                    </div>
-                  )}
-
-                  {/* Buy Modal */}
-                  {activeModal === 'buy' && (
-                     <div className="space-y-4 flex-grow">
-                        <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-start gap-3">
-                           <ShieldCheck size={20} className="text-emerald-500 shrink-0 mt-0.5" />
-                           <p className="text-[10px] text-emerald-200/80 leading-relaxed">Transactions are processed via MoonPay. KYC may be required for purchases over $500.</p>
-                        </div>
-                        <div>
-                           <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">You Pay</label>
-                           <div className="flex items-center justify-between bg-black/20 rounded-xl border border-white/10 p-3">
-                              <input type="number" defaultValue="100" className="bg-transparent w-full text-xl font-black text-white outline-none" />
-                              <button className="flex items-center gap-1 bg-slate-800 px-2 py-1 rounded text-xs font-bold text-white">
-                                 USD <ChevronDown size={10} />
-                              </button>
-                           </div>
-                        </div>
-                        <div>
-                           <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">You Get</label>
-                           <div className="flex items-center justify-between bg-black/20 rounded-xl border border-white/10 p-3">
-                              <span className="text-xl font-black text-emerald-400">~8,420</span>
-                              <div className="flex items-center gap-2">
-                                 <div className="w-5 h-5 rounded-full bg-emerald-500"></div>
-                                 <span className="text-xs font-bold text-white">FLD</span>
-                              </div>
-                           </div>
-                        </div>
-                        <button 
-                          onClick={() => handleSecureAction('buyCrypto', () => alert("Proceeding to MoonPay"))}
-                          className="w-full py-4 mt-auto bg-emerald-500 text-white font-black rounded-xl uppercase tracking-widest hover:bg-emerald-400 transition-colors shadow-lg shadow-emerald-500/20"
-                        >
-                          Continue to Payment
-                        </button>
-                     </div>
-                  )}
-
-               </div>
-            </div>
-          )}
-
-          {/* Bottom Navigation */}
-          {!activeApp && (
-            <nav className="px-6 py-4 bg-slate-900/90 backdrop-blur-xl border-t border-white/5 absolute bottom-0 w-full z-40">
-                <div className="flex justify-between items-center">
-                    {tabs.map((tab) => (
-                    <button 
-                        key={tab.id}
-                        onClick={() => handleTabChange(tab.id)}
-                        className={`flex flex-col items-center gap-1 transition-all duration-300 ${activeTab === tab.id ? 'text-white scale-110' : 'text-slate-500 hover:text-slate-300'}`}
-                    >
-                        <tab.icon size={24} strokeWidth={activeTab === tab.id ? 2.5 : 2} />
-                        <span className="text-[9px] font-bold tracking-wide">{tab.label}</span>
-                    </button>
-                    ))}
+                         </div>
+                      ))}
+                   </div>
+                   
+                   <div className="mt-auto mb-4 bg-slate-900 rounded-xl p-4 border border-slate-800">
+                       <div className="flex items-center gap-3 mb-2">
+                           <Terminal size={16} className="text-slate-500" />
+                           <span className="text-xs font-bold text-slate-400">Recent Activity</span>
+                       </div>
+                       <div className="font-mono text-[10px] text-slate-500 space-y-1">
+                           <p>> Updated <span className="text-blue-400">index.html</span> (2m ago)</p>
+                           <p>> Syncing to Shard #4... Done.</p>
+                       </div>
+                   </div>
                 </div>
-            </nav>
-          )}
-          
-          {/* Home Indicator */}
-          <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/20 rounded-full z-50"></div>
+             )}
+
+             {/* CHAT TAB */}
+             {viewState === 'chat' && (
+               <div className="h-full">
+                  <SecureChatApp onBack={() => setViewState('home')} />
+               </div>
+             )}
+
           </div>
-       )}
 
-       {/* Interactive Features Guide */}
-       {!isLocked && (
-         <div className="mt-16 max-w-4xl mx-auto px-4 grid grid-cols-2 md:grid-cols-3 gap-6 text-center md:text-left animate-in fade-in slide-in-from-bottom-8 duration-700">
-            <div className="p-5 rounded-3xl bg-slate-900/50 border border-slate-800 hover:border-indigo-500/30 transition-all hover:-translate-y-1 group">
-               <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500 mb-4 mx-auto md:mx-0 group-hover:scale-110 transition-transform">
-                  <Fingerprint size={24} />
-               </div>
-               <h3 className="text-sm font-bold text-white mb-2">Smart Auth</h3>
-               <p className="text-xs text-slate-500 leading-relaxed font-medium">Experience biometric security. Toggle "Biometric Triggers" in Settings to protect sensitive actions.</p>
+          {/* Bottom Navigation (Hidden if in Chat or certain views) */}
+          {activeTab !== 'chat' && viewState !== 'chat' && (
+            <div className="absolute bottom-0 inset-x-0 h-20 bg-slate-900 border-t border-slate-800 flex items-center justify-around px-2 pb-4">
+               {[
+                 { id: 'home', icon: Home, label: 'Home' },
+                 { id: 'swap', icon: RefreshCw, label: 'Swap' },
+                 { id: 'cards', icon: CreditCard, label: 'Cards' },
+                 { id: 'dapps', icon: Grid, label: 'dApps' },
+               ].map((tab) => (
+                 <button 
+                    key={tab.id} 
+                    onClick={() => handleTabChange(tab.id)}
+                    className={`flex flex-col items-center gap-1 p-2 rounded-xl transition-all ${
+                       getActiveTab() === tab.id ? 'text-blue-500' : 'text-slate-500 hover:text-slate-300'
+                    }`}
+                 >
+                    <tab.icon size={22} className={getActiveTab() === tab.id ? 'fill-current' : ''} />
+                    <span className="text-[9px] font-bold">{tab.label}</span>
+                 </button>
+               ))}
             </div>
-            
-            <div className="p-5 rounded-3xl bg-slate-900/50 border border-slate-800 hover:border-emerald-500/30 transition-all hover:-translate-y-1 group">
-               <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500 mb-4 mx-auto md:mx-0 group-hover:scale-110 transition-transform">
-                  <CreditCard size={24} />
-               </div>
-               <h3 className="text-sm font-bold text-white mb-2">Instant Issuance</h3>
-               <p className="text-xs text-slate-500 leading-relaxed font-medium">Request a virtual card, set your PIN, and generate dynamic CVV codes for secure spending.</p>
-            </div>
+          )}
 
-            <div className="p-5 rounded-3xl bg-slate-900/50 border border-slate-800 hover:border-blue-500/30 transition-all hover:-translate-y-1 group">
-               <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center text-blue-500 mb-4 mx-auto md:mx-0 group-hover:scale-110 transition-transform">
-                  <Globe size={24} />
-               </div>
-               <h3 className="text-sm font-bold text-white mb-2">Fiat Gateway</h3>
-               <p className="text-xs text-slate-500 leading-relaxed font-medium">Manage multi-currency accounts (USD, EUR, GBP). Tap "Reveal" to see banking details.</p>
-            </div>
-
-            <div className="p-5 rounded-3xl bg-slate-900/50 border border-slate-800 hover:border-purple-500/30 transition-all hover:-translate-y-1 group">
-               <div className="w-12 h-12 rounded-2xl bg-purple-500/10 flex items-center justify-center text-purple-500 mb-4 mx-auto md:mx-0 group-hover:scale-110 transition-transform">
-                  <MessageSquare size={24} />
-               </div>
-               <h3 className="text-sm font-bold text-white mb-2">Secure Chat</h3>
-               <p className="text-xs text-slate-500 leading-relaxed font-medium">Launch the SecureChat app to send encrypted messages and assets to other wallets.</p>
-            </div>
-
-            <div className="p-5 rounded-3xl bg-slate-900/50 border border-slate-800 hover:border-orange-500/30 transition-all hover:-translate-y-1 group">
-               <div className="w-12 h-12 rounded-2xl bg-orange-500/10 flex items-center justify-center text-orange-500 mb-4 mx-auto md:mx-0 group-hover:scale-110 transition-transform">
-                  <Server size={24} />
-               </div>
-               <h3 className="text-sm font-bold text-white mb-2">Fluid Host</h3>
-               <p className="text-xs text-slate-500 leading-relaxed font-medium">Deploy real websites to the permanent web using the simulated Fluid CLI terminal.</p>
-            </div>
-
-            <div className="p-5 rounded-3xl bg-slate-900/50 border border-slate-800 hover:border-pink-500/30 transition-all hover:-translate-y-1 group">
-               <div className="w-12 h-12 rounded-2xl bg-pink-500/10 flex items-center justify-center text-pink-500 mb-4 mx-auto md:mx-0 group-hover:scale-110 transition-transform">
-                  <AtSign size={24} />
-               </div>
-               <h3 className="text-sm font-bold text-white mb-2">Domain Registrar</h3>
-               <p className="text-xs text-slate-500 leading-relaxed font-medium">Search and register .fluid handles or traditional domains directly within the app.</p>
-            </div>
-         </div>
-       )}
+          {/* Home Indicator */}
+          <div className="absolute bottom-2 left-1/2 -translate-x-1/2 w-32 h-1 bg-white/20 rounded-full z-50"></div>
+       </div>
     </div>
   );
 };

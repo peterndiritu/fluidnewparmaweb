@@ -102,55 +102,61 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   return (
     <div className="overflow-hidden pb-12">
         {/* Compact Hero Section */}
-        <section id="presale" className="relative pt-20 pb-4 overflow-hidden flex flex-col justify-center">
+        <section id="presale" className="relative pt-24 pb-12 md:pt-32 md:pb-24 overflow-hidden flex flex-col justify-center min-h-[60vh] md:min-h-[70vh]">
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full z-0 pointer-events-none">
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-blue-600/5 rounded-full blur-[100px]"></div>
-            <div className="absolute bottom-0 left-0 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[100px]"></div>
+            <div className="absolute top-[-10%] right-[-10%] w-[300px] h-[300px] md:w-[600px] md:h-[600px] bg-blue-600/10 rounded-full blur-[80px] md:blur-[120px]"></div>
+            <div className="absolute bottom-[-10%] left-[-10%] w-[300px] h-[300px] md:w-[600px] md:h-[600px] bg-emerald-500/10 rounded-full blur-[80px] md:blur-[120px]"></div>
           </div>
 
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full text-center">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10 w-full text-center flex flex-col items-center">
             <button 
               onClick={() => onNavigate('buy')}
-              className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900/60 border border-slate-700/50 mb-4 animate-fade-in-up backdrop-blur-md hover:bg-slate-800/80 transition-all group cursor-pointer"
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/60 border border-slate-700/50 mb-6 animate-fade-in-up backdrop-blur-md hover:bg-slate-800/80 transition-all group cursor-pointer shadow-lg shadow-emerald-500/10"
             >
-              <span className="flex h-1.5 w-1.5 relative">
+              <span className="flex h-2 w-2 relative">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
               </span>
-              <span className="text-emerald-400 text-[9px] font-black tracking-widest uppercase">Live Presale</span>
-              <ChevronRight size={10} className="text-emerald-400 group-hover:translate-x-1 transition-transform" />
+              <span className="text-emerald-400 text-[10px] md:text-xs font-black tracking-widest uppercase">Live Presale Phase 1</span>
+              <ChevronRight size={12} className="text-emerald-400 group-hover:translate-x-1 transition-transform" />
             </button>
             
-            <h1 className="text-4xl lg:text-6xl font-black leading-tight mb-2 text-slate-900 dark:text-white tracking-tighter">
-              Fluid <br />
+            <h1 className="text-4xl sm:text-5xl md:text-7xl lg:text-8xl font-black leading-[1.1] mb-6 text-slate-900 dark:text-white tracking-tighter max-w-5xl">
+              Fluid <br className="hidden md:block" />
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-cyan-500 to-emerald-400">Store. Spend. Host.</span>
-              <br />
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-500 to-blue-600">Infinitely & Eternally.</span>
+              <br className="hidden md:block" />
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-500 to-blue-600 block mt-2 md:mt-0">Infinitely & Eternally.</span>
             </h1>
             
-            <div className="min-h-[4rem] flex items-center justify-center">
-              <p className="text-base md:text-lg text-slate-600 dark:text-slate-400 mb-6 max-w-3xl mx-auto leading-relaxed font-medium">
+            <div className="min-h-[6rem] md:min-h-[4rem] flex items-start md:items-center justify-center mb-10">
+              <p className="text-sm sm:text-base md:text-xl text-slate-600 dark:text-slate-400 max-w-3xl mx-auto leading-relaxed font-medium px-4">
                 {displayedText}
-                <span className={`inline-block w-1 h-4 ml-0.5 bg-blue-500 align-middle ${index < fullDescription.length ? 'animate-pulse' : 'hidden'}`}></span>
+                <span className={`inline-block w-1.5 h-4 md:h-5 ml-1 bg-blue-500 align-middle ${index < fullDescription.length ? 'animate-pulse' : 'hidden'}`}></span>
               </p>
             </div>
 
-            <div className="mb-6">
+            <div className="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto px-4">
                <button 
                   onClick={() => onNavigate('buy')}
-                  className="px-8 py-3 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-black text-base rounded-xl shadow-xl shadow-blue-500/20 transition-all transform hover:-translate-y-0.5 active:scale-95 uppercase tracking-wider"
+                  className="w-full sm:w-auto px-8 py-4 bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-500 hover:to-cyan-400 text-white font-black text-lg rounded-xl shadow-xl shadow-blue-500/20 transition-all transform hover:-translate-y-1 active:scale-95 uppercase tracking-wider"
                 >
-                  Get Started
+                  Join Presale
+                </button>
+                <button 
+                  onClick={() => onNavigate('blockchain')}
+                  className="w-full sm:w-auto px-8 py-4 bg-white/5 border border-slate-200 dark:border-slate-800 hover:bg-white/10 text-slate-900 dark:text-white font-bold text-lg rounded-xl transition-all uppercase tracking-wider flex items-center justify-center gap-2"
+                >
+                  Explore Tech <ChevronRight size={18} />
                 </button>
             </div>
           </div>
         </section>
 
-        {/* Vertical Layout of Main Components */}
-        <div className="max-w-2xl mx-auto px-4 flex flex-col gap-8 mb-12">
+        {/* Responsive Grid of Main Components */}
+        <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-2 gap-6 mb-24">
             
             {/* 1. Hosting Snippet */}
-            <div onClick={() => onNavigate('host')} className="group cursor-pointer bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-white/20 dark:border-slate-800/50 rounded-[2rem] p-6 shadow-xl hover:scale-[1.01] transition-all overflow-hidden flex flex-col relative">
+            <div onClick={() => onNavigate('host')} className="group cursor-pointer bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-white/20 dark:border-slate-800/50 rounded-[2rem] p-6 shadow-xl hover:scale-[1.01] transition-all overflow-hidden flex flex-col relative h-[420px]">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Permanent Hosting</h3>
                     <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500"><Cloud size={14}/></div>
@@ -179,14 +185,16 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                     <div className="absolute inset-x-0 bottom-2 text-center text-[7px] font-black text-slate-500 tracking-widest uppercase">Distributed Grid</div>
                 </div>
                 
-                <p className="text-[10px] mt-4 text-slate-500 font-bold leading-relaxed">Immutable decentralized storage across a global node network. One-time payment, host forever.</p>
-                <button className="mt-4 flex items-center gap-1.5 text-blue-600 dark:text-cyan-400 font-black text-[9px] uppercase tracking-widest group-hover:translate-x-1 transition-transform">
-                  Protocol Docs <ArrowUpRight size={12} />
-                </button>
+                <div className="mt-auto">
+                    <p className="text-[11px] mt-4 text-slate-500 font-bold leading-relaxed">Immutable decentralized storage across a global node network. One-time payment, host forever.</p>
+                    <button className="mt-4 flex items-center gap-1.5 text-blue-600 dark:text-cyan-400 font-black text-[9px] uppercase tracking-widest group-hover:translate-x-1 transition-transform">
+                      Protocol Docs <ArrowUpRight size={12} />
+                    </button>
+                </div>
             </div>
 
             {/* 2. Endowment Economy Snippet */}
-            <div onClick={() => onNavigate('economics')} className="group cursor-pointer bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-white/20 dark:border-slate-800/50 rounded-[2rem] p-6 shadow-xl hover:scale-[1.01] transition-all overflow-hidden flex flex-col relative">
+            <div onClick={() => onNavigate('economics')} className="group cursor-pointer bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-white/20 dark:border-slate-800/50 rounded-[2rem] p-6 shadow-xl hover:scale-[1.01] transition-all overflow-hidden flex flex-col relative h-[420px]">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Endowment Economy</h3>
                     <div className="p-1.5 rounded-lg bg-amber-500/10 text-amber-500"><Coins size={14}/></div>
@@ -209,21 +217,23 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                     <div className="mt-4 text-[7px] font-black text-amber-500 uppercase tracking-widest">Sustainability Engine</div>
                 </div>
 
-                <p className="text-[10px] mt-4 text-slate-500 font-bold leading-relaxed">Protocol treasury generates sustainable yield to maintain infrastructure indefinitely without monthly fees.</p>
-                <button className="mt-4 flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-black text-[9px] uppercase tracking-widest group-hover:translate-x-1 transition-transform">
-                  View Treasury <ArrowUpRight size={12} />
-                </button>
+                <div className="mt-auto">
+                    <p className="text-[11px] mt-4 text-slate-500 font-bold leading-relaxed">Protocol treasury generates sustainable yield to maintain infrastructure indefinitely without monthly fees.</p>
+                    <button className="mt-4 flex items-center gap-1.5 text-amber-600 dark:text-amber-400 font-black text-[9px] uppercase tracking-widest group-hover:translate-x-1 transition-transform">
+                      View Treasury <ArrowUpRight size={12} />
+                    </button>
+                </div>
             </div>
 
             {/* 3. Wallet Snippet */}
-            <div onClick={() => onNavigate('wallet')} className="group cursor-pointer bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-white/20 dark:border-slate-800/50 rounded-[2rem] p-6 shadow-xl hover:scale-[1.01] transition-all overflow-hidden flex flex-col relative">
+            <div onClick={() => onNavigate('wallet')} className="group cursor-pointer bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-white/20 dark:border-slate-800/50 rounded-[2rem] p-6 shadow-xl hover:scale-[1.01] transition-all overflow-hidden flex flex-col relative h-[420px]">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-emerald-500">Fluid Wallet App</h3>
                     <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-500"><WalletIcon size={14}/></div>
                 </div>
 
                 {/* Dynamic App Mockup */}
-                <div className="flex-grow bg-slate-950 rounded-2xl p-4 border border-white/10 shadow-2xl flex flex-col relative overflow-hidden h-[160px]">
+                <div className="flex-grow bg-slate-950 rounded-2xl p-4 border border-white/10 shadow-2xl flex flex-col relative overflow-hidden min-h-[160px]">
                   
                   {/* Crypto Assets View */}
                   <div className={`absolute inset-0 p-4 transition-all duration-700 flex flex-col gap-2 ${walletView === 0 ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}>
@@ -313,21 +323,23 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                   </div>
                 </div>
 
-                <p className="text-[10px] mt-4 text-slate-500 font-bold leading-relaxed">Multichain non-custodial gateway. Seamlessly bridge crypto, manage native debit cards, link bank accounts, and browse decentralized Fluid Host apps.</p>
-                <button className="mt-4 flex items-center gap-1.5 text-emerald-600 dark:text-cyan-400 font-black text-[9px] uppercase tracking-widest group-hover:translate-x-1 transition-transform">
-                  Launch Wallet App <ArrowUpRight size={12} />
-                </button>
+                <div className="mt-auto">
+                    <p className="text-[11px] mt-4 text-slate-500 font-bold leading-relaxed">Multichain non-custodial gateway. Seamlessly bridge crypto, manage native debit cards, link bank accounts, and browse decentralized Fluid Host apps.</p>
+                    <button className="mt-4 flex items-center gap-1.5 text-emerald-600 dark:text-cyan-400 font-black text-[9px] uppercase tracking-widest group-hover:translate-x-1 transition-transform">
+                      Launch Wallet App <ArrowUpRight size={12} />
+                    </button>
+                </div>
             </div>
 
-            {/* 4. Fluid Blockchain Snippet - ENHANCED with Live Blocks */}
-            <div onClick={() => onNavigate('blockchain')} className="group cursor-pointer bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-white/20 dark:border-slate-800/50 rounded-[2rem] p-6 shadow-xl hover:scale-[1.01] transition-all overflow-hidden flex flex-col relative">
+            {/* 4. Fluid Blockchain Snippet */}
+            <div onClick={() => onNavigate('blockchain')} className="group cursor-pointer bg-white/40 dark:bg-slate-900/40 backdrop-blur-xl border border-white/20 dark:border-slate-800/50 rounded-[2rem] p-6 shadow-xl hover:scale-[1.01] transition-all overflow-hidden flex flex-col relative h-[420px]">
                 <div className="flex items-center justify-between mb-4">
                     <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Fluid Blockchain</h3>
                     <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500"><Cpu size={14}/></div>
                 </div>
 
                 {/* Live Block Visualization Area */}
-                <div className="flex-grow bg-slate-950 rounded-2xl border border-white/5 p-3 flex flex-col relative overflow-hidden h-[160px]">
+                <div className="flex-grow bg-slate-950 rounded-2xl border border-white/5 p-3 flex flex-col relative overflow-hidden min-h-[160px]">
                    <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-1.5">
                          <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></div>
@@ -375,33 +387,35 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                    </div>
                 </div>
 
-                <div className="mt-3 space-y-2">
-                    <div className="flex items-start gap-2">
-                        <Zap size={10} className="text-blue-500 mt-0.5 shrink-0" />
-                        <div className="flex flex-col">
-                          <p className="text-[9px] font-black text-slate-900 dark:text-white leading-none uppercase tracking-tight">Ultra-Fast Throughput</p>
-                          <p className="text-[8px] font-bold text-slate-500 leading-tight">Consensual computation architecture with sub-millisecond finality.</p>
+                <div className="mt-auto">
+                    <div className="mt-3 space-y-2">
+                        <div className="flex items-start gap-2">
+                            <Zap size={10} className="text-blue-500 mt-0.5 shrink-0" />
+                            <div className="flex flex-col">
+                              <p className="text-[9px] font-black text-slate-900 dark:text-white leading-none uppercase tracking-tight">Ultra-Fast Throughput</p>
+                              <p className="text-[8px] font-bold text-slate-500 leading-tight">Consensual computation architecture with sub-millisecond finality.</p>
+                            </div>
+                        </div>
+                        <div className="flex items-start gap-2">
+                            <Code2 size={10} className="text-cyan-500 mt-0.5 shrink-0" />
+                            <div className="flex flex-col">
+                              <p className="text-[9px] font-black text-slate-900 dark:text-white leading-none uppercase tracking-tight">EVM Native Ecosystem</p>
+                              <p className="text-[8px] font-bold text-slate-500 leading-tight">Full compatibility for Ethereum dApps with zero migration overhead.</p>
+                            </div>
                         </div>
                     </div>
-                    <div className="flex items-start gap-2">
-                        <Code2 size={10} className="text-cyan-500 mt-0.5 shrink-0" />
-                        <div className="flex flex-col">
-                          <p className="text-[9px] font-black text-slate-900 dark:text-white leading-none uppercase tracking-tight">EVM Native Ecosystem</p>
-                          <p className="text-[8px] font-bold text-slate-500 leading-tight">Full compatibility for Ethereum dApps with zero migration overhead.</p>
-                        </div>
-                    </div>
-                </div>
 
-                <button className="mt-4 flex items-center gap-1.5 text-blue-600 dark:text-cyan-400 font-black text-[9px] uppercase tracking-widest group-hover:translate-x-1 transition-transform">
-                  Network Explorer <ArrowUpRight size={12} />
-                </button>
+                    <button className="mt-4 flex items-center gap-1.5 text-blue-600 dark:text-cyan-400 font-black text-[9px] uppercase tracking-widest group-hover:translate-x-1 transition-transform">
+                      Network Explorer <ArrowUpRight size={12} />
+                    </button>
+                </div>
             </div>
         </div>
 
         {/* Core Tech Vertical Stack */}
         <section className="py-4 bg-transparent relative">
-          <div className="max-w-2xl mx-auto px-4">
-            <div className="flex flex-col gap-4">
+          <div className="max-w-7xl mx-auto px-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               {revolutionaryFeatures.map((feature, idx) => (
                 <div key={idx} className="scroll-card p-5 bg-slate-50/30 dark:bg-slate-900/20 backdrop-blur-xl rounded-[1.5rem] border border-slate-200 dark:border-slate-800/50 hover:border-blue-500/20 transition-all group relative overflow-hidden">
                   <div className="absolute top-0 right-0 p-4">
@@ -424,8 +438,8 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
 
         {/* Blockchain Features Stats Vertical Stack */}
         <section className="py-4 bg-transparent relative mb-4">
-           <div className="max-w-2xl mx-auto px-4">
-              <div className="flex flex-col gap-3">
+           <div className="max-w-7xl mx-auto px-4">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                  {blockchainFeatures.map((stat, i) => (
                     <div key={i} className="scroll-card bg-white/20 dark:bg-slate-900/20 backdrop-blur-xl rounded-[1rem] p-4 border border-slate-200/50 dark:border-slate-800/50 hover:border-blue-500/30 transition-all group shadow-sm">
                         <p className="text-slate-500 dark:text-slate-400 text-[8px] mb-1 font-black uppercase tracking-widest">{stat.label}</p>
