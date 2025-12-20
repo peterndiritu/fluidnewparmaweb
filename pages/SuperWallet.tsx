@@ -6,7 +6,7 @@ import {
   ChevronRight, Lock, ShieldCheck, Smartphone, 
   MoreHorizontal, RefreshCw, Server, Zap, Copy,
   Monitor, AlertTriangle, ChevronLeft, CheckCircle2,
-  MapPin, Truck
+  MapPin, Truck, Loader2
 } from 'lucide-react';
 
 interface FluidWalletAppProps {
@@ -15,11 +15,11 @@ interface FluidWalletAppProps {
 }
 
 // Mock Data
-const ASSETS = [
-  { id: 'fld', symbol: 'FLD', name: 'Fluid', balance: '45,200', value: '$22,600.00', change: '+12.5%', color: 'text-purple-400' },
-  { id: 'eth', symbol: 'ETH', name: 'Ethereum', balance: '4.20', value: '$10,240.50', change: '+2.4%', color: 'text-blue-400' },
-  { id: 'sol', symbol: 'SOL', name: 'Solana', balance: '145.5', value: '$21,825.00', change: '+5.1%', color: 'text-emerald-400' },
-  { id: 'usdt', symbol: 'USDT', name: 'Tether', balance: '5,000', value: '$5,000.00', change: '0.0%', color: 'text-slate-400' },
+const INITIAL_ASSETS = [
+  { id: 'fld', symbol: 'FLD', name: 'Fluid', balance: 45200, price: 0.5, color: 'text-purple-400' },
+  { id: 'eth', symbol: 'ETH', name: 'Ethereum', balance: 4.20, price: 2450.00, color: 'text-blue-400' },
+  { id: 'sol', symbol: 'SOL', name: 'Solana', balance: 145.5, price: 150.00, color: 'text-emerald-400' },
+  { id: 'usdt', symbol: 'USDT', name: 'Tether', balance: 5000, price: 1.00, color: 'text-slate-400' },
 ];
 
 const FluidLogo = ({ className }: { className?: string }) => (
@@ -46,12 +46,21 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
   const [isScanning, setIsScanning] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   
+  // Wallet Data State
+  const [assets, setAssets] = useState(INITIAL_ASSETS);
+  const [sendAmount, setSendAmount] = useState('');
+  const [recipient, setRecipient] = useState('');
+  const [isSending, setIsSending] = useState(false);
+  const [sendSuccess, setSendSuccess] = useState(false);
+
   // Card Request State
   const [showCardRequest, setShowCardRequest] = useState(false);
   const [requestStep, setRequestStep] = useState<'config' | 'address' | 'success'>('config');
   const [cardType, setCardType] = useState<'virtual' | 'physical'>('virtual');
   const [cardTier, setCardTier] = useState(CARD_TIERS[0]);
   const [shippingDetails, setShippingDetails] = useState({ address: '', city: '', zip: '', country: '' });
+
+  const totalBalance = assets.reduce((acc, asset) => acc + (asset.balance * asset.price), 0);
 
   // Simulate Biometric Unlock
   const handleUnlock = () => {
@@ -70,6 +79,30 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
       } else {
           setRequestStep('success');
       }
+  };
+
+  const handleSend = () => {
+      if (!sendAmount || !recipient) return;
+      setIsSending(true);
+      setTimeout(() => {
+          // Update simulated balance
+          const newAssets = [...assets];
+          // Assuming sending ETH for demo
+          const ethIndex = newAssets.findIndex(a => a.id === 'eth');
+          if (ethIndex > -1) {
+              newAssets[ethIndex].balance -= parseFloat(sendAmount);
+              setAssets(newAssets);
+          }
+          setIsSending(false);
+          setSendSuccess(true);
+      }, 2000);
+  };
+
+  const resetSend = () => {
+      setSendSuccess(false);
+      setSendAmount('');
+      setRecipient('');
+      setView('assets');
   };
 
   const resetCardFlow = () => {
@@ -231,7 +264,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
 
                        <div className="relative z-10">
                           <span className="text-slate-300 text-xs font-medium">Total Balance</span>
-                          <div className="text-3xl font-black text-white mt-1 tracking-tight">$59,645.50</div>
+                          <div className="text-3xl font-black text-white mt-1 tracking-tight">${totalBalance.toLocaleString(undefined, {maximumFractionDigits: 2})}</div>
                           <div className="flex items-center gap-1.5 mt-1">
                              <span className="text-emerald-400 text-xs font-bold">+$2,450.20 (4.2%)</span>
                           </div>
@@ -273,7 +306,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                           <button className="text-xs font-bold text-purple-400">Manage</button>
                        </div>
                        <div className="space-y-3">
-                          {ASSETS.map((asset) => (
+                          {assets.map((asset) => (
                              <div key={asset.id} className="flex items-center justify-between p-4 bg-slate-900/50 border border-slate-800/50 rounded-2xl hover:bg-slate-800 transition-all">
                                 <div className="flex items-center gap-4">
                                    <div className={`w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-black text-xs ${asset.color} border border-white/5`}>
@@ -281,12 +314,12 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                                    </div>
                                    <div>
                                       <div className="font-bold text-white text-sm">{asset.name}</div>
-                                      <div className="text-xs text-slate-500">{asset.balance} {asset.symbol}</div>
+                                      <div className="text-xs text-slate-500">{asset.balance.toLocaleString()} {asset.symbol}</div>
                                    </div>
                                 </div>
                                 <div className="text-right">
-                                   <div className="font-bold text-white text-sm">{asset.value}</div>
-                                   <div className="text-xs text-emerald-400 font-medium">{asset.change}</div>
+                                   <div className="font-bold text-white text-sm">${(asset.balance * asset.price).toLocaleString(undefined, {maximumFractionDigits: 2})}</div>
+                                   <div className="text-xs text-emerald-400 font-medium">+1.2%</div>
                                 </div>
                              </div>
                           ))}
@@ -300,22 +333,48 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                     <div className="animate-fade-in-up">
                         <button onClick={() => setView('assets')} className="mb-6 flex items-center gap-2 text-slate-400 hover:text-white"><ChevronLeft size={20}/> Back</button>
                         <h2 className="text-2xl font-bold text-white mb-6">Send Assets</h2>
-                        <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4">
-                            <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase ml-1">Recipient</label>
-                                <input type="text" className="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl py-3 px-4 text-white focus:border-purple-500 focus:outline-none font-mono text-sm" placeholder="0x..." />
+                        
+                        {sendSuccess ? (
+                            <div className="text-center py-12 bg-slate-900 rounded-3xl border border-slate-800">
+                                <CheckCircle2 size={64} className="text-emerald-500 mx-auto mb-6" />
+                                <h3 className="text-2xl font-bold text-white mb-2">Sent!</h3>
+                                <p className="text-slate-400 mb-8">Your transaction has been broadcasted.</p>
+                                <button onClick={resetSend} className="px-8 py-3 bg-white text-slate-900 font-bold rounded-xl">Done</button>
                             </div>
-                            <div>
-                                <label className="text-xs font-bold text-slate-500 uppercase ml-1">Amount</label>
-                                <div className="relative mt-1">
-                                    <input type="number" className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 pl-4 pr-20 text-white focus:border-purple-500 focus:outline-none text-2xl font-bold" placeholder="0.00" />
-                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 bg-slate-800 px-2 py-1 rounded text-xs font-bold text-white">ETH</div>
+                        ) : (
+                            <div className="bg-slate-900 p-6 rounded-3xl border border-slate-800 space-y-4">
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase ml-1">Recipient</label>
+                                    <input 
+                                        type="text" 
+                                        className="w-full mt-1 bg-slate-950 border border-slate-700 rounded-xl py-3 px-4 text-white focus:border-purple-500 focus:outline-none font-mono text-sm" 
+                                        placeholder="0x..." 
+                                        value={recipient}
+                                        onChange={(e) => setRecipient(e.target.value)}
+                                    />
                                 </div>
+                                <div>
+                                    <label className="text-xs font-bold text-slate-500 uppercase ml-1">Amount</label>
+                                    <div className="relative mt-1">
+                                        <input 
+                                            type="number" 
+                                            className="w-full bg-slate-950 border border-slate-700 rounded-xl py-3 pl-4 pr-20 text-white focus:border-purple-500 focus:outline-none text-2xl font-bold" 
+                                            placeholder="0.00" 
+                                            value={sendAmount}
+                                            onChange={(e) => setSendAmount(e.target.value)}
+                                        />
+                                        <div className="absolute right-2 top-1/2 -translate-y-1/2 bg-slate-800 px-2 py-1 rounded text-xs font-bold text-white">ETH</div>
+                                    </div>
+                                </div>
+                                <button 
+                                    onClick={handleSend}
+                                    disabled={isSending || !sendAmount}
+                                    className="w-full py-4 bg-purple-600 rounded-xl font-bold text-white hover:bg-purple-500 transition-colors mt-4 flex items-center justify-center"
+                                >
+                                    {isSending ? <Loader2 className="animate-spin" /> : 'Send Now'}
+                                </button>
                             </div>
-                            <button className="w-full py-4 bg-purple-600 rounded-xl font-bold text-white hover:bg-purple-500 transition-colors mt-4">
-                                Send Now
-                            </button>
-                        </div>
+                        )}
                     </div>
                 )}
 
