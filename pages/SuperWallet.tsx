@@ -495,7 +495,7 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
   const [cardMode, setCardMode] = useState<'virtual' | 'physical'>('virtual');
   const [cardFrozen, setCardFrozen] = useState(false);
   const [showCardDetails, setShowCardDetails] = useState(false);
-  const [activeModal, setActiveModal] = useState<'send' | 'receive' | 'buy' | 'editProfile' | 'domainRegistrar' | 'cardLimits' | 'deploy' | 'dappStore' | 'notifications' | 'requestCard' | null>(null);
+  const [activeModal, setActiveModal] = useState<'send' | 'receive' | 'buy' | 'editProfile' | 'domainRegistrar' | 'cardLimits' | 'deploy' | 'dappStore' | 'notifications' | 'requestCard' | 'changePin' | 'deleteCard' | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
   
   // Send / Receive Chain State
@@ -505,9 +505,15 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
   const [hasCard, setHasCard] = useState(true);
   const [cardPin, setCardPin] = useState('');
   const [confirmCardPin, setConfirmCardPin] = useState('');
+  const [actualCardPin, setActualCardPin] = useState('1234');
   const [cvv, setCvv] = useState('***');
   const [isCvvVisible, setIsCvvVisible] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+
+  // Change PIN Flow State
+  const [oldPinInput, setOldPinInput] = useState('');
+  const [newPinInput, setNewPinInput] = useState('');
+  const [confirmNewPinInput, setConfirmNewPinInput] = useState('');
 
   // Profile State
   const [profile, setProfile] = useState({
@@ -605,18 +611,35 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
 
   const handleCreateCard = () => {
     if (cardPin.length !== 4 || cardPin !== confirmCardPin) return;
+    setActualCardPin(cardPin);
     setHasCard(true);
     setActiveModal(null);
     setCardPin('');
     setConfirmCardPin('');
   };
 
-  const handleDeleteCard = () => {
-    if (confirm("Are you sure you want to permanently delete your virtual card?")) {
-        setHasCard(false);
-        setCardMode('virtual'); // Reset to virtual default
-        setCardFrozen(false);
+  const handleChangePin = () => {
+    if (oldPinInput !== actualCardPin) {
+      alert("Incorrect current PIN.");
+      return;
     }
+    if (newPinInput.length !== 4 || newPinInput !== confirmNewPinInput) {
+      alert("New PINs do not match or are invalid length.");
+      return;
+    }
+    setActualCardPin(newPinInput);
+    setActiveModal(null);
+    setOldPinInput('');
+    setNewPinInput('');
+    setConfirmNewPinInput('');
+    alert("PIN Updated Successfully");
+  };
+
+  const handleDeleteCard = () => {
+    setHasCard(false);
+    setCardMode('virtual'); // Reset to virtual default
+    setCardFrozen(false);
+    setActiveModal(null);
   };
 
   const handleTabChange = (tabId: string) => {
@@ -1157,27 +1180,37 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                    </div>
                    {/* ... controls ... */}
                    <div className="space-y-4">
-                      <div className="grid grid-cols-3 gap-3">
+                      <div className="grid grid-cols-4 gap-2">
+                         <button 
+                           onClick={handleGenerateCvv}
+                           className="flex flex-col items-center justify-center gap-2 p-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-indigo-500/50 transition-colors group"
+                         >
+                            <RotateCw size={20} className="text-slate-400 group-hover:text-white transition-colors group-active:rotate-180 duration-500" />
+                            <span className="text-[9px] font-bold text-slate-500 uppercase group-hover:text-white transition-colors">CVV</span>
+                         </button>
                          <button 
                            onClick={() => handleSecureAction('changeLimits', () => {
                               setTempCardLimits(cardLimits);
                               setActiveModal('cardLimits');
                            })}
-                           className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-indigo-500/50 transition-colors"
+                           className="flex flex-col items-center justify-center gap-2 p-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-indigo-500/50 transition-colors group"
                          >
-                            <Settings size={20} className="text-slate-400" />
-                            <span className="text-[9px] font-bold text-slate-500 uppercase">Limits</span>
-                         </button>
-                         <button className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-indigo-500/50 transition-colors">
-                            <Lock size={20} className="text-slate-400" />
-                            <span className="text-[9px] font-bold text-slate-500 uppercase">Pin</span>
+                            <Settings size={20} className="text-slate-400 group-hover:text-white transition-colors" />
+                            <span className="text-[9px] font-bold text-slate-500 uppercase group-hover:text-white transition-colors">Limits</span>
                          </button>
                          <button 
-                            onClick={handleDeleteCard}
-                            className="flex flex-col items-center justify-center gap-2 p-4 rounded-2xl bg-slate-900 border border-slate-800 hover:border-rose-500/50 hover:bg-rose-500/5 transition-colors group"
+                            onClick={() => setActiveModal('changePin')}
+                            className="flex flex-col items-center justify-center gap-2 p-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-indigo-500/50 transition-colors group"
                          >
-                            <Trash2 size={20} className="text-slate-400 group-hover:text-rose-500" />
-                            <span className="text-[9px] font-bold text-slate-500 group-hover:text-rose-500 uppercase">Delete</span>
+                            <Lock size={20} className="text-slate-400 group-hover:text-white transition-colors" />
+                            <span className="text-[9px] font-bold text-slate-500 uppercase group-hover:text-white transition-colors">Pin</span>
+                         </button>
+                         <button 
+                            onClick={() => setActiveModal('deleteCard')}
+                            className="flex flex-col items-center justify-center gap-2 p-3 rounded-2xl bg-slate-900 border border-slate-800 hover:border-rose-500/50 hover:bg-rose-500/5 transition-colors group"
+                         >
+                            <Trash2 size={20} className="text-slate-400 group-hover:text-rose-500 transition-colors" />
+                            <span className="text-[9px] font-bold text-slate-500 group-hover:text-rose-500 uppercase transition-colors">Delete</span>
                          </button>
                       </div>
 
@@ -1202,126 +1235,89 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                 </div>
              )}
 
-             {/* === MODULE: FIAT INTEGRATION === */}
+             {/* === MODULE F: FIAT === */}
              {activeTab === 'fiat' && (
-                <div className="p-6 h-full flex flex-col animate-in fade-in slide-in-from-bottom-4 duration-300">
+                <div className="p-6 h-full flex flex-col animate-in fade-in slide-in-from-right-4 duration-300">
                    <div className="flex items-center justify-between mb-6">
                       <h2 className="text-2xl font-black text-white uppercase tracking-tight">Fiat Gateway</h2>
                       <div className="px-2 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded text-[9px] font-black text-emerald-500 uppercase tracking-widest flex items-center gap-1">
-                         <Globe size={10} /> Global Accounts
+                         <Landmark size={10} /> Multi-Currency
                       </div>
                    </div>
 
-                   {/* Global Account Card */}
-                   <div className="bg-gradient-to-br from-emerald-900 to-slate-900 border border-white/10 rounded-[2rem] p-6 mb-6 relative overflow-hidden shadow-2xl">
-                      <div className="absolute top-0 right-0 w-40 h-40 bg-emerald-500/20 rounded-full blur-[60px] pointer-events-none"></div>
-                      <div className="absolute bottom-0 left-0 w-full h-full bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10 pointer-events-none"></div>
-                      
-                      <div className="relative z-10">
-                         <div className="flex justify-between items-start mb-6">
-                             <div className="p-2 bg-white/10 rounded-xl backdrop-blur-md">
-                                <Building2 size={20} className="text-emerald-400" />
-                             </div>
-                             <div className="flex items-center gap-1.5 bg-black/20 px-3 py-1.5 rounded-full border border-white/5">
-                                 <span className="text-xl">{FIAT_ACCOUNTS[activeFiatIndex].flag}</span>
-                                 <span className="text-xs font-bold text-white">{FIAT_ACCOUNTS[activeFiatIndex].currency}</span>
-                                 <ChevronDown size={12} className="text-slate-400" />
-                             </div>
-                         </div>
-
-                         <div className="mb-6">
-                             <span className="text-[10px] font-bold text-emerald-200/60 uppercase tracking-widest mb-1 block">Total Balance</span>
-                             <h1 className="text-4xl font-black text-white tracking-tighter">
-                                {FIAT_ACCOUNTS[activeFiatIndex].symbol}{FIAT_ACCOUNTS[activeFiatIndex].balance}
-                             </h1>
-                         </div>
-
-                         {/* Accounts Carousel Dots */}
-                         <div className="flex gap-1.5 justify-center mb-6">
-                            {FIAT_ACCOUNTS.map((_, i) => (
-                               <button 
-                                 key={i} 
-                                 onClick={() => setActiveFiatIndex(i)}
-                                 className={`h-1.5 rounded-full transition-all ${i === activeFiatIndex ? 'w-6 bg-emerald-400' : 'w-1.5 bg-white/20'}`}
-                               />
-                            ))}
-                         </div>
-
-                         <div className="grid grid-cols-2 gap-3">
-                             <button className="py-3 bg-white text-emerald-900 font-bold rounded-xl text-xs uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-emerald-50 transition-colors">
-                                <ArrowDownLeft size={16} /> Add Funds
-                             </button>
-                             <button className="py-3 bg-white/10 text-white font-bold rounded-xl text-xs uppercase tracking-wide flex items-center justify-center gap-2 hover:bg-white/20 transition-colors border border-white/10">
-                                <ArrowUpRight size={16} /> Withdraw
-                             </button>
-                         </div>
-                      </div>
-                   </div>
-
-                   {/* Banking Details */}
-                   <div className="mb-6">
-                      <div className="flex justify-between items-center mb-4">
-                         <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest">Banking Details</h3>
-                         <button 
-                           onClick={() => setShowAccountDetails(!showAccountDetails)}
-                           className="text-[9px] font-bold text-indigo-400 uppercase tracking-wider hover:text-white transition-colors"
-                         >
-                            {showAccountDetails ? 'Hide' : 'Reveal'}
-                         </button>
-                      </div>
-
-                      <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 space-y-4 relative overflow-hidden">
-                         {!showAccountDetails && (
-                            <div className="absolute inset-0 backdrop-blur-md bg-slate-900/10 flex items-center justify-center z-10">
-                               <div className="flex flex-col items-center gap-2">
-                                  <Lock size={24} className="text-slate-500" />
-                                  <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Tap Reveal to View</span>
-                               </div>
-                            </div>
-                         )}
-                         <div className="flex justify-between items-center pb-3 border-b border-white/5">
-                            <span className="text-xs text-slate-500 font-bold">Bank Name</span>
-                            <div className="flex items-center gap-2">
-                               <span className="text-sm text-white font-mono">{FIAT_ACCOUNTS[activeFiatIndex].bank}</span>
-                               <Copy size={12} className="text-slate-600" />
-                            </div>
-                         </div>
-                         <div className="flex justify-between items-center pb-3 border-b border-white/5">
-                             <span className="text-xs text-slate-500 font-bold">{FIAT_ACCOUNTS[activeFiatIndex].type === 'IBAN' ? 'IBAN' : 'Routing Number'}</span>
-                             <div className="flex items-center gap-2">
-                                <span className="text-sm text-white font-mono">{FIAT_ACCOUNTS[activeFiatIndex].details.route}</span>
-                                <Copy size={12} className="text-slate-600" />
-                             </div>
-                         </div>
-                         <div className="flex justify-between items-center">
-                             <span className="text-xs text-slate-500 font-bold">Account Number</span>
-                             <div className="flex items-center gap-2">
-                                <span className="text-sm text-white font-mono">{FIAT_ACCOUNTS[activeFiatIndex].details.acct}</span>
-                                <Copy size={12} className="text-slate-600" />
-                             </div>
-                         </div>
-                      </div>
-                   </div>
-
-                   {/* Linked Banks List */}
-                   <div>
-                       <h3 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Linked Accounts</h3>
-                       <div className="space-y-3">
-                           <div className="flex items-center justify-between p-3 rounded-2xl bg-slate-900/50 border border-slate-800">
+                   <div className="space-y-4">
+                      {FIAT_ACCOUNTS.map((account, idx) => (
+                         <div key={account.currency} className="bg-slate-900/50 border border-slate-800 rounded-[2rem] p-5 relative overflow-hidden group hover:border-indigo-500/30 transition-all">
+                            {/* Background Elements */}
+                            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-[50px] group-hover:bg-indigo-500/10 transition-colors pointer-events-none"></div>
+                            
+                            <div className="flex justify-between items-start mb-4 relative z-10">
                                <div className="flex items-center gap-3">
-                                   <div className="w-10 h-10 rounded-xl bg-blue-900/30 flex items-center justify-center text-blue-500 font-black text-sm">C</div>
-                                   <div>
-                                       <div className="text-xs font-bold text-white">Chase Bank</div>
-                                       <div className="text-[9px] text-slate-500 font-bold">**** 8842</div>
-                                   </div>
+                                  <div className="text-2xl">{account.flag}</div>
+                                  <div>
+                                     <div className="text-sm font-black text-white">{account.currency} Account</div>
+                                     <div className="text-[10px] text-slate-500 font-bold">{account.bank} • {account.type}</div>
+                                  </div>
                                </div>
-                               <div className="px-2 py-1 bg-emerald-500/10 text-emerald-500 text-[9px] font-black uppercase rounded tracking-wider">Verified</div>
-                           </div>
-                           
-                           <button className="w-full py-3 rounded-2xl border border-dashed border-slate-700 text-slate-500 text-[10px] font-bold uppercase tracking-widest hover:bg-slate-900/50 hover:text-white hover:border-slate-600 transition-all flex items-center justify-center gap-2">
-                               <Building2 size={14} /> Link New Account
-                           </button>
-                       </div>
+                               <div className="text-right">
+                                  <div className="text-lg font-black text-white">{account.symbol}{account.balance}</div>
+                                  <div className="text-[9px] font-bold text-emerald-500 flex items-center justify-end gap-1"><CheckCircle2 size={10}/> Active</div>
+                               </div>
+                            </div>
+
+                            <div className="bg-black/20 rounded-xl p-3 border border-white/5 relative z-10">
+                               <div className="flex justify-between items-center">
+                                  <div className="flex flex-col">
+                                     <span className="text-[8px] font-bold text-slate-500 uppercase tracking-wider mb-1">Account Details</span>
+                                     {showAccountDetails && activeFiatIndex === idx ? (
+                                        <div className="text-xs font-mono text-white tracking-wide">
+                                           <div className="flex justify-between w-full gap-4">
+                                              <span>R: {account.details.route}</span>
+                                              <span>A: {account.details.acct}</span>
+                                           </div>
+                                        </div>
+                                     ) : (
+                                        <div className="flex gap-2">
+                                           <div className="h-4 w-12 bg-slate-800 rounded animate-pulse"></div>
+                                           <div className="h-4 w-20 bg-slate-800 rounded animate-pulse"></div>
+                                        </div>
+                                     )}
+                                  </div>
+                                  <button 
+                                    onClick={() => {
+                                       if (showAccountDetails && activeFiatIndex === idx) {
+                                          setShowAccountDetails(false);
+                                       } else {
+                                          setActiveFiatIndex(idx);
+                                          handleSecureAction('viewCardDetails', () => setShowAccountDetails(true));
+                                       }
+                                    }}
+                                    className="p-2 rounded-lg bg-slate-800 text-slate-400 hover:text-white hover:bg-slate-700 transition-colors"
+                                  >
+                                     {showAccountDetails && activeFiatIndex === idx ? <EyeOff size={14} /> : <Eye size={14} />}
+                                  </button>
+                               </div>
+                            </div>
+
+                            <div className="flex gap-2 mt-4 relative z-10">
+                               <button className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-[10px] font-bold text-white border border-white/5 transition-colors flex items-center justify-center gap-2">
+                                  <ArrowDownLeft size={12} className="text-emerald-500" /> Deposit
+                               </button>
+                               <button className="flex-1 py-2.5 rounded-xl bg-white/5 hover:bg-white/10 text-[10px] font-bold text-white border border-white/5 transition-colors flex items-center justify-center gap-2">
+                                  <ArrowUpRight size={12} className="text-rose-500" /> Withdraw
+                               </button>
+                            </div>
+                         </div>
+                      ))}
+                   </div>
+
+                   <div className="mt-6 p-4 rounded-2xl bg-indigo-500/10 border border-indigo-500/20 flex items-center gap-4">
+                      <div className="p-2 bg-indigo-500 rounded-xl text-white shadow-lg"><Globe size={18}/></div>
+                      <div>
+                         <h4 className="text-xs font-bold text-white mb-0.5">Global Transfers</h4>
+                         <p className="text-[10px] text-indigo-200/70">Send fiat internationally with low fees using Fluid Bridge.</p>
+                      </div>
+                      <button className="ml-auto px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white text-[9px] font-bold rounded-lg uppercase tracking-wider transition-colors">Start</button>
                    </div>
                 </div>
              )}
@@ -1679,6 +1675,8 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                        {activeModal === 'deploy' && 'Deploy dApp'}
                        {activeModal === 'dappStore' && 'dApp Store'}
                        {activeModal === 'requestCard' && 'Request Card'}
+                       {activeModal === 'changePin' && 'Change PIN'}
+                       {activeModal === 'deleteCard' && 'Destroy Card'}
                      </h3>
                      <button onClick={() => { setActiveModal(null); setDomainSearchStatus('idle'); setDomainQuery(''); }} className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-slate-400 hover:text-white">
                         <X size={16} />
@@ -1827,9 +1825,196 @@ const FluidWalletApp: React.FC<{ onNavigate: (page: string) => void, initialView
                         </button>
                     </div>
                   )}
-                  {/* ... (Other modals like 'buy', 'editProfile', etc. - kept simple or similar to previous versions for brevity as user focused on Send/Receive/Wallet Revert) ... */}
-                  {/* For brevity, re-implementing key modals needed for the full experience */}
-                  
+
+                  {activeModal === 'changePin' && (
+                    <div className="space-y-6 flex-grow flex flex-col">
+                        <div className="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-start gap-3">
+                            <Lock size={20} className="text-indigo-500 shrink-0 mt-0.5" />
+                            <p className="text-[10px] text-indigo-200/80 leading-relaxed">
+                                Enter your current PIN to authenticate changes.
+                            </p>
+                        </div>
+
+                        <div>
+                            <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Current PIN</label>
+                            <div className="flex items-center bg-black/20 rounded-xl border border-white/10 p-3">
+                                <input 
+                                    type="password" 
+                                    maxLength={4}
+                                    placeholder="****" 
+                                    value={oldPinInput}
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/[^0-9]/g, '');
+                                        setOldPinInput(val);
+                                    }}
+                                    className="bg-transparent w-full text-center text-2xl font-black text-white outline-none tracking-[1em]" 
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">New PIN</label>
+                            <div className="flex items-center bg-black/20 rounded-xl border border-white/10 p-3">
+                                <input 
+                                    type="password" 
+                                    maxLength={4}
+                                    placeholder="****" 
+                                    value={newPinInput}
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/[^0-9]/g, '');
+                                        setNewPinInput(val);
+                                    }}
+                                    className="bg-transparent w-full text-center text-2xl font-black text-white outline-none tracking-[1em]" 
+                                />
+                            </div>
+                        </div>
+
+                        <div>
+                            <label className="text-[10px] font-bold text-slate-500 uppercase mb-2 block">Confirm New PIN</label>
+                            <div className="flex items-center bg-black/20 rounded-xl border border-white/10 p-3">
+                                <input 
+                                    type="password" 
+                                    maxLength={4}
+                                    placeholder="****" 
+                                    value={confirmNewPinInput}
+                                    onChange={(e) => {
+                                        const val = e.target.value.replace(/[^0-9]/g, '');
+                                        setConfirmNewPinInput(val);
+                                    }}
+                                    className="bg-transparent w-full text-center text-2xl font-black text-white outline-none tracking-[1em]" 
+                                />
+                            </div>
+                        </div>
+
+                        <button 
+                            disabled={oldPinInput.length !== 4 || newPinInput.length !== 4 || newPinInput !== confirmNewPinInput}
+                            onClick={handleChangePin}
+                            className="w-full py-4 mt-auto bg-white text-slate-900 font-black rounded-xl uppercase tracking-widest hover:bg-slate-200 transition-colors shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Update PIN
+                        </button>
+                    </div>
+                  )}
+
+                  {activeModal === 'deleteCard' && (
+                    <div className="space-y-6 flex-grow flex flex-col justify-center text-center">
+                        <div className="w-24 h-24 rounded-full bg-rose-500/10 flex items-center justify-center mx-auto mb-4 border border-rose-500/20">
+                            <Trash2 size={48} className="text-rose-500" />
+                        </div>
+                        
+                        <div>
+                            <h3 className="text-xl font-black text-white uppercase tracking-tight mb-2">Danger Zone</h3>
+                            <p className="text-slate-400 text-sm">
+                                Are you sure you want to permanently delete your virtual card? This action cannot be undone.
+                            </p>
+                        </div>
+
+                        <div className="p-4 bg-rose-500/10 border border-rose-500/20 rounded-xl text-left flex gap-3">
+                            <AlertTriangle size={20} className="text-rose-500 shrink-0" />
+                            <span className="text-[10px] font-bold text-rose-300">Any active subscriptions linked to this card will fail. Funds remain in your wallet.</span>
+                        </div>
+
+                        <div className="mt-auto space-y-3">
+                            <button 
+                                onClick={handleDeleteCard}
+                                className="w-full py-4 bg-rose-600 text-white font-black rounded-xl uppercase tracking-widest hover:bg-rose-500 transition-colors shadow-lg shadow-rose-600/20"
+                            >
+                                Confirm Deletion
+                            </button>
+                            <button 
+                                onClick={() => setActiveModal(null)}
+                                className="w-full py-4 bg-slate-800 text-slate-300 font-black rounded-xl uppercase tracking-widest hover:bg-slate-700 transition-colors"
+                            >
+                                Cancel
+                            </button>
+                        </div>
+                    </div>
+                  )}
+
+                  {activeModal === 'cardLimits' && (
+                    <div className="space-y-6 flex-grow flex flex-col">
+                        <div className="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-xl flex items-start gap-3">
+                            <ShieldCheck size={20} className="text-indigo-500 shrink-0 mt-0.5" />
+                            <p className="text-[10px] text-indigo-200/80 leading-relaxed">
+                                Set daily spending limits for different transaction types to enhance security. Changes apply instantly.
+                            </p>
+                        </div>
+
+                        <div className="space-y-6">
+                            {/* Online */}
+                            <div>
+                                <div className="flex justify-between items-center mb-2">
+                                    <div className="flex items-center gap-2">
+                                        <Globe size={16} className="text-blue-400" />
+                                        <span className="text-xs font-bold text-white uppercase tracking-wider">Online</span>
+                                    </div>
+                                    <span className="text-sm font-black text-white">${tempCardLimits.online.toLocaleString()}</span>
+                                </div>
+                                <input 
+                                    type="range" 
+                                    min="0" 
+                                    max="20000" 
+                                    step="100" 
+                                    value={tempCardLimits.online}
+                                    onChange={(e) => setTempCardLimits({...tempCardLimits, online: parseInt(e.target.value)})}
+                                    className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                                />
+                            </div>
+
+                            {/* In-Store */}
+                            <div>
+                                <div className="flex justify-between items-center mb-2">
+                                    <div className="flex items-center gap-2">
+                                        <ShoppingBag size={16} className="text-purple-400" />
+                                        <span className="text-xs font-bold text-white uppercase tracking-wider">In-Store</span>
+                                    </div>
+                                    <span className="text-sm font-black text-white">${tempCardLimits.inStore.toLocaleString()}</span>
+                                </div>
+                                <input 
+                                    type="range" 
+                                    min="0" 
+                                    max="10000" 
+                                    step="100" 
+                                    value={tempCardLimits.inStore}
+                                    onChange={(e) => setTempCardLimits({...tempCardLimits, inStore: parseInt(e.target.value)})}
+                                    className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-purple-500"
+                                />
+                            </div>
+
+                            {/* ATM */}
+                            <div>
+                                <div className="flex justify-between items-center mb-2">
+                                    <div className="flex items-center gap-2">
+                                        <Banknote size={16} className="text-emerald-400" />
+                                        <span className="text-xs font-bold text-white uppercase tracking-wider">ATM Withdrawal</span>
+                                    </div>
+                                    <span className="text-sm font-black text-white">${tempCardLimits.atm.toLocaleString()}</span>
+                                </div>
+                                <input 
+                                    type="range" 
+                                    min="0" 
+                                    max="5000" 
+                                    step="50" 
+                                    value={tempCardLimits.atm}
+                                    onChange={(e) => setTempCardLimits({...tempCardLimits, atm: parseInt(e.target.value)})}
+                                    className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500"
+                                />
+                            </div>
+                        </div>
+
+                        <button 
+                            onClick={() => {
+                                setCardLimits(tempCardLimits);
+                                setActiveModal(null);
+                            }}
+                            className="w-full py-4 mt-auto bg-white text-slate-900 font-black rounded-xl uppercase tracking-widest hover:bg-slate-200 transition-colors shadow-lg"
+                        >
+                            Save Limits
+                        </button>
+                    </div>
+                  )}
+
+                  {/* Buy Modal */}
                   {activeModal === 'buy' && (
                      <div className="space-y-4 flex-grow">
                         <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-xl flex items-start gap-3">
