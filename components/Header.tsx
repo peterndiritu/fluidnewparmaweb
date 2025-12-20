@@ -70,6 +70,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
       children: [
         { label: 'Fluid Blockchain', action: () => handleLinkClick('blockchain') },
         { label: 'Fluid Wallet App', action: () => handleLinkClick('wallet') },
+        { label: 'Desktop Wallet', action: () => handleLinkClick('desktop') },
       ]
     },
     { 

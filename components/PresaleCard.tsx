@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { ChevronDown, Lightbulb, Wallet, Check, AlertCircle, Info, ShieldAlert, ShieldCheck, X, AlertTriangle, Unlock } from 'lucide-react';
+import { ChevronDown, Lightbulb, Wallet, Check, AlertCircle, Info, ShieldAlert, ShieldCheck, X, AlertTriangle, Unlock, Loader2, ScanEye } from 'lucide-react';
 import { 
   useActiveAccount, 
   useSendTransaction, 
@@ -16,6 +16,7 @@ import {
   toUnits
 } from "thirdweb";
 import { client, wallets } from "../client";
+import { analyzeTransactionRisk, TransactionRiskAnalysis } from '../services/geminiService';
 
 // --- Configuration ---
 const PRESALE_CONTRACT_ADDRESS = "0x1234567890123456789012345678901234567890"; // Placeholder
@@ -65,8 +66,11 @@ const PresaleCard: React.FC = () => {
   const [showMore, setShowMore] = useState(false);
   const [status, setStatus] = useState<'IDLE' | 'PENDING' | 'SUCCESS' | 'ERROR'>('IDLE');
   
-  // Security Modal States
+  // Security & Simulation States
   const [showSecurityModal, setShowSecurityModal] = useState(false);
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simulationResult, setSimulationResult] = useState<TransactionRiskAnalysis | null>(null);
+  
   const [agreements, setAgreements] = useState({
     responsibility: false,
     risk: false,
@@ -184,9 +188,26 @@ const PresaleCard: React.FC = () => {
     }
   };
 
-  const handleInitiateBuy = () => {
+  const handleInitiateBuy = async () => {
     if (!account || !usdAmount || parseFloat(usdAmount) < 10) return;
-    setShowSecurityModal(true);
+    
+    // Start Simulation
+    setIsSimulating(true);
+    
+    try {
+        const result = await analyzeTransactionRisk(
+            cryptoAmount.toFixed(4), 
+            selectedPayment.symbol, 
+            PRESALE_CONTRACT_ADDRESS, 
+            selectedPayment.network
+        );
+        setSimulationResult(result);
+    } catch (error) {
+        console.error("Simulation failed", error);
+    } finally {
+        setIsSimulating(false);
+        setShowSecurityModal(true);
+    }
   };
 
   const handleConfirmBuy = async () => {
@@ -386,15 +407,25 @@ const PresaleCard: React.FC = () => {
                 ) : (
                     <button
                         onClick={handleInitiateBuy}
-                        disabled={status === 'PENDING'}
+                        disabled={status === 'PENDING' || isSimulating}
                         className="w-full py-4 rounded-xl text-lg font-bold bg-gradient-to-r from-orange-500 to-amber-500 text-white hover:brightness-110 transition-all shadow-lg shadow-orange-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                     >
-                        {status === 'PENDING' ? (
-                            <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                        {isSimulating ? (
+                            <>
+                                <ScanEye className="animate-pulse" size={20} />
+                                Simulating...
+                            </>
+                        ) : status === 'PENDING' ? (
+                            <>
+                                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                                Confirming...
+                            </>
                         ) : (
-                            <Wallet size={20} />
+                            <>
+                                <Wallet size={20} />
+                                Buy Tokens
+                            </>
                         )}
-                        {status === 'PENDING' ? 'Confirming...' : 'Buy Tokens'}
                     </button>
                 )}
             </div>
@@ -427,10 +458,40 @@ const PresaleCard: React.FC = () => {
               </div>
 
               <div className="space-y-6 flex-grow overflow-y-auto pr-2 custom-scrollbar">
+                  
+                  {/* Simulation Report */}
+                  {simulationResult && (
+                      <div className={`p-4 rounded-2xl border ${
+                          simulationResult.riskLevel === 'HIGH' ? 'bg-red-500/10 border-red-500/30' :
+                          simulationResult.riskLevel === 'MEDIUM' ? 'bg-amber-500/10 border-amber-500/30' :
+                          'bg-emerald-500/10 border-emerald-500/30'
+                      }`}>
+                          <div className="flex justify-between items-center mb-2">
+                              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Simulation Report</span>
+                              <span className={`text-xs font-black px-2 py-0.5 rounded ${
+                                  simulationResult.riskLevel === 'HIGH' ? 'bg-red-500 text-white' :
+                                  simulationResult.riskLevel === 'MEDIUM' ? 'bg-amber-500 text-black' :
+                                  'bg-emerald-500 text-white'
+                              }`}>Score: {simulationResult.score}/100</span>
+                          </div>
+                          <p className="text-sm font-bold text-white mb-2">{simulationResult.summary}</p>
+                          {simulationResult.warnings.length > 0 && (
+                              <ul className="text-xs space-y-1">
+                                  {simulationResult.warnings.map((w, i) => (
+                                      <li key={i} className="flex items-start gap-2">
+                                          <AlertTriangle size={12} className="mt-0.5 shrink-0" />
+                                          <span className="opacity-80">{w}</span>
+                                      </li>
+                                  ))}
+                              </ul>
+                          )}
+                      </div>
+                  )}
+
                   <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-2xl flex gap-3">
                       <AlertTriangle className="text-orange-500 shrink-0" size={20} />
                       <p className="text-xs text-orange-200/90 leading-relaxed">
-                        Warning: Blockchain transactions are <strong>permanent and irreversible</strong>. Fluid Protocol cannot refund mistaken payments or recover funds sent to wrong networks.
+                        Warning: Blockchain transactions are <strong>permanent and irreversible</strong>. Fluid Protocol cannot refund mistaken payments.
                       </p>
                   </div>
 
