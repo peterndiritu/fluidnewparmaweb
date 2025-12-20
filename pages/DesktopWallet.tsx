@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   LayoutDashboard, Wallet, ArrowRightLeft, CreditCard, Globe, 
   Settings, LogOut, Bell, Search, TrendingUp, ArrowUpRight, 
   ArrowDownLeft, MoreHorizontal, Copy, ShieldCheck, PieChart,
   User, RefreshCw, Zap, Plus, Lock, History, ChevronRight,
   Server, Smartphone, Check, ChevronDown, Activity, ScanLine, Key,
-  ArrowRight
+  ArrowRight, ToggleLeft, ToggleRight, Moon, Sun, HelpCircle, AlertCircle, X,
+  Shield, Eye, AlertTriangle, EyeOff, Clipboard, CheckCircle2
 } from 'lucide-react';
 
 interface DesktopWalletProps {
@@ -26,11 +27,60 @@ const RECENT_TRANSACTIONS = [
   { type: 'Swapped', asset: 'FLD', amount: '5000', date: 'Oct 24, 2023', status: 'Completed', icon: RefreshCw },
 ];
 
+const NOTIFICATIONS = [
+  { id: 1, title: 'Staking Reward', message: 'You received 45.2 FLD', time: '2m ago', type: 'success' },
+  { id: 2, title: 'Security Alert', message: 'New login from Mac OS X', time: '1h ago', type: 'warning' },
+  { id: 3, title: 'System Update', message: 'Fluid Node v2.1 is live', time: '1d ago', type: 'info' },
+];
+
+// Mock Seed Phrase
+const MOCK_SEED = ["witch", "collapse", "practice", "feed", "shame", "open", "despair", "creek", "road", "again", "ice", "least"];
+const VERIFY_CONFIG = [
+  { index: 2, options: ["shield", "practice", "lunar"] }, // practice
+  { index: 5, options: ["open", "closed", "orbit"] },     // open
+  { index: 8, options: ["street", "road", "path"] }       // road
+];
+
 const DesktopWallet: React.FC<DesktopWalletProps> = ({ onNavigate }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [isLocked, setIsLocked] = useState(true);
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [showBackupNudge, setShowBackupNudge] = useState(true);
+
+  // Backup Flow State
+  const [showBackupModal, setShowBackupModal] = useState(false);
+  const [backupStep, setBackupStep] = useState<'intro' | 'reveal' | 'verify' | 'success'>('intro');
+  const [verifySelection, setVerifySelection] = useState<{ [key: number]: string }>({});
+
+  // Dropdown States
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [showProfile, setShowProfile] = useState(false);
+
+  // Settings Mock State
+  const [settings, setSettings] = useState({
+    twoFactor: true,
+    biometrics: false,
+    notifications: true,
+    testnet: false,
+    currency: 'USD'
+  });
+
+  const notifRef = useRef<HTMLDivElement>(null);
+  const profileRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
+        setShowNotifications(false);
+      }
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setShowProfile(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -39,6 +89,22 @@ const DesktopWallet: React.FC<DesktopWalletProps> = ({ onNavigate }) => {
       setIsLocked(false);
       setIsLoading(false);
     }, 1500);
+  };
+
+  const handleBackupStart = () => {
+    setBackupStep('intro');
+    setVerifySelection({});
+    setShowBackupModal(true);
+  };
+
+  const handleVerifyComplete = () => {
+      const isCorrect = VERIFY_CONFIG.every(q => verifySelection[q.index] === MOCK_SEED[q.index]);
+      if (isCorrect) {
+          setBackupStep('success');
+      } else {
+          // In a real app, show error message
+          alert("Incorrect words selected. Please try again.");
+      }
   };
 
   const NavItem = ({ id, icon: Icon, label }: { id: string, icon: any, label: string }) => (
@@ -52,6 +118,12 @@ const DesktopWallet: React.FC<DesktopWalletProps> = ({ onNavigate }) => {
     >
       <Icon size={20} />
       <span>{label}</span>
+    </button>
+  );
+
+  const ToggleSwitch = ({ checked, onChange }: { checked: boolean, onChange: () => void }) => (
+    <button onClick={onChange} className={`w-12 h-6 rounded-full relative transition-colors ${checked ? 'bg-purple-600' : 'bg-slate-700'}`}>
+      <div className={`absolute top-1 w-4 h-4 rounded-full bg-white transition-all ${checked ? 'left-7' : 'left-1'}`}></div>
     </button>
   );
 
@@ -98,6 +170,15 @@ const DesktopWallet: React.FC<DesktopWalletProps> = ({ onNavigate }) => {
                   )}
                </button>
             </form>
+
+            <div className="mt-8 text-center">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800/50 border border-slate-700 text-[10px] text-slate-400">
+                  <ShieldCheck size={10} className="text-emerald-500" />
+                  <span>Secure Session</span>
+                  <span className="mx-1 text-slate-600">•</span>
+                  <span>Anti-Phishing Code: <span className="text-white font-mono font-bold">A7F2</span></span>
+              </div>
+            </div>
          </div>
       </div>
     );
@@ -150,13 +231,73 @@ const DesktopWallet: React.FC<DesktopWalletProps> = ({ onNavigate }) => {
                    className="bg-slate-900 border border-slate-800 rounded-full py-2 pl-10 pr-4 text-sm focus:outline-none focus:border-purple-500 transition-colors w-64"
                  />
               </div>
-              <button className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-colors">
-                 <Bell size={18} />
-              </button>
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 p-0.5">
-                  <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center overflow-hidden">
-                      <User size={20} className="text-slate-200" />
-                  </div>
+              
+              {/* Notification Bell */}
+              <div className="relative" ref={notifRef}>
+                <button 
+                   onClick={() => setShowNotifications(!showNotifications)}
+                   className="w-10 h-10 rounded-full bg-slate-900 border border-slate-800 flex items-center justify-center text-slate-400 hover:text-white transition-colors relative"
+                >
+                   <Bell size={18} />
+                   <span className="absolute top-2 right-2.5 w-2 h-2 bg-purple-500 rounded-full animate-pulse"></span>
+                </button>
+                
+                {showNotifications && (
+                   <div className="absolute right-0 top-12 w-80 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-4 animate-fade-in-up z-50">
+                      <div className="flex justify-between items-center mb-4 pb-2 border-b border-slate-800">
+                         <h3 className="font-bold">Notifications</h3>
+                         <span className="text-xs text-purple-400 cursor-pointer">Mark all read</span>
+                      </div>
+                      <div className="space-y-3">
+                         {NOTIFICATIONS.map(n => (
+                            <div key={n.id} className="flex gap-3 hover:bg-white/5 p-2 rounded-lg transition-colors cursor-pointer">
+                               <div className={`mt-1 w-2 h-2 rounded-full flex-shrink-0 ${n.type === 'success' ? 'bg-emerald-500' : n.type === 'warning' ? 'bg-amber-500' : 'bg-blue-500'}`}></div>
+                               <div>
+                                  <div className="text-sm font-bold text-white">{n.title}</div>
+                                  <div className="text-xs text-slate-400">{n.message}</div>
+                                  <div className="text-[10px] text-slate-600 mt-1">{n.time}</div>
+                               </div>
+                            </div>
+                         ))}
+                      </div>
+                   </div>
+                )}
+              </div>
+
+              {/* Profile Menu */}
+              <div className="relative" ref={profileRef}>
+                <button 
+                   onClick={() => setShowProfile(!showProfile)}
+                   className="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 p-0.5"
+                >
+                    <div className="w-full h-full rounded-full bg-slate-900 flex items-center justify-center overflow-hidden">
+                        <User size={20} className="text-slate-200" />
+                    </div>
+                </button>
+                
+                {showProfile && (
+                   <div className="absolute right-0 top-12 w-72 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl p-2 animate-fade-in-up z-50">
+                      <div className="p-4 border-b border-slate-800 mb-2">
+                         <div className="font-bold text-white text-lg">Alexander</div>
+                         <div className="text-xs text-slate-400 mb-3">alex.fluid</div>
+                         <div className="flex items-center gap-2 bg-slate-950 p-2 rounded-lg border border-slate-800 cursor-pointer hover:border-slate-700 group">
+                            <span className="text-xs font-mono text-slate-500 truncate">0x847...92A</span>
+                            <Copy size={12} className="text-slate-600 group-hover:text-white" />
+                         </div>
+                      </div>
+                      <div className="space-y-1">
+                         <button onClick={() => setActiveTab('settings')} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors">
+                            <Settings size={16} /> Settings
+                         </button>
+                         <button className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-white/5 transition-colors">
+                            <ShieldCheck size={16} /> Security
+                         </button>
+                         <button onClick={() => setIsLocked(true)} className="w-full flex items-center gap-3 px-3 py-2 rounded-xl text-sm font-medium text-red-400 hover:bg-red-500/10 transition-colors">
+                            <LogOut size={16} /> Lock Wallet
+                         </button>
+                      </div>
+                   </div>
+                )}
               </div>
            </div>
         </div>
@@ -167,6 +308,33 @@ const DesktopWallet: React.FC<DesktopWalletProps> = ({ onNavigate }) => {
           {/* DASHBOARD VIEW */}
           {activeTab === 'dashboard' && (
             <div className="grid grid-cols-12 gap-6">
+              
+              {/* Security Nudge Banner */}
+              {showBackupNudge && (
+                  <div className="col-span-12 bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between animate-fade-in-up gap-4">
+                      <div className="flex items-center gap-4">
+                          <div className="p-2 bg-amber-500/20 text-amber-500 rounded-lg">
+                              <AlertTriangle size={20} />
+                          </div>
+                          <div>
+                              <h4 className="font-bold text-white text-sm">Action Required: Back up your wallet</h4>
+                              <p className="text-xs text-amber-200/80">Your funds are currently at risk if you lose this device.</p>
+                          </div>
+                      </div>
+                      <div className="flex items-center gap-3 w-full sm:w-auto">
+                          <button 
+                              onClick={handleBackupStart}
+                              className="flex-1 sm:flex-none px-4 py-2 bg-amber-500 text-black text-xs font-bold rounded-lg hover:bg-amber-400 transition-colors"
+                          >
+                              Backup Now
+                          </button>
+                          <button onClick={() => setShowBackupNudge(false)} className="text-slate-400 hover:text-white transition-colors">
+                              <X size={18} />
+                          </button>
+                      </div>
+                  </div>
+              )}
+
               {/* Total Balance Card */}
               <div className="col-span-12 lg:col-span-8 bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900 border border-slate-800 rounded-3xl p-8 relative overflow-hidden group shadow-2xl">
                   <div className="absolute top-0 right-0 w-64 h-64 bg-purple-500/20 rounded-full blur-3xl -mr-16 -mt-16 group-hover:bg-purple-500/30 transition-colors duration-500"></div>
@@ -501,10 +669,188 @@ const DesktopWallet: React.FC<DesktopWalletProps> = ({ onNavigate }) => {
              </div>
           )}
 
+          {/* SETTINGS VIEW */}
+          {activeTab === 'settings' && (
+             <div className="max-w-4xl mx-auto">
+                <h2 className="text-2xl font-bold text-white mb-8">Settings</h2>
+                
+                <div className="grid md:grid-cols-2 gap-8">
+                    {/* Security Section */}
+                    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
+                       <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                          <ShieldCheck className="text-emerald-500" size={20} /> Security
+                       </h3>
+                       <div className="space-y-6">
+                          <div className="flex justify-between items-center">
+                             <div>
+                                <div className="font-bold text-white">Two-Factor Authentication</div>
+                                <div className="text-xs text-slate-500">Require 2FA for transactions</div>
+                             </div>
+                             <ToggleSwitch checked={settings.twoFactor} onChange={() => setSettings(s => ({...s, twoFactor: !s.twoFactor}))} />
+                          </div>
+                          <div className="flex justify-between items-center">
+                             <div>
+                                <div className="font-bold text-white">Biometric Unlock</div>
+                                <div className="text-xs text-slate-500">Use device fingerprint/face ID</div>
+                             </div>
+                             <ToggleSwitch checked={settings.biometrics} onChange={() => setSettings(s => ({...s, biometrics: !s.biometrics}))} />
+                          </div>
+                          <div className="pt-4 border-t border-slate-800">
+                             <button className="w-full py-3 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-bold text-white transition-colors flex items-center justify-center gap-2">
+                                <Key size={16} /> Change Password
+                             </button>
+                             <button className="w-full mt-3 py-3 bg-red-500/10 hover:bg-red-500/20 rounded-xl text-sm font-bold text-red-500 transition-colors flex items-center justify-center gap-2">
+                                <Eye size={16} /> Show Private Key
+                             </button>
+                             <button 
+                                onClick={handleBackupStart}
+                                className="w-full mt-3 py-3 bg-amber-500/10 hover:bg-amber-500/20 rounded-xl text-sm font-bold text-amber-500 transition-colors flex items-center justify-center gap-2"
+                             >
+                                <ShieldCheck size={16} /> View Secret Phrase
+                             </button>
+                          </div>
+                       </div>
+                    </div>
+
+                    {/* Preferences */}
+                    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
+                       <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                          <Settings className="text-blue-500" size={20} /> Preferences
+                       </h3>
+                       <div className="space-y-6">
+                          <div className="flex justify-between items-center">
+                             <div>
+                                <div className="font-bold text-white">Push Notifications</div>
+                                <div className="text-xs text-slate-500">Alerts for txs & security</div>
+                             </div>
+                             <ToggleSwitch checked={settings.notifications} onChange={() => setSettings(s => ({...s, notifications: !s.notifications}))} />
+                          </div>
+                          <div className="flex justify-between items-center">
+                             <div>
+                                <div className="font-bold text-white">Developer Mode</div>
+                                <div className="text-xs text-slate-500">Show testnet networks</div>
+                             </div>
+                             <ToggleSwitch checked={settings.testnet} onChange={() => setSettings(s => ({...s, testnet: !s.testnet}))} />
+                          </div>
+                          <div className="flex justify-between items-center">
+                             <div className="font-bold text-white">Base Currency</div>
+                             <select className="bg-slate-800 border border-slate-700 text-white text-sm rounded-lg px-3 py-1.5 focus:outline-none">
+                                <option>USD</option>
+                                <option>EUR</option>
+                                <option>GBP</option>
+                                <option>JPY</option>
+                             </select>
+                          </div>
+                       </div>
+                    </div>
+
+                    {/* Network Status */}
+                    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
+                       <h3 className="text-lg font-bold text-white mb-6 flex items-center gap-2">
+                          <Activity className="text-purple-500" size={20} /> Network Status
+                       </h3>
+                       <div className="space-y-4">
+                          <div className="flex justify-between items-center p-3 bg-slate-950 rounded-xl border border-slate-800">
+                             <div className="flex items-center gap-3">
+                                <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
+                                <span className="text-sm font-bold text-white">Fluid Mainnet</span>
+                             </div>
+                             <span className="text-xs text-emerald-500 font-bold">Operational</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4">
+                             <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-center">
+                                <div className="text-xs text-slate-500 uppercase font-bold mb-1">Block Height</div>
+                                <div className="text-lg font-black text-white">8,492,012</div>
+                             </div>
+                             <div className="p-3 bg-slate-950 rounded-xl border border-slate-800 text-center">
+                                <div className="text-xs text-slate-500 uppercase font-bold mb-1">Current Fee</div>
+                                <div className="text-lg font-black text-white">0.0001 GWEI</div>
+                             </div>
+                          </div>
+                       </div>
+                    </div>
+
+                    {/* Help & Support */}
+                    <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 flex flex-col justify-center text-center">
+                       <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4 text-slate-400">
+                          <HelpCircle size={32} />
+                       </div>
+                       <h3 className="font-bold text-white mb-2">Need Help?</h3>
+                       <p className="text-sm text-slate-400 mb-6">Our support team is available 24/7 to assist you with any issues.</p>
+                       <div className="grid grid-cols-2 gap-4">
+                          <button className="py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-bold text-white transition-colors">
+                             Help Center
+                          </button>
+                          <button className="py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-sm font-bold text-white transition-colors">
+                             Report Bug
+                          </button>
+                       </div>
+                    </div>
+                </div>
+             </div>
+          )}
+
         </div>
       </div>
-    </div>
-  );
-};
+      
+      {/* Backup Modal */}
+      {showBackupModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl animate-fade-in-up">
+                {/* Header */}
+                <div className="px-8 py-6 border-b border-slate-800 flex justify-between items-center">
+                    <h3 className="font-bold text-white text-lg">Back up Wallet</h3>
+                    <button onClick={() => setShowBackupModal(false)} className="text-slate-500 hover:text-white"><X size={20} /></button>
+                </div>
 
-export default DesktopWallet;
+                {/* Content based on step */}
+                <div className="p-8">
+                    {backupStep === 'intro' && (
+                        <div className="text-center">
+                            <div className="w-20 h-20 bg-amber-500/10 rounded-full flex items-center justify-center mx-auto mb-6 text-amber-500">
+                                <ShieldCheck size={40} />
+                            </div>
+                            <h4 className="text-xl font-bold text-white mb-4">Secure your Secret Phrase</h4>
+                            <p className="text-slate-400 mb-8 leading-relaxed">
+                                Your 12-word Secret Recovery Phrase is the only way to recover your funds if you lose access to your wallet. 
+                                <br/><br/>
+                                <span className="text-amber-500 font-bold">Do not share it with anyone.</span> Fluid support will never ask for it.
+                            </p>
+                            <button 
+                                onClick={() => setBackupStep('reveal')}
+                                className="w-full py-4 bg-emerald-500 hover:bg-emerald-400 text-slate-900 font-bold rounded-xl transition-colors flex items-center justify-center gap-2"
+                            >
+                                <Eye size={20} /> Reveal Secret Phrase
+                            </button>
+                        </div>
+                    )}
+
+                    {backupStep === 'reveal' && (
+                        <div>
+                            <div className="mb-6 bg-slate-950 border border-slate-800 rounded-2xl p-6 relative group">
+                                 <div className="grid grid-cols-3 gap-4 filter blur-md group-hover:blur-0 transition-all duration-300">
+                                    {MOCK_SEED.map((word, i) => (
+                                        <div key={i} className="flex items-center gap-3">
+                                            <span className="text-slate-600 w-4 text-right select-none">{i+1}.</span>
+                                            <span className="font-mono text-white font-bold bg-slate-900 px-2 py-1 rounded border border-slate-800/50 w-full">{word}</span>
+                                        </div>
+                                    ))}
+                                 </div>
+                                 <div className="absolute inset-0 flex items-center justify-center group-hover:opacity-0 transition-opacity duration-300 pointer-events-none">
+                                    <div className="bg-slate-900/90 px-4 py-2 rounded-full border border-slate-700 text-sm font-bold text-white flex items-center gap-2">
+                                        <EyeOff size={16} /> Hover to Reveal
+                                    </div>
+                                 </div>
+                            </div>
+                            
+                            <div className="flex items-center justify-between mb-8 text-sm text-slate-400">
+                               <div className="flex items-center gap-2">
+                                   <AlertTriangle size={16} className="text-amber-500" />
+                                   <span>Make sure no one is watching.</span>
+                               </div>
+                               <button className="flex items-center gap-1 text-blue-400 hover:text-blue-300" onClick={() => navigator.clipboard.writeText(MOCK_SEED.join(' '))}>
+                                   <Clipboard size={14} /> Copy
+                               </button>
+                            </div>
+
+                            <button 

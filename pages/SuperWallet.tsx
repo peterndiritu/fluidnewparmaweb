@@ -5,7 +5,7 @@ import {
   Fingerprint, Scan, ArrowDown, History, 
   ChevronRight, Lock, ShieldCheck, Smartphone, 
   MoreHorizontal, RefreshCw, Server, Zap, Copy,
-  Monitor
+  Monitor, AlertTriangle
 } from 'lucide-react';
 
 interface FluidWalletAppProps {
@@ -165,6 +165,18 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                 {/* ASSETS VIEW */}
                 {view === 'assets' && (
                   <div className="space-y-6 animate-fade-in-up">
+                    
+                    {/* Security Tip Nudge */}
+                    <div className="bg-slate-900/80 border-l-4 border-blue-500 p-4 rounded-r-xl flex items-start gap-3 shadow-lg">
+                        <ShieldCheck size={18} className="text-blue-500 mt-0.5 shrink-0" />
+                        <div>
+                            <h4 className="text-xs font-bold text-white mb-0.5">Security Tip</h4>
+                            <p className="text-[10px] text-slate-400 leading-relaxed">
+                                Fluid Support will <strong>NEVER</strong> ask for your seed phrase or private key. Beware of impersonators.
+                            </p>
+                        </div>
+                    </div>
+
                     {/* Balance Card */}
                     <div className="relative w-full aspect-[1.6/1] rounded-3xl overflow-hidden p-6 flex flex-col justify-between shadow-2xl shadow-purple-900/20 group">
                        <div className="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-slate-900 transition-transform duration-500 group-hover:scale-105"></div>
@@ -374,56 +386,57 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                                 <Server size={20} />
                              </div>
                              <div>
-                                <h4 className="text-sm font-bold text-white">Deploy App</h4>
-                                <p className="text-[10px] text-slate-500">Upload to IPFS/Fluid Chain</p>
+                                <h4 className="text-sm font-bold text-white">Deployments</h4>
+                                <p className="text-[10px] text-slate-500 font-bold">3 Active Projects</p>
                              </div>
                           </div>
-                          <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-all">
-                             <Plus size={16} />
-                          </div>
+                          <ChevronRight size={16} className="text-slate-600" />
                        </div>
                    </div>
+                )}
+
+                {/* SETTINGS VIEW */}
+                {view === 'settings' && (
+                    <div className="space-y-6 animate-fade-in-up">
+                        <h2 className="text-2xl font-bold text-white">Settings</h2>
+                        <div className="space-y-2">
+                             {[
+                                 { icon: ShieldCheck, label: 'Security & Privacy', color: 'text-emerald-500' },
+                                 { icon: Bell, label: 'Notifications', color: 'text-orange-500' },
+                                 { icon: Globe, label: 'Network Preferences', color: 'text-blue-500' },
+                                 { icon: RefreshCw, label: 'Auto-Lock Timer', color: 'text-purple-500' },
+                             ].map((item, i) => (
+                                 <div key={i} className="p-4 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-between cursor-pointer hover:bg-slate-800 transition-colors">
+                                     <div className="flex items-center gap-3">
+                                         <item.icon size={20} className={item.color} />
+                                         <span className="text-sm font-bold text-white">{item.label}</span>
+                                     </div>
+                                     <ChevronRight size={16} className="text-slate-500" />
+                                 </div>
+                             ))}
+                        </div>
+                        <button className="w-full p-4 bg-slate-900 border border-slate-800 rounded-2xl flex items-center justify-center gap-2 text-red-500 font-bold hover:bg-red-500/10 transition-colors">
+                            <LogOut size={18} /> Sign Out
+                        </button>
+                    </div>
                 )}
              </div>
 
              {/* Bottom Navigation */}
-             <div className="absolute bottom-0 inset-x-0 h-20 bg-slate-950/90 backdrop-blur-xl border-t border-white/5 flex items-center justify-around px-2 z-50">
-                 <NavButton id="assets" icon={Wallet} label="Wallet" />
-                 <NavButton id="swap" icon={RefreshCw} label="Swap" />
-                 <NavButton id="cards" icon={CreditCard} label="Cards" />
-                 <NavButton id="host" icon={Globe} label="Host" />
+             <div className="absolute bottom-6 left-6 right-6 bg-slate-900/90 backdrop-blur-xl border border-slate-800 p-4 rounded-3xl flex justify-between items-center shadow-2xl z-40">
+                <NavButton id="assets" icon={Wallet} label="Wallet" />
+                <NavButton id="swap" icon={ArrowRightLeft} label="Swap" />
+                <div className="relative -top-8">
+                   <button className="w-14 h-14 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-purple-500/30 hover:scale-110 transition-transform">
+                      <Scan size={24} />
+                   </button>
+                </div>
+                <NavButton id="cards" icon={CreditCard} label="Cards" />
+                <NavButton id="host" icon={Globe} label="Host" />
              </div>
           </div>
         )}
-
-        {/* Home Button Indicator */}
-        <div className="absolute bottom-1 inset-x-0 flex justify-center z-50 pointer-events-none">
-           <div className="w-32 h-1 bg-slate-800 rounded-full"></div>
-        </div>
-
       </div>
-
-      {/* Desktop Helper Text */}
-      <div className="absolute -right-48 top-1/2 -translate-y-1/2 hidden xl:block w-40">
-         <div className="bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-xl">
-             <div className="flex items-center gap-2 mb-2 text-purple-400 font-bold text-xs uppercase">
-                <Zap size={14} /> Pro Tip
-             </div>
-             <p className="text-slate-400 text-xs leading-relaxed">
-                This simulated environment demonstrates the non-custodial architecture. Keys are encrypted locally within the "Vault" state.
-             </p>
-         </div>
-      </div>
-      
-      {/* Return Home */}
-      <button 
-        onClick={() => onNavigate('home')}
-        className="absolute top-8 left-8 p-3 bg-white/5 hover:bg-white/10 rounded-full text-slate-400 hover:text-white transition-colors backdrop-blur-sm md:flex hidden items-center gap-2"
-      >
-         <LogOut size={20} />
-         <span className="text-sm font-bold">Exit Demo</span>
-      </button>
-
     </div>
   );
 };
