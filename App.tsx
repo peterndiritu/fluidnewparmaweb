@@ -3,6 +3,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import FluidWalletApp from './pages/SuperWallet';
+import DesktopWallet from './pages/DesktopWallet';
 import HostPage from './pages/Host';
 import AboutPage from './pages/About';
 import TokenPage from './pages/TokenPage';
@@ -38,6 +39,7 @@ function App() {
             } 
           />
         );
+      case 'desktop': return <DesktopWallet onNavigate={setCurrentPage} />;
       case 'token': return <TokenPage />;
       case 'host': return <HostPage />;
       case 'about': return <AboutPage />;
@@ -58,13 +60,19 @@ function App() {
       <div className="fixed inset-0 bg-tech-grid pointer-events-none z-0 opacity-100"></div>
       
       <div className="relative z-10 flex flex-col min-h-screen">
-        <Header onNavigate={setCurrentPage} currentPage={currentPage} />
+        {/* Hide header on desktop wallet view for immersive feel, or keep it. Keeping it for consistency but maybe simpler. */}
+        {currentPage !== 'desktop' && <Header onNavigate={setCurrentPage} currentPage={currentPage} />}
+        {currentPage === 'desktop' && (
+           <div className="fixed top-6 right-6 z-50">
+               {/* Minimal controls for desktop view if needed */}
+           </div>
+        )}
 
         <main className="flex-grow">
           {renderPage()}
         </main>
 
-        <Footer />
+        {currentPage !== 'desktop' && <Footer />}
       </div>
     </div>
   );

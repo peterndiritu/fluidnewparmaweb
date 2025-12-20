@@ -4,7 +4,8 @@ import {
   Send, Plus, LogOut, Search, Bell, X, 
   Fingerprint, Scan, ArrowDown, History, 
   ChevronRight, Lock, ShieldCheck, Smartphone, 
-  MoreHorizontal, RefreshCw, Server, Zap, Copy
+  MoreHorizontal, RefreshCw, Server, Zap, Copy,
+  Monitor
 } from 'lucide-react';
 
 interface FluidWalletAppProps {
@@ -57,8 +58,29 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
   );
 
   return (
-    <div className="min-h-screen pt-24 pb-12 px-4 flex justify-center items-center relative z-10">
+    <div className="min-h-screen pt-24 pb-12 px-4 flex flex-col justify-center items-center relative z-10">
       
+      {/* Intro Text & Desktop Toggle */}
+      <div className="text-center mb-10 relative z-20">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-400 text-xs font-bold uppercase tracking-wider mb-4 animate-fade-in-up">
+          <Smartphone size={14} />
+          Mobile Simulator
+        </div>
+        <h1 className="text-4xl md:text-5xl font-black text-white mb-4 tracking-tight animate-fade-in-up delay-100">
+          Fluid Super Wallet
+        </h1>
+        <p className="text-slate-400 text-lg mb-8 max-w-xl mx-auto animate-fade-in-up delay-200">
+          Experience the power of a non-custodial multi-chain wallet directly in your browser. Encrypted, secure, and intuitive.
+        </p>
+        <button 
+          onClick={() => onNavigate('desktop')}
+          className="inline-flex items-center gap-2 px-8 py-3 bg-white text-slate-900 font-bold rounded-full hover:scale-105 transition-transform shadow-[0_0_20px_rgba(255,255,255,0.3)] animate-fade-in-up delay-300 group"
+        >
+          <Monitor size={20} className="group-hover:text-purple-600 transition-colors" />
+          Explore Desktop Version
+        </button>
+      </div>
+
       {/* Device Frame (The Simulator) */}
       <div className="relative w-full max-w-[400px] h-[850px] bg-slate-950 rounded-[3rem] border-8 border-slate-900 shadow-2xl overflow-hidden flex flex-col ring-1 ring-white/10">
         
