@@ -27,12 +27,16 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             <span className="text-emerald-400 text-xs font-bold tracking-widest uppercase">Protocol V2 Live</span>
           </div>
 
-          <h1 className="text-5xl md:text-8xl font-black text-slate-900 dark:text-white mb-8 tracking-tight leading-[1.1]">
+          <h1 className="text-5xl md:text-8xl font-black text-slate-900 dark:text-white mb-6 tracking-tight leading-[1.1]">
             The Future of <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-500 to-emerald-400">Decentralized Finance</span>
+            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-500 to-emerald-400">Decentralization</span>
           </h1>
 
-          <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed">
+          <h2 className="text-2xl md:text-4xl font-extrabold text-slate-800 dark:text-white mb-8 tracking-tight animate-fade-in-up delay-100 max-w-4xl mx-auto">
+            Store. Spend. Host Infinitely & Eternally.
+          </h2>
+
+          <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed animate-fade-in-up delay-150">
             Fluid is the all-in-one non-custodial ecosystem. Manage assets, host permanent websites, and spend crypto globally with zero friction.
           </p>
 
