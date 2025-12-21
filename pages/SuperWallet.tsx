@@ -573,8 +573,11 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                 <NavButton id="assets" icon={Wallet} label="Wallet" />
                 <NavButton id="swap" icon={ArrowRightLeft} label="Swap" />
                 <div className="relative -top-8">
-                   <button className="w-14 h-14 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-purple-500/30 hover:scale-110 transition-transform">
-                      <Scan size={24} />
+                   <button 
+                      onClick={() => setView('assets')}
+                      className="w-14 h-14 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-purple-500/30 hover:scale-110 transition-transform"
+                   >
+                      <FluidLogo className="w-6 h-6 fill-current" />
                    </button>
                 </div>
                 <NavButton id="cards" icon={CreditCard} label="Cards" />

@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   Zap, Shield, Layers, Code2, Globe, Cpu, 
@@ -10,6 +11,7 @@ const BlockchainPage: React.FC = () => {
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [openDropdown, setOpenDropdown] = useState<string | null>('overview');
   const [showDevMessage, setShowDevMessage] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
   const copyToClipboard = (text: string, field: string) => {
     navigator.clipboard.writeText(text);
@@ -85,46 +87,54 @@ const BlockchainPage: React.FC = () => {
       {/* Left Sidebar Dropdown Navigation */}
       <aside className="lg:w-64 flex-shrink-0 hidden lg:block">
         <div className="sticky top-32 w-full">
-            <div className="bg-[#0F1115] border border-white/5 rounded-2xl p-2 shadow-2xl overflow-hidden">
-               <div className="px-4 py-3 border-b border-white/5 flex items-center justify-between mb-2">
-                  <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Network</span>
+            <div className="bg-[#0F1115] border border-white/5 rounded-2xl p-2 shadow-2xl overflow-hidden transition-all duration-300">
+               <div 
+                  onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+                  className="px-4 py-3 border-b border-white/5 flex items-center justify-between mb-2 cursor-pointer hover:bg-white/5 rounded-xl transition-colors"
+               >
+                  <div className="flex items-center gap-2">
+                     <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Network</span>
+                     <ChevronDown size={14} className={`text-slate-500 transition-transform duration-300 ${isSidebarOpen ? 'rotate-180' : ''}`} />
+                  </div>
                   <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
                </div>
                
-               <div className="flex flex-col gap-1">
-                   {menuItems.map((item) => (
-                     <div key={item.id} className="group">
-                        <button 
-                          onClick={() => setOpenDropdown(openDropdown === item.id ? null : item.id)}
-                          className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 border ${
-                             openDropdown === item.id 
-                             ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' 
-                             : 'bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/5'
-                          }`}
-                        >
-                           <div className="flex items-center gap-3">
-                              <item.icon size={16} className={openDropdown === item.id ? 'text-blue-500' : 'text-slate-500 group-hover:text-slate-400'} />
-                              <span className="text-xs font-bold tracking-wide">{item.label}</span>
-                           </div>
-                           <ChevronDown size={14} className={`transition-transform duration-200 ${openDropdown === item.id ? 'rotate-180 text-blue-500' : 'text-slate-600'}`} />
-                        </button>
-                        
-                        {openDropdown === item.id && (
-                           <div className="mt-1 mb-2 ml-3 pl-3 border-l border-white/5 space-y-0.5 animate-fade-in-up">
-                              {item.children.map((child) => (
-                                <button 
-                                  key={child}
-                                  onClick={() => scrollTo(item.id)}
-                                  className="w-full text-left px-3 py-2 rounded-lg text-[11px] font-medium text-slate-500 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-2"
-                                >
-                                   <div className="w-1 h-1 rounded-full bg-slate-700 group-hover:bg-blue-500 transition-colors"></div>
-                                   {child}
-                                </button>
-                              ))}
-                           </div>
-                        )}
-                     </div>
-                   ))}
+               <div className={`transition-all duration-300 ease-in-out overflow-hidden ${isSidebarOpen ? 'max-h-[800px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                   <div className="flex flex-col gap-1">
+                       {menuItems.map((item) => (
+                         <div key={item.id} className="group">
+                            <button 
+                              onClick={() => setOpenDropdown(openDropdown === item.id ? null : item.id)}
+                              className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl transition-all duration-200 border ${
+                                 openDropdown === item.id 
+                                 ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' 
+                                 : 'bg-transparent border-transparent text-slate-400 hover:text-slate-200 hover:bg-white/5'
+                              }`}
+                            >
+                               <div className="flex items-center gap-3">
+                                  <item.icon size={16} className={openDropdown === item.id ? 'text-blue-500' : 'text-slate-500 group-hover:text-slate-400'} />
+                                  <span className="text-xs font-bold tracking-wide">{item.label}</span>
+                               </div>
+                               <ChevronDown size={14} className={`transition-transform duration-200 ${openDropdown === item.id ? 'rotate-180 text-blue-500' : 'text-slate-600'}`} />
+                            </button>
+                            
+                            {openDropdown === item.id && (
+                               <div className="mt-1 mb-2 ml-3 pl-3 border-l border-white/5 space-y-0.5 animate-fade-in-up">
+                                  {item.children.map((child) => (
+                                    <button 
+                                      key={child}
+                                      onClick={() => scrollTo(item.id)}
+                                      className="w-full text-left px-3 py-2 rounded-lg text-[11px] font-medium text-slate-500 hover:text-white hover:bg-white/5 transition-colors flex items-center gap-2"
+                                    >
+                                       <div className="w-1 h-1 rounded-full bg-slate-700 group-hover:bg-blue-500 transition-colors"></div>
+                                       {child}
+                                    </button>
+                                  ))}
+                               </div>
+                            )}
+                         </div>
+                       ))}
+                   </div>
                </div>
             </div>
         </div>
