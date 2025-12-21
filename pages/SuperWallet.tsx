@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Wallet, ArrowRightLeft, CreditCard, Globe, 
@@ -40,6 +41,18 @@ const CARD_TIERS = [
 ];
 
 type ViewState = 'locked' | 'assets' | 'swap' | 'cards' | 'host' | 'settings' | 'send' | 'receive';
+
+const NavButton: React.FC<{ id: ViewState; icon: any; label: string; view: ViewState; setView: (v: ViewState) => void }> = ({ id, icon: Icon, label, view, setView }) => (
+  <button 
+    onClick={() => setView(id)}
+    className={`flex flex-col items-center gap-1 transition-all duration-300 ${
+      view === id ? 'text-purple-400 scale-110' : 'text-slate-500 hover:text-slate-300'
+    }`}
+  >
+    <Icon size={20} strokeWidth={view === id ? 2.5 : 2} />
+    <span className="text-[10px] font-bold tracking-wide">{label}</span>
+  </button>
+);
 
 const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView = 'assets' }) => {
   const [view, setView] = useState<ViewState>('locked');
@@ -110,18 +123,6 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
       setRequestStep('config');
       setCardType('virtual');
   };
-
-  const NavButton = ({ id, icon: Icon, label }: { id: ViewState, icon: any, label: string }) => (
-    <button 
-      onClick={() => setView(id)}
-      className={`flex flex-col items-center gap-1 transition-all duration-300 ${
-        view === id ? 'text-purple-400 scale-110' : 'text-slate-500 hover:text-slate-300'
-      }`}
-    >
-      <Icon size={20} strokeWidth={view === id ? 2.5 : 2} />
-      <span className="text-[10px] font-bold tracking-wide">{label}</span>
-    </button>
-  );
 
   return (
     <div className="min-h-screen pt-24 pb-12 px-4 flex flex-col justify-center items-center relative z-10">
@@ -570,8 +571,8 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
 
              {/* Bottom Navigation */}
              <div className="absolute bottom-6 left-6 right-6 bg-slate-900/90 backdrop-blur-xl border border-slate-800 p-4 rounded-3xl flex justify-between items-center shadow-2xl z-40">
-                <NavButton id="assets" icon={Wallet} label="Wallet" />
-                <NavButton id="swap" icon={ArrowRightLeft} label="Swap" />
+                <NavButton id="assets" icon={Wallet} label="Wallet" view={view} setView={setView} />
+                <NavButton id="swap" icon={ArrowRightLeft} label="Swap" view={view} setView={setView} />
                 <div className="relative -top-8">
                    <button 
                       onClick={() => setView('assets')}
@@ -580,8 +581,8 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                       <FluidLogo className="w-6 h-6 fill-current" />
                    </button>
                 </div>
-                <NavButton id="cards" icon={CreditCard} label="Cards" />
-                <NavButton id="host" icon={Globe} label="Host" />
+                <NavButton id="cards" icon={CreditCard} label="Cards" view={view} setView={setView} />
+                <NavButton id="host" icon={Globe} label="Host" view={view} setView={setView} />
              </div>
           </div>
         )}

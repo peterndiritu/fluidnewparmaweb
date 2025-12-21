@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   LayoutDashboard, Wallet, ArrowRightLeft, CreditCard, Globe, 
@@ -59,6 +60,20 @@ const FluidLogo = ({ className }: { className?: string }) => (
     <path d="M35 45 H65 C70.5 45 75 49.5 75 55 C75 60.5 70.5 65 65 65 H25 L35 45 Z" fill="currentColor" />
     <path d="M22 70 H52 C57.5 70 62 74.5 62 80 C62 85.5 57.5 90 52 90 H12 L22 70 Z" fill="currentColor" />
   </svg>
+);
+
+const NavItem: React.FC<{ id: string; icon: any; label: string; activeTab: string; setActiveTab: (id: string) => void }> = ({ id, icon: Icon, label, activeTab, setActiveTab }) => (
+  <button 
+    onClick={() => setActiveTab(id)}
+    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
+      activeTab === id 
+      ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' 
+      : 'text-slate-400 hover:text-white hover:bg-white/5'
+    }`}
+  >
+    <Icon size={20} />
+    <span>{label}</span>
+  </button>
 );
 
 const DesktopWallet: React.FC<DesktopWalletProps> = ({ onNavigate }) => {
@@ -246,20 +261,6 @@ const DesktopWallet: React.FC<DesktopWalletProps> = ({ onNavigate }) => {
       showToast("Address copied to clipboard");
   };
 
-  const NavItem = ({ id, icon: Icon, label }: { id: string, icon: any, label: string }) => (
-    <button 
-      onClick={() => setActiveTab(id)}
-      className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-        activeTab === id 
-        ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' 
-        : 'text-slate-400 hover:text-white hover:bg-white/5'
-      }`}
-    >
-      <Icon size={20} />
-      <span>{label}</span>
-    </button>
-  );
-
   return (
       <div className="min-h-screen pt-28 pb-12 px-4 md:px-8">
          {/* Toast Notification */}
@@ -349,11 +350,11 @@ const DesktopWallet: React.FC<DesktopWalletProps> = ({ onNavigate }) => {
                             </div>
 
                             <div className="space-y-1 flex-grow">
-                            <NavItem id="dashboard" icon={LayoutDashboard} label="Dashboard" />
-                            <NavItem id="swap" icon={ArrowRightLeft} label="Swap" />
-                            <NavItem id="cards" icon={CreditCard} label="Cards" />
-                            <NavItem id="host" icon={Globe} label="Host" />
-                            <NavItem id="settings" icon={Settings} label="Settings" />
+                            <NavItem id="dashboard" icon={LayoutDashboard} label="Dashboard" activeTab={activeTab} setActiveTab={setActiveTab} />
+                            <NavItem id="swap" icon={ArrowRightLeft} label="Swap" activeTab={activeTab} setActiveTab={setActiveTab} />
+                            <NavItem id="cards" icon={CreditCard} label="Cards" activeTab={activeTab} setActiveTab={setActiveTab} />
+                            <NavItem id="host" icon={Globe} label="Host" activeTab={activeTab} setActiveTab={setActiveTab} />
+                            <NavItem id="settings" icon={Settings} label="Settings" activeTab={activeTab} setActiveTab={setActiveTab} />
                             </div>
 
                             <div className="mt-auto pt-6 border-t border-slate-800">
@@ -1239,28 +1240,6 @@ const DesktopWallet: React.FC<DesktopWalletProps> = ({ onNavigate }) => {
                         </div>
                     )}
 
-                </div>
-            </div>
-         )}
-
-         {showReceiveModal && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
-                <div className="bg-slate-900 border border-slate-800 rounded-3xl max-w-sm w-full p-6 shadow-2xl animate-fade-in-up text-center">
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-bold text-white">Receive ETH</h3>
-                        <button onClick={() => setShowReceiveModal(false)} className="text-slate-500 hover:text-white"><X size={24}/></button>
-                    </div>
-                    
-                    <div className="bg-white p-4 rounded-xl inline-block mb-6">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=0x71C7656EC7ab88b098defB751B7401B5f6d8976F" alt="QR" className="w-32 h-32" />
-                    </div>
-                    
-                    <div className="bg-slate-950 border border-slate-800 rounded-xl p-3 mb-6 flex items-center justify-between gap-2">
-                        <span className="font-mono text-xs text-slate-400 truncate">0x71C7656EC7ab88b098defB751B7401B5f6d8976F</span>
-                        <button onClick={copyAddress} className="text-purple-400 hover:text-white"><Copy size={16}/></button>
-                    </div>
-
-                    <p className="text-xs text-slate-500">Only send Ethereum (ERC-20) assets to this address.</p>
                 </div>
             </div>
          )}
