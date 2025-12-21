@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -47,7 +48,7 @@ function App() {
       case 'faq': return <FaqPage />;
       case 'terms': return <TermsPage />;
       case 'privacy': return <PrivacyPage />;
-      case 'economics': return <EconomicsPage />;
+      case 'economics': return <EconomicsPage onNavigate={setCurrentPage} />;
       case 'docs': return <DocsPage />;
       default: return <Home onNavigate={setCurrentPage} />;
     }
