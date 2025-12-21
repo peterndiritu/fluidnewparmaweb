@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   Zap, Shield, Layers, Code2, Globe, Cpu, 
   CheckCircle, Wifi, Copy, Check, Wallet, 
@@ -24,12 +24,12 @@ const BlockchainPage: React.FC = () => {
     setTimeout(() => setShowDevMessage(false), 3000);
   };
 
-  const menuItems = [
+  const menuItems = useMemo(() => [
     { id: 'overview', label: 'Overview', icon: Globe, children: ['Architecture', 'Consensus', 'EVM'] },
     { id: 'nodes', label: 'Network', icon: Server, children: ['Validators', 'Shards', 'State Sync'] },
     { id: 'stats', label: 'Statistics', icon: Activity, children: ['TPS Live', 'Gas History', 'Uptime'] },
     { id: 'dev', label: 'Developer', icon: Code2, children: ['RPC Access', 'Faucet', 'Deploy Tool'] }
-  ];
+  ], []);
 
   const blockchainFeatures = [
     { 

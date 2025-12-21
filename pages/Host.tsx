@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import HowItWorks from '../components/HowItWorks';
 import { Server, Database, Cloud, Lock, Terminal, Cpu, Globe, ArrowRight, ChevronDown, Rocket, Layers, Code2, Search, CheckCircle2, ShoppingCart, RefreshCw } from 'lucide-react';
 
@@ -15,13 +15,19 @@ const HostPage: React.FC = () => {
   const [isTyping, setIsTyping] = useState(false);
   const terminalRef = useRef<HTMLDivElement>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const isMounted = useRef(true);
 
-  const menuItems = [
+  const menuItems = useMemo(() => [
     { id: 'domains', label: 'Domains', icon: Globe, children: ['Search', '.fluid Handle', 'DNS Bridge'] },
     { id: 'start', label: 'Getting Started', icon: Rocket, children: ['CLI Setup', 'Initialization', 'Deployment'] },
     { id: 'tech', label: 'Technical Specs', icon: Layers, children: ['Micro-Sharding', 'Security', 'Performance'] },
     { id: 'api', label: 'API Reference', icon: Code2, children: ['End points', 'Webhooks', 'SDKs'] }
-  ];
+  ], []);
+
+  useEffect(() => {
+    isMounted.current = true;
+    return () => { isMounted.current = false; };
+  }, []);
 
   const scrollTo = (id: string) => {
     const el = document.getElementById(id);
@@ -57,8 +63,10 @@ const HostPage: React.FC = () => {
     
     // Simulate API call
     setTimeout(() => {
-      setIsSearchingDomains(false);
-      setShowDomainResults(true);
+      if (isMounted.current) {
+        setIsSearchingDomains(false);
+        setShowDomainResults(true);
+      }
     }, 1500);
   };
 
@@ -77,6 +85,7 @@ const HostPage: React.FC = () => {
     );
 
     const addToTerminal = (line: { type: string; content: React.ReactNode }) => {
+      if (!isMounted.current) return;
       setTerminalLines(prev => [...prev, line]);
       if (terminalRef.current) {
         terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
@@ -84,11 +93,13 @@ const HostPage: React.FC = () => {
     };
 
     const typeCommand = async (cmd: string) => {
+      if (!isMounted.current) return;
       addToTerminal({ type: 'prompt', content: <div className="flex items-center">{prompt}<span className="typing-cursor ml-1"></span></div> });
       
       // Simulate typing
       let typed = "";
       for (let i = 0; i < cmd.length; i++) {
+        if (!isMounted.current) return;
         await new Promise(r => setTimeout(r, Math.random() * 50 + 30));
         typed += cmd[i];
         setTerminalLines(prev => {
@@ -102,6 +113,7 @@ const HostPage: React.FC = () => {
       }
       
       // Remove cursor from command line
+      if (!isMounted.current) return;
       await new Promise(r => setTimeout(r, 200));
       setTerminalLines(prev => {
         const newLines = [...prev];
@@ -114,14 +126,18 @@ const HostPage: React.FC = () => {
     };
 
     // Step 1: Install
+    if (!isMounted.current) return;
     await typeCommand("npm install -g fluid-cli");
+    if (!isMounted.current) return;
     await new Promise(r => setTimeout(r, 500));
     addToTerminal({ type: 'output', content: <div className="text-slate-400">+ fluid-cli@1.0.4</div> });
     addToTerminal({ type: 'output', content: <div className="text-slate-400 mb-4">added 12 packages in 2s</div> });
 
     // Step 2: Init
+    if (!isMounted.current) return;
     await new Promise(r => setTimeout(r, 500));
     await typeCommand("fluid init");
+    if (!isMounted.current) return;
     await new Promise(r => setTimeout(r, 400));
     addToTerminal({ type: 'output', content: <div className="text-blue-400">? <span className="text-slate-300">Project name:</span> <span className="text-white font-bold">awesome-dapp</span></div> });
     await new Promise(r => setTimeout(r, 200));
@@ -130,8 +146,10 @@ const HostPage: React.FC = () => {
     addToTerminal({ type: 'output', content: <div className="text-blue-400 mb-4">? <span className="text-slate-300">Storage:</span> <span className="text-white font-bold">Permanent (Fluid Host)</span></div> });
 
     // Step 3: Deploy
+    if (!isMounted.current) return;
     await new Promise(r => setTimeout(r, 600));
     await typeCommand("fluid deploy");
+    if (!isMounted.current) return;
     await new Promise(r => setTimeout(r, 300));
     
     const steps = [
@@ -142,19 +160,22 @@ const HostPage: React.FC = () => {
     ];
 
     for (const step of steps) {
+      if (!isMounted.current) return;
       await new Promise(r => setTimeout(r, 600));
       addToTerminal({ type: 'output', content: <div className="text-slate-400">{step}</div> });
     }
 
+    if (!isMounted.current) return;
     await new Promise(r => setTimeout(r, 500));
     addToTerminal({ type: 'success', content: <div className="text-emerald-400 font-bold mt-2">✔ Deployment Successful!</div> });
     addToTerminal({ type: 'link', content: <div className="text-slate-300">Access your app at: <a href="#" className="text-blue-400 hover:underline">https://fluid.link/awesome-dapp</a></div> });
     
     // Final Prompt
+    if (!isMounted.current) return;
     await new Promise(r => setTimeout(r, 500));
     addToTerminal({ type: 'prompt', content: <div className="flex items-center mt-4">{prompt}<span className="typing-cursor ml-2"></span></div> });
     
-    setIsTyping(false);
+    if (isMounted.current) setIsTyping(false);
   };
 
   useEffect(() => {

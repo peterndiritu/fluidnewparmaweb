@@ -1,17 +1,17 @@
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Coins, Repeat, Landmark, Infinity as InfinityIcon, ShieldCheck, TrendingUp, PieChart, ArrowUpRight, ChevronDown, BarChart, Eye, Layout } from 'lucide-react';
 
 const EconomicsPage: React.FC = () => {
   const [openDropdown, setOpenDropdown] = useState<string | null>('principles');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  const menuItems = [
+  const menuItems = useMemo(() => [
     { id: 'principles', label: 'Core Principles', icon: BarChart, children: ['Sustainability', 'Yield Model', 'One-Time Cost'] },
     { id: 'model', label: 'Endowment Model', icon: InfinityIcon, children: ['Lifecycle', 'Yield Gen', 'Treasury'] },
     { id: 'stats', label: 'Governance', icon: Landmark, children: ['Voting', 'Proposals', 'Audit'] },
     { id: 'tokens', label: 'Tokenomics', icon: Coins, children: ['Distribution', 'Supply', 'Burn Rate'] }
-  ];
+  ], []);
 
   const scrollTo = (id: string) => {
     const el = document.getElementById(id);

@@ -1,10 +1,9 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   ChevronDown, BookOpen, Cpu, Globe, Coins, Wallet, Code2, 
   Terminal, ShieldCheck, Zap, Database, Layers, Landmark, 
-  CreditCard, SmartphoneNfc, ArrowRight, RefreshCw, FileText, Search,
-  Box, Key, Network
+  CreditCard, RefreshCw, Search, Box, Network
 } from 'lucide-react';
 
 interface AccordionSectionProps {
@@ -47,11 +46,12 @@ const DocsPage: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
 
-  const sidebarMenu = [
+  // Memoize static menu configuration to prevent re-renders
+  const sidebarMenu = useMemo(() => [
     { id: 'core', label: 'Core Protocol', icon: Cpu, items: ['Blockchain', 'Fluid Host', 'Tokenomics'] },
     { id: 'apps', label: 'Applications', icon: Wallet, items: ['Wallet App', 'Cards', 'DEX'] },
     { id: 'devs', label: 'Developers', icon: Code2, items: ['CLI', 'SDK', 'RPC'] }
-  ];
+  ], []);
 
   const filteredMenu = useMemo(() => {
     if (!searchQuery) return sidebarMenu;
@@ -72,13 +72,13 @@ const DocsPage: React.FC = () => {
       }
       return null;
     }).filter(Boolean) as typeof sidebarMenu;
-  }, [searchQuery]);
+  }, [searchQuery, sidebarMenu]);
 
-  // Auto-expand dropdowns when searching
-  React.useEffect(() => {
-    if (searchQuery) {
-      const allIds = filteredMenu.map(m => m.id);
-      if (allIds.length > 0) setOpenDropdown(allIds[0]); // Open first match
+  // Safe effect for auto-expanding dropdowns
+  useEffect(() => {
+    if (searchQuery && filteredMenu.length > 0) {
+      const firstMatchId = filteredMenu[0].id;
+      setOpenDropdown(prev => prev === firstMatchId ? prev : firstMatchId);
     }
   }, [searchQuery, filteredMenu]);
 
@@ -90,7 +90,6 @@ const DocsPage: React.FC = () => {
   };
 
   const getSectionId = (itemName: string) => {
-    // Map nice names to IDs
     const map: Record<string, string> = {
       'Blockchain': 'blockchain',
       'Fluid Host': 'fluid',
