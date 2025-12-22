@@ -12,7 +12,8 @@ import {
   ArrowUpRight, ArrowDownLeft, Landmark, Banknote, Phone,
   QrCode, ChevronDown, Repeat, Settings, User, Mail, 
   FileText, HelpCircle, Edit3, Camera, ToggleLeft, ToggleRight,
-  Eye, EyeOff, Timer, KeyRound, Map, Palette, Trash2, Snowflake
+  Eye, EyeOff, Timer, KeyRound, Map, Palette, Trash2, Snowflake,
+  Coffee, Car, Tv, ShoppingBag
 } from 'lucide-react';
 
 interface FluidWalletAppProps {
@@ -64,6 +65,14 @@ const FluidLogo = ({ className }: { className?: string }) => (
 const MOCK_CARDS = [
     { id: 1, type: 'Virtual', name: 'Fluid Black', number: '**** 4829', realNumber: '4829 1029 4829 4829', balance: 5000, color: 'bg-slate-900', border: 'border-slate-800', text: 'text-white', watermark: 'text-white/5', expiry: '12/28', cvv: '123', isFrozen: false },
     { id: 2, type: 'Physical', name: 'Fluid Steel', number: '**** 9921', realNumber: '9921 5521 8832 9921', balance: 1200, color: 'bg-gradient-to-br from-slate-700 to-slate-900', border: 'border-slate-600', text: 'text-white', watermark: 'text-white/10', expiry: '09/27', cvv: '456', isFrozen: true }
+];
+
+const MOCK_TRANSACTIONS = [
+    { id: 1, merchant: 'Uber Trip', amount: -24.50, date: 'Today, 2:30 PM', icon: 'car' },
+    { id: 2, merchant: 'Starbucks', amount: -5.40, date: 'Today, 9:15 AM', icon: 'coffee' },
+    { id: 3, merchant: 'Top Up', amount: 500.00, date: 'Yesterday', icon: 'plus' },
+    { id: 4, merchant: 'Netflix', amount: -14.99, date: 'Oct 24', icon: 'tv' },
+    { id: 5, merchant: 'Apple Store', amount: -1299.00, date: 'Oct 20', icon: 'shopping' },
 ];
 
 type ViewState = 'locked' | 'assets' | 'swap' | 'cards' | 'host' | 'send' | 'receive' | 'deposit' | 'withdraw' | 'add_card' | 'settings' | 'profile' | 'card_details';
@@ -126,6 +135,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
   const [isSettingPin, setIsSettingPin] = useState(false);
   const [newPin, setNewPin] = useState('');
   const [isOrderingPhysical, setIsOrderingPhysical] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
   // Host Flow
   const [domainSearch, setDomainSearch] = useState('');
@@ -254,11 +264,15 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
 
   const handleDeleteCard = () => {
       if (!selectedCard) return;
-      if (confirm('Are you sure you want to delete this card? This action cannot be undone.')) {
-          setCards(prev => prev.filter(c => c.id !== selectedCard.id));
-          setSelectedCard(null);
-          setView('cards');
-      }
+      setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = () => {
+      if (!selectedCard) return;
+      setCards(prev => prev.filter(c => c.id !== selectedCard.id));
+      setSelectedCard(null);
+      setShowDeleteConfirm(false);
+      setView('cards');
   };
 
   return (
@@ -270,11 +284,6 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
       {/* Intro Text & Desktop Toggle */}
       <div className="text-center mb-10 relative z-20">
         
-        {/* FLUID DAPP Visual Box */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[380px] h-[260px] border border-blue-400/20 rounded-lg flex items-end justify-end p-4 pointer-events-none -z-10">
-           <span className="text-white/40 font-bold tracking-widest text-xs">FLUID DAPP</span>
-        </div>
-
         <button 
           onClick={() => {
             setView('locked');
@@ -885,7 +894,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                         {cards.map((card) => (
                             <div 
                                 key={card.id} 
-                                onClick={() => { setSelectedCard(card); setView('card_details'); setShowFullNumber(false); }}
+                                onClick={() => { setSelectedCard(card); setView('card_details'); setShowFullNumber(false); setShowDeleteConfirm(false); }}
                                 className={`relative aspect-[1.58/1] rounded-2xl ${card.color} border ${card.border} shadow-xl overflow-hidden cursor-pointer group hover:scale-[1.02] transition-transform duration-300`}
                             >
                                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
@@ -1107,6 +1116,33 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                             </button>
                         </div>
 
+                        {/* Transactions List */}
+                        <div className="mt-6 mb-6">
+                            <h3 className="text-xs font-bold text-slate-500 uppercase mb-3">Recent Transactions</h3>
+                            <div className="space-y-3">
+                                {MOCK_TRANSACTIONS.map((tx) => (
+                                    <div key={tx.id} className="flex items-center justify-between p-3 bg-slate-900 border border-slate-800 rounded-xl">
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${tx.amount > 0 ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-800 text-slate-400'}`}>
+                                                {tx.icon === 'coffee' && <Coffee size={18} />}
+                                                {tx.icon === 'car' && <Car size={18} />}
+                                                {tx.icon === 'tv' && <Tv size={18} />}
+                                                {tx.icon === 'plus' && <ArrowDownLeft size={18} />}
+                                                {tx.icon === 'shopping' && <ShoppingBag size={18} />}
+                                            </div>
+                                            <div>
+                                                <div className="font-bold text-white text-sm">{tx.merchant}</div>
+                                                <div className="text-[10px] text-slate-500">{tx.date}</div>
+                                            </div>
+                                        </div>
+                                        <div className={`font-mono text-sm font-bold ${tx.amount > 0 ? 'text-emerald-400' : 'text-white'}`}>
+                                            {tx.amount > 0 ? '+' : ''}{tx.amount.toFixed(2)}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
                         {/* PIN Setting UI */}
                         {isSettingPin ? (
                             <div className="bg-slate-900 border border-slate-800 p-4 rounded-xl animate-fade-in-up">
@@ -1200,6 +1236,37 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                                 <Trash2 size={14} /> Terminate Card
                             </button>
                         </div>
+
+                        {/* Delete Confirmation Modal */}
+                        {showDeleteConfirm && (
+                            <div className="absolute inset-0 bg-slate-950/80 backdrop-blur-sm z-50 flex items-center justify-center p-6 animate-fade-in-up">
+                                <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 w-full shadow-2xl">
+                                    <div className="flex flex-col items-center text-center mb-6">
+                                        <div className="w-12 h-12 bg-red-500/10 rounded-full flex items-center justify-center text-red-500 mb-4">
+                                            <AlertTriangle size={24} />
+                                        </div>
+                                        <h3 className="text-lg font-bold text-white mb-2">Terminate Card?</h3>
+                                        <p className="text-slate-400 text-xs leading-relaxed">
+                                            This action is permanent. Your physical card will stop working immediately and virtual cards will be destroyed.
+                                        </p>
+                                    </div>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button 
+                                            onClick={() => setShowDeleteConfirm(false)}
+                                            className="py-3 bg-slate-800 text-white font-bold rounded-xl text-xs hover:bg-slate-700 transition-colors"
+                                        >
+                                            Cancel
+                                        </button>
+                                        <button 
+                                            onClick={confirmDelete}
+                                            className="py-3 bg-red-500 text-white font-bold rounded-xl text-xs hover:bg-red-600 transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <Trash2 size={14} /> Confirm
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
                 
