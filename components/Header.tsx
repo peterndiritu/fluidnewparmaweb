@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Menu, X, Sun, Moon, ChevronDown, Download } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
@@ -171,6 +172,12 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
                   client={client} 
                   wallets={wallets}
                   theme={theme}
+                  appMetadata={{
+                    name: "Fluid",
+                    url: "https://fluid.chain",
+                    description: "The all-in-one non-custodial ecosystem.",
+                    logoUrl: "https://cryptologos.cc/logos/ethereum-eth-logo.png"
+                  }}
               />
             </div>
 

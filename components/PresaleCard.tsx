@@ -1,3 +1,4 @@
+
 import React, { useEffect, useState, useMemo } from 'react';
 import { ChevronDown, Lightbulb, Wallet, Check, AlertCircle, Info, ShieldAlert, ShieldCheck, X, AlertTriangle, Unlock, Loader2, ScanEye } from 'lucide-react';
 import { 
@@ -18,9 +19,8 @@ import {
 import { client, wallets } from "../client";
 import { analyzeTransactionRisk, TransactionRiskAnalysis } from '../services/geminiService';
 
-// --- Configuration ---
-const PRESALE_CONTRACT_ADDRESS = "0x1234567890123456789012345678901234567890"; // Placeholder
-const FALLBACK_FLUID_PRICE = 0.05; // $0.05 per FLUID
+const PRESALE_CONTRACT_ADDRESS = "0x1234567890123456789012345678901234567890";
+const FALLBACK_FLUID_PRICE = 0.05;
 
 interface PaymentOption {
   id: string;
@@ -30,7 +30,7 @@ interface PaymentOption {
   chainId: number;
   icon: string;
   isNative: boolean;
-  address?: string; // Token address
+  address?: string;
   decimals: number;
 }
 
@@ -38,7 +38,7 @@ const FluidLogo = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
     <path d="M45 22H80C83.3137 22 86 24.6863 86 28V32C86 35.3137 83.3137 38 80 38H40L45 22Z" fill="currentColor" />
     <path d="M30 44H70C73.3137 44 76 46.6863 76 50V54C76 57.3137 73.3137 60 70 60H25L30 44Z" fill="currentColor" />
-    <path d="M15 66H60C63.3137 66 66 68.6863 66 72V76C66 79.3137 63.3137 82 60 82H10L15 66Z" fill="currentColor" />
+    <path d="M15 66H60C63.3137 66 66 68.6863 66 72V76C66 79.3137 83.3137 82 60 82H10L15 66Z" fill="currentColor" />
   </svg>
 );
 
@@ -58,19 +58,15 @@ const PresaleCard: React.FC = () => {
   const chainId = activeChain?.id;
   const { mutateAsync: sendTransaction } = useSendTransaction();
 
-  // State
   const [selectedPayment, setSelectedPayment] = useState<PaymentOption>(PAYMENT_OPTIONS[0]);
   const [usdAmount, setUsdAmount] = useState<string>('100');
   const [cryptoPrice, setCryptoPrice] = useState<number>(0);
   const [fluidPrice, setFluidPrice] = useState<number>(FALLBACK_FLUID_PRICE);
   const [showMore, setShowMore] = useState(false);
   const [status, setStatus] = useState<'IDLE' | 'PENDING' | 'SUCCESS' | 'ERROR'>('IDLE');
-  
-  // Security & Simulation States
   const [showSecurityModal, setShowSecurityModal] = useState(false);
   const [isSimulating, setIsSimulating] = useState(false);
   const [simulationResult, setSimulationResult] = useState<TransactionRiskAnalysis | null>(null);
-  
   const [agreements, setAgreements] = useState({
     responsibility: false,
     risk: false,
@@ -78,16 +74,12 @@ const PresaleCard: React.FC = () => {
     irreversible: false
   });
 
-  // Calculate amounts
   const cryptoAmount = cryptoPrice > 0 && usdAmount ? parseFloat(usdAmount) / cryptoPrice : 0;
   const fluidAmount = usdAmount ? parseFloat(usdAmount) / fluidPrice : 0;
 
-  // --- Contract Hooks ---
-  
-  // 1. Define a dummy contract for safe fallbacks
   const dummyContract = useMemo(() => getContract({
     client,
-    chain: defineChain(1), // Mainnet as placeholder
+    chain: defineChain(1),
     address: "0x0000000000000000000000000000000000000000"
   }), []);
 
@@ -108,12 +100,10 @@ const PresaleCard: React.FC = () => {
   }, [selectedPayment]);
 
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
-    // Use dummyContract if tokenContract is undefined to prevent "reading 'chain' of undefined" error
     contract: tokenContract || dummyContract, 
     method: "function allowance(address owner, address spender) view returns (uint256)",
     params: [account?.address || "", PRESALE_CONTRACT_ADDRESS],
     queryOptions: {
-      // Only enable the query if we have a valid tokenContract (not the dummy one)
       enabled: !!account && !!tokenContract && !selectedPayment.isNative
     }
   });
@@ -129,25 +119,20 @@ const PresaleCard: React.FC = () => {
     }
   }, [selectedPayment, allowance, cryptoAmount]);
 
-  // --- Fetch Prices ---
   useEffect(() => {
     const fetchPrice = async () => {
       let symbol = selectedPayment.symbol;
-
       if (symbol === 'USDT' || symbol === 'USDC') {
         setCryptoPrice(1);
         return;
       }
-
       if (selectedPayment.id === 'sol') {
          setCryptoPrice(145); 
          return;
       }
-      
       try {
         const res = await fetch(`https://min-api.cryptocompare.com/data/price?fsym=${symbol}&tsyms=USD`);
         const data = await res.json();
-        
         if (data && data.USD) {
           setCryptoPrice(parseFloat(data.USD));
         } else {
@@ -157,10 +142,8 @@ const PresaleCard: React.FC = () => {
         if (selectedPayment.symbol === 'ETH') setCryptoPrice(2450);
         if (selectedPayment.symbol === 'BNB') setCryptoPrice(580);
         if (selectedPayment.symbol === 'MATIC') setCryptoPrice(0.40);
-        console.warn(`Price fetch failed for ${symbol}, using fallback.`);
       }
     };
-
     fetchPrice();
     const interval = setInterval(fetchPrice, 60000);
     return () => clearInterval(interval);
@@ -190,10 +173,7 @@ const PresaleCard: React.FC = () => {
 
   const handleInitiateBuy = async () => {
     if (!account || !usdAmount || parseFloat(usdAmount) < 10) return;
-    
-    // Start Simulation
     setIsSimulating(true);
-    
     try {
         const result = await analyzeTransactionRisk(
             cryptoAmount.toFixed(4), 
@@ -213,36 +193,30 @@ const PresaleCard: React.FC = () => {
   const handleConfirmBuy = async () => {
     setShowSecurityModal(false);
     setStatus('PENDING');
-
     try {
       if (selectedPayment.chainId > 0 && chainId !== selectedPayment.chainId) {
          await switchChain(defineChain(selectedPayment.chainId));
       }
-
       if (selectedPayment.chainId <= 0) {
           alert("Solana support coming soon. Please use EVM chains.");
           setStatus('IDLE');
           return;
       }
-
       const activeChainDef = defineChain(selectedPayment.chainId);
       const presaleContract = getContract({
         client,
         chain: activeChainDef,
         address: PRESALE_CONTRACT_ADDRESS,
       });
-
       const method = selectedPayment.isNative ? "function buyWithNative()" : "function buyWithToken(address token, uint256 amount)";
       const params = selectedPayment.isNative ? [] : [selectedPayment.address, toUnits(cryptoAmount.toFixed(selectedPayment.decimals), selectedPayment.decimals)];
       const value = selectedPayment.isNative ? toWei(cryptoAmount.toFixed(18)) : undefined;
-
       const transaction = prepareContractCall({
         contract: presaleContract,
         method: method,
         params: params,
         value: value,
       });
-
       await sendTransaction(transaction);
       setStatus('SUCCESS');
     } catch (e) {
@@ -256,8 +230,6 @@ const PresaleCard: React.FC = () => {
   return (
     <div className="w-full max-w-[480px] mx-auto z-10">
       <div className="bg-slate-950/80 backdrop-blur-xl border border-white/10 rounded-3xl overflow-hidden shadow-2xl relative">
-        
-        {/* Header */}
         <div className="p-6 border-b border-white/5 flex flex-col items-center">
             <h2 className="text-2xl font-bold text-white tracking-tight">Buy $FLUID Presale</h2>
             <div className="flex items-center gap-2 mt-2">
@@ -268,9 +240,7 @@ const PresaleCard: React.FC = () => {
                 <span className="text-emerald-400 text-xs font-bold uppercase tracking-wider">Sale is Live</span>
             </div>
         </div>
-
         <div className="p-6 space-y-6">
-            {/* Payment Selector */}
             <div className="space-y-3">
                 <div className="flex items-center justify-between text-sm">
                     <span className="text-slate-400 font-medium">Select Payment Method</span>
@@ -278,7 +248,6 @@ const PresaleCard: React.FC = () => {
                         <Info size={12} /> Supporting {PAYMENT_OPTIONS.length}+ Chains
                     </span>
                 </div>
-                
                 <div className="grid grid-cols-4 gap-2">
                     {PAYMENT_OPTIONS.slice(0, 5).map(opt => (
                         <button
@@ -305,7 +274,6 @@ const PresaleCard: React.FC = () => {
                         <span className="text-[10px] font-bold">More</span>
                     </button>
                 </div>
-
                 {showMore && (
                     <div className="grid grid-cols-4 gap-2 animate-fade-in-up">
                         {PAYMENT_OPTIONS.slice(5).map(opt => (
@@ -325,8 +293,6 @@ const PresaleCard: React.FC = () => {
                     </div>
                 )}
             </div>
-
-            {/* Input Section */}
             <div className="space-y-4">
                 <div className="space-y-2">
                     <label className="text-xs font-bold text-slate-400 ml-1 uppercase">You Pay (USD)</label>
@@ -352,13 +318,11 @@ const PresaleCard: React.FC = () => {
                         <Lightbulb size={12} /> Min: $10
                     </div>
                 </div>
-
                 <div className="flex justify-center -my-2 relative z-10">
                     <div className="bg-slate-800 border border-slate-700 p-1.5 rounded-full text-slate-400">
                         <ChevronDown size={16} />
                     </div>
                 </div>
-
                 <div className="space-y-2">
                     <label className="text-xs font-bold text-slate-400 ml-1 uppercase">You Receive ($FLUID)</label>
                     <div className="relative">
@@ -378,8 +342,6 @@ const PresaleCard: React.FC = () => {
                     </div>
                 </div>
             </div>
-
-            {/* Action Button */}
             <div className="pt-2">
                 {!account ? (
                     <ConnectButton 
@@ -389,6 +351,12 @@ const PresaleCard: React.FC = () => {
                         connectButton={{
                             label: "Connect Wallet",
                             className: "!w-full !py-4 !rounded-xl !text-lg !font-bold !bg-gradient-to-r !from-orange-500 !to-amber-500 !text-white !border-none hover:!brightness-110 transition-all shadow-lg shadow-orange-500/20"
+                        }}
+                        appMetadata={{
+                          name: "Fluid",
+                          url: "https://fluid.chain",
+                          description: "Presale & Token Ecosystem",
+                          logoUrl: "https://cryptologos.cc/logos/ethereum-eth-logo.png"
                         }}
                     />
                 ) : !isAllowanceSufficient ? (
@@ -429,7 +397,6 @@ const PresaleCard: React.FC = () => {
                     </button>
                 )}
             </div>
-            
             {status === 'SUCCESS' && (
                 <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-3 animate-fade-in-up">
                     <Check size={18} className="text-emerald-500" />
@@ -443,8 +410,6 @@ const PresaleCard: React.FC = () => {
                 </div>
             )}
         </div>
-
-        {/* Security Confirmation Modal */}
         {showSecurityModal && (
           <div className="absolute inset-0 z-50 bg-slate-950/98 backdrop-blur-2xl flex flex-col p-6 animate-fade-in-up">
               <div className="flex justify-between items-center mb-6">
@@ -456,10 +421,7 @@ const PresaleCard: React.FC = () => {
                       <X size={24} />
                   </button>
               </div>
-
               <div className="space-y-6 flex-grow overflow-y-auto pr-2 custom-scrollbar">
-                  
-                  {/* Simulation Report */}
                   {simulationResult && (
                       <div className={`p-4 rounded-2xl border ${
                           simulationResult.riskLevel === 'HIGH' ? 'bg-red-500/10 border-red-500/30' :
@@ -487,14 +449,12 @@ const PresaleCard: React.FC = () => {
                           )}
                       </div>
                   )}
-
                   <div className="p-4 bg-orange-500/10 border border-orange-500/20 rounded-2xl flex gap-3">
                       <AlertTriangle className="text-orange-500 shrink-0" size={20} />
                       <p className="text-xs text-orange-200/90 leading-relaxed">
                         Warning: Blockchain transactions are <strong>permanent and irreversible</strong>. Fluid Protocol cannot refund mistaken payments.
                       </p>
                   </div>
-
                   <div className="space-y-5">
                       <label className="flex gap-4 cursor-pointer group select-none">
                           <input 
@@ -508,7 +468,6 @@ const PresaleCard: React.FC = () => {
                               <span className="text-slate-500 group-hover:text-slate-400 transition-colors">I accept that Fluid is non-custodial and I am responsible for my own security.</span>
                           </div>
                       </label>
-
                       <label className="flex gap-4 cursor-pointer group select-none">
                           <input 
                             type="checkbox" 
@@ -521,7 +480,6 @@ const PresaleCard: React.FC = () => {
                               <span className="text-slate-500 group-hover:text-slate-400 transition-colors">I am aware of the volatility and risks associated with early-stage crypto presales.</span>
                           </div>
                       </label>
-
                       <label className="flex gap-4 cursor-pointer group select-none">
                           <input 
                             type="checkbox" 
@@ -534,7 +492,6 @@ const PresaleCard: React.FC = () => {
                               <span className="text-slate-500 group-hover:text-slate-400 transition-colors">I verified that I am on the <strong>{selectedPayment.network}</strong> network for this <strong>{selectedPayment.symbol}</strong> payment.</span>
                           </div>
                       </label>
-
                       <label className="flex gap-4 cursor-pointer group select-none">
                           <input 
                             type="checkbox" 
@@ -549,7 +506,6 @@ const PresaleCard: React.FC = () => {
                       </label>
                   </div>
               </div>
-
               <div className="pt-6 mt-6 border-t border-white/10">
                   <div className="mb-4 flex justify-between items-center text-[10px] font-bold text-slate-500 uppercase px-1">
                       <span>Network Gas Fee</span>

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { ArrowRight, Shield, Globe, Zap, CreditCard, LayoutDashboard, Coins } from 'lucide-react';
+import { ArrowRight, Shield, Globe, Zap, CreditCard, LayoutDashboard, Coins, TrendingUp } from 'lucide-react';
 
 interface HomeProps {
   onNavigate: (page: string) => void;
@@ -61,7 +61,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
       <section className="max-w-7xl mx-auto px-4 py-20">
         <h2 className="text-3xl font-black text-center mb-16 text-slate-900 dark:text-white">Integrated Ecosystem</h2>
         
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
           {/* Card 1: Wallet */}
           <div onClick={() => onNavigate('wallet')} className="group p-8 rounded-[2.5rem] bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 transition-all cursor-pointer relative overflow-hidden">
             <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
@@ -100,6 +100,20 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             <p className="text-slate-600 dark:text-slate-400 mb-6">Spend your crypto instantly worldwide with virtual and physical cards.</p>
             <span className="text-emerald-500 font-bold flex items-center gap-2 text-sm group-hover:gap-3 transition-all">Order Card <ArrowRight size={16} /></span>
           </div>
+
+          {/* Card 4: Protocol Economy */}
+          <div onClick={() => onNavigate('economics')} className="group p-8 rounded-[2.5rem] bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 hover:border-amber-500/50 transition-all cursor-pointer relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
+              <TrendingUp size={100} />
+            </div>
+            <div className="w-14 h-14 bg-amber-500/10 rounded-2xl flex items-center justify-center mb-6 text-amber-500">
+              <TrendingUp size={28} />
+            </div>
+            <h3 className="text-2xl font-bold mb-3 text-slate-900 dark:text-white">Protocol Economy</h3>
+            <p className="text-slate-600 dark:text-slate-400 mb-6">Endowment-based yield generation with deflationary halving mechanics.</p>
+            <span className="text-amber-500 font-bold flex items-center gap-2 text-sm group-hover:gap-3 transition-all">View Tokenomics <ArrowRight size={16} /></span>
+          </div>
+
         </div>
       </section>
 

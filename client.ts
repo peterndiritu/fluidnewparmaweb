@@ -1,3 +1,4 @@
+
 import { createThirdwebClient } from "thirdweb";
 import { inAppWallet, createWallet } from "thirdweb/wallets";
 
@@ -12,5 +13,7 @@ export const wallets = [
   createWallet("io.metamask"),
   createWallet("com.coinbase.wallet"),
   createWallet("me.rainbow"),
+  createWallet("io.rabby"),
+  createWallet("com.trustwallet.app"),
   createWallet("walletConnect"),
 ];
