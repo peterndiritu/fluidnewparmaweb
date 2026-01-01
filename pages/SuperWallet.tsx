@@ -12,7 +12,7 @@ import {
   QrCode, ChevronDown, Repeat, Settings, User, Mail, 
   FileText, HelpCircle, Edit3, Camera, ToggleLeft, ToggleRight,
   Eye, EyeOff, Timer, KeyRound, Map, Palette, Trash2, Snowflake,
-  Coffee, Car, Tv, ShoppingBag, ArrowDownCircle, Sparkles
+  Coffee, Car, Tv, ShoppingBag, ArrowDownCircle, Sparkles, Maximize2
 } from 'lucide-react';
 
 // --- Components ---
@@ -110,11 +110,16 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   // Functionality State
-  const [swapFrom, setSwapFrom] = useState(INITIAL_ASSETS[2]); // ETH (index changed due to BTC insertion)
+  const [swapFrom, setSwapFrom] = useState(INITIAL_ASSETS[2]); // ETH
   const [swapTo, setSwapTo] = useState(INITIAL_ASSETS[0]); // FLD
   const [swapAmount, setSwapAmount] = useState('');
   const [isSwapping, setIsSwapping] = useState(false);
   
+  // Asset Selection State for Swap
+  const [showAssetSelector, setShowAssetSelector] = useState(false);
+  const [selectorSide, setSelectorSide] = useState<'from' | 'to'>('from');
+  const [assetSearchQuery, setAssetSearchQuery] = useState('');
+
   const [sendAddress, setSendAddress] = useState('');
   const [sendAmount, setSendAmount] = useState('');
   const [isSending, setIsSending] = useState(false);
@@ -152,6 +157,10 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
       }
   }, [initialView]);
 
+  // Derived state for swap
+  const swapExchangeRate = (swapFrom.price || 0) / (swapTo.price || 1);
+  const swapOutputAmount = swapAmount ? (parseFloat(swapAmount) * swapExchangeRate).toFixed(6) : '0.0';
+
   const totalBalance = assets.filter(a => a.visible).reduce((acc, asset) => acc + (asset.balance * (asset.price || 0)), 0);
   const totalFiat = fiatAssets.reduce((acc, asset) => acc + (asset.symbol === 'USD' ? asset.balance : asset.balance / 1.1), 0);
 
@@ -163,14 +172,70 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
     }, 1500);
   };
 
+  const handleOpenAssetSelector = (side: 'from' | 'to') => {
+      setSelectorSide(side);
+      setAssetSearchQuery('');
+      setShowAssetSelector(true);
+  };
+
+  const handleSelectAsset = (asset: any) => {
+      if (selectorSide === 'from') {
+          if (asset.id === swapTo.id) {
+              setSwapTo(swapFrom);
+          }
+          setSwapFrom(asset);
+      } else {
+          if (asset.id === swapFrom.id) {
+              setSwapFrom(swapTo);
+          }
+          setSwapTo(asset);
+      }
+      setShowAssetSelector(false);
+  };
+
+  const handleFlipAssets = () => {
+      setSwapFrom(swapTo);
+      setSwapTo(swapFrom);
+      setSwapAmount('');
+  };
+
+  const handleMaxSwap = () => {
+      setSwapAmount(swapFrom.balance.toString());
+  };
+
   const handleSwap = () => {
-      if (!swapAmount) return;
+      const amount = parseFloat(swapAmount);
+      if (!amount || amount <= 0) return;
+      if (amount > swapFrom.balance) {
+          alert('Insufficient balance');
+          return;
+      }
+
       setIsSwapping(true);
       setTimeout(() => {
+          const output = parseFloat(swapOutputAmount);
+          
+          // Update Global State
+          setAssets(prev => prev.map(a => {
+              if (a.id === swapFrom.id) return { ...a, balance: a.balance - amount };
+              if (a.id === swapTo.id) return { ...a, balance: a.balance + output };
+              return a;
+          }));
+
+          // Update Local Refs for UI consistency if needed (though global state update triggers re-render)
+          // Ensure the local swapFrom/swapTo objects reflect the new balance if they are just refs to INITIAL_ASSETS
+          setSwapFrom(prev => ({ ...prev, balance: prev.balance - amount }));
+          setSwapTo(prev => ({ ...prev, balance: prev.balance + output }));
+
           setIsSwapping(false);
           setSwapAmount('');
-          alert(`Swapped ${swapAmount} ${swapFrom.symbol} to ${swapTo.symbol}`);
-          setNotifications(prev => [{id: Date.now(), title: 'Swap Successful', message: `Swapped ${swapAmount} ${swapFrom.symbol}`, time: 'Just now', type: 'success'}, ...prev]);
+          setNotifications(prev => [{
+              id: Date.now(), 
+              title: 'Swap Successful', 
+              message: `Swapped ${amount} ${swapFrom.symbol} to ${output.toFixed(4)} ${swapTo.symbol}`, 
+              time: 'Just now', 
+              type: 'success'
+          }, ...prev]);
       }, 2000);
   };
 
@@ -564,23 +629,126 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                             <h2 className="text-xl font-bold text-white">Swap Assets</h2>
                         </div>
                         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 relative">
+                            {/* FROM SECTION */}
                             <div className="p-4 bg-slate-950 rounded-2xl mb-2">
-                                <div className="flex justify-between text-xs text-slate-500 mb-2"><span>Pay</span><span>Bal: {swapFrom.balance}</span></div>
+                                <div className="flex justify-between text-xs text-slate-500 mb-2">
+                                    <span>Pay</span>
+                                    <span className="flex items-center gap-1 cursor-pointer hover:text-blue-400" onClick={handleMaxSwap}>
+                                        Bal: {swapFrom.balance.toFixed(4)} <Maximize2 size={10} />
+                                    </span>
+                                </div>
                                 <div className="flex items-center justify-between">
-                                    <input type="number" placeholder="0.0" value={swapAmount} onChange={(e) => setSwapAmount(e.target.value)} className="bg-transparent text-2xl font-bold text-white w-24 outline-none placeholder-slate-600" />
-                                    <button className="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700"><span className={`font-bold ${swapFrom.color}`}>{swapFrom.symbol}</span><ChevronDown size={14} className="text-slate-400"/></button>
+                                    <input 
+                                        type="number" 
+                                        placeholder="0.0" 
+                                        value={swapAmount} 
+                                        onChange={(e) => setSwapAmount(e.target.value)} 
+                                        className="bg-transparent text-2xl font-bold text-white w-24 outline-none placeholder-slate-600" 
+                                    />
+                                    <button 
+                                        onClick={() => handleOpenAssetSelector('from')}
+                                        className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-full border border-slate-700 transition-colors"
+                                    >
+                                        <span className={`font-bold ${swapFrom.color}`}>{swapFrom.symbol}</span>
+                                        <ChevronDown size={14} className="text-slate-400"/>
+                                    </button>
                                 </div>
                             </div>
-                            <div className="flex justify-center -my-5 relative z-10"><div className="bg-slate-800 p-2 rounded-xl border border-slate-700 shadow-xl cursor-pointer hover:rotate-180 transition-transform"><ArrowDown size={16} className="text-purple-400" /></div></div>
+
+                            {/* FLIP BUTTON */}
+                            <div className="flex justify-center -my-5 relative z-10">
+                                <div 
+                                    onClick={handleFlipAssets}
+                                    className="bg-slate-800 p-2 rounded-xl border border-slate-700 shadow-xl cursor-pointer hover:rotate-180 transition-transform hover:bg-slate-700"
+                                >
+                                    <ArrowDown size={16} className="text-purple-400" />
+                                </div>
+                            </div>
+
+                            {/* TO SECTION */}
                             <div className="p-4 bg-slate-950 rounded-2xl mt-2">
-                                <div className="flex justify-between text-xs text-slate-500 mb-2"><span>Receive</span><span>Bal: {swapTo.balance}</span></div>
+                                <div className="flex justify-between text-xs text-slate-500 mb-2">
+                                    <span>Receive</span>
+                                    <span>Bal: {swapTo.balance.toFixed(4)}</span>
+                                </div>
                                 <div className="flex items-center justify-between">
-                                    <span className="text-2xl font-bold text-slate-400">{swapAmount ? (parseFloat(swapAmount) * 1.05).toFixed(4) : '0.0'}</span>
-                                    <button className="flex items-center gap-2 bg-slate-800 px-3 py-1.5 rounded-full border border-slate-700"><span className={`font-bold ${swapTo.color}`}>{swapTo.symbol}</span><ChevronDown size={14} className="text-slate-400"/></button>
+                                    <span className="text-2xl font-bold text-slate-400">
+                                        {swapOutputAmount}
+                                    </span>
+                                    <button 
+                                        onClick={() => handleOpenAssetSelector('to')}
+                                        className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-full border border-slate-700 transition-colors"
+                                    >
+                                        <span className={`font-bold ${swapTo.color}`}>{swapTo.symbol}</span>
+                                        <ChevronDown size={14} className="text-slate-400"/>
+                                    </button>
                                 </div>
                             </div>
                         </div>
-                        <button disabled={!swapAmount || isSwapping} onClick={handleSwap} className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-2xl shadow-lg shadow-purple-900/20 disabled:opacity-50 flex items-center justify-center gap-2">{isSwapping ? <Loader2 className="animate-spin" size={20} /> : <RefreshCw size={20} />}{isSwapping ? 'Swapping...' : 'Swipe to Swap'}</button>
+
+                        <div className="flex justify-between px-2 text-xs font-medium text-slate-500">
+                            <span>Rate</span>
+                            <span>1 {swapFrom.symbol} ≈ {swapExchangeRate.toFixed(4)} {swapTo.symbol}</span>
+                        </div>
+
+                        <button 
+                            disabled={!swapAmount || isSwapping} 
+                            onClick={handleSwap} 
+                            className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-2xl shadow-lg shadow-purple-900/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                        >
+                            {isSwapping ? <Loader2 className="animate-spin" size={20} /> : <RefreshCw size={20} />}
+                            {isSwapping ? 'Swapping...' : 'Swipe to Swap'}
+                        </button>
+                    </div>
+                )}
+
+                {/* --- ASSET SELECTOR MODAL --- */}
+                {showAssetSelector && (
+                    <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-sm z-50 animate-fade-in-up flex flex-col p-6">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-bold text-white">Select Asset</h3>
+                            <button onClick={() => setShowAssetSelector(false)} className="p-2 bg-slate-900 rounded-full text-slate-400 hover:text-white">
+                                <X size={20} />
+                            </button>
+                        </div>
+                        <div className="relative mb-4">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                            <input 
+                                type="text" 
+                                placeholder="Search assets..." 
+                                value={assetSearchQuery}
+                                onChange={(e) => setAssetSearchQuery(e.target.value)}
+                                className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-purple-500"
+                            />
+                        </div>
+                        <div className="flex-grow overflow-y-auto custom-scrollbar space-y-2">
+                            {assets
+                                .filter(a => 
+                                    a.name.toLowerCase().includes(assetSearchQuery.toLowerCase()) || 
+                                    a.symbol.toLowerCase().includes(assetSearchQuery.toLowerCase())
+                                )
+                                .map((asset) => (
+                                <button 
+                                    key={asset.id}
+                                    onClick={() => handleSelectAsset(asset)}
+                                    className="w-full flex items-center justify-between p-3 rounded-xl hover:bg-slate-900 border border-transparent hover:border-slate-800 transition-all group"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className={`w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center font-bold text-sm ${asset.color}`}>
+                                            {asset.symbol[0]}
+                                        </div>
+                                        <div className="text-left">
+                                            <div className="text-white font-bold">{asset.name}</div>
+                                            <div className="text-xs text-slate-500">{asset.symbol}</div>
+                                        </div>
+                                    </div>
+                                    <div className="text-right">
+                                        <div className="text-white font-bold text-sm">{asset.balance.toFixed(4)}</div>
+                                        <div className="text-xs text-slate-500">${asset.price}</div>
+                                    </div>
+                                </button>
+                            ))}
+                        </div>
                     </div>
                 )}
 
