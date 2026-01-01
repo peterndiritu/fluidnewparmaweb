@@ -691,8 +691,17 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                                         <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border mb-1 inline-block ${selectedCard.text === 'text-slate-900' ? 'border-slate-900/30 text-slate-900' : 'border-white/30 text-white'}`}>
                                             {selectedCard.type}
                                         </span>
-                                        <div className="text-2xl font-bold">
-                                            {showBalance ? '$' + selectedCard.balance.toLocaleString() : '****'}
+                                        <div 
+                                            className="flex items-center justify-end gap-2 cursor-pointer group"
+                                            onClick={(e) => { e.stopPropagation(); setShowBalance(!showBalance); }}
+                                            title="Toggle Balance"
+                                        >
+                                            <div className="text-2xl font-bold">
+                                                {showBalance ? '$' + selectedCard.balance.toLocaleString() : '****'}
+                                            </div>
+                                            <div className={`opacity-60 group-hover:opacity-100 transition-opacity ${selectedCard.text === 'text-slate-900' ? 'text-slate-900' : 'text-white'}`}>
+                                                {showBalance ? <Eye size={16} /> : <EyeOff size={16} />}
+                                            </div>
                                         </div>
                                         <div className="text-[10px] opacity-70 uppercase font-bold">Balance</div>
                                     </div>
