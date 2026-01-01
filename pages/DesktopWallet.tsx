@@ -1,84 +1,66 @@
-
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
-  LayoutDashboard, Wallet, ArrowRightLeft, CreditCard, Globe, 
-  Settings, LogOut, Bell, Search, TrendingUp, ArrowUpRight, 
-  ArrowDownLeft, RefreshCw, Zap, Plus, Lock, History, ChevronRight,
-  Smartphone, ChevronDown, Key, ArrowRight, X,
-  ShieldCheck, PieChart, User, AlertTriangle, Copy, CheckCircle2,
-  MapPin, Truck, ScanEye, ShieldAlert, Loader2, Check,
-  Server, HardDrive, Cloud, Code2, ExternalLink, Activity, Wifi,
-  Landmark, Phone, Banknote
+  Loader2, Lock, LayoutDashboard, Wallet, CreditCard, 
+  Globe, Settings, LogOut, ChevronRight, Bell, Search, 
+  TrendingUp, ArrowUpRight, ArrowDownLeft, Copy, Server,
+  Activity, HardDrive, ShieldCheck, Eye, EyeOff, Snowflake, ScanEye
 } from 'lucide-react';
+
+const FluidLogo = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M45 22H80C83.3137 22 86 24.6863 86 28V32C86 35.3137 83.3137 38 80 38H40L45 22Z" fill="currentColor" />
+    <path d="M30 44H70C73.3137 44 76 46.6863 76 50V54C76 57.3137 73.3137 60 70 60H25L30 44Z" fill="currentColor" />
+    <path d="M15 66H60C63.3137 66 66 68.6863 66 72V76C66 79.3137 83.3137 82 60 82H10L15 66Z" fill="currentColor" />
+  </svg>
+);
+
+interface NavItemProps {
+    id: string;
+    icon: React.ElementType;
+    label: string;
+    activeTab: string;
+    setActiveTab: (id: string) => void;
+}
+const NavItem = ({ id, icon: Icon, label, activeTab, setActiveTab }: NavItemProps) => (
+    <button 
+        onClick={() => setActiveTab(id)}
+        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl transition-all ${
+            activeTab === id 
+            ? 'bg-purple-600 text-white shadow-lg shadow-purple-500/20' 
+            : 'text-slate-400 hover:text-white hover:bg-white/5'
+        }`}
+    >
+        <Icon size={20} />
+        <span className="font-medium">{label}</span>
+    </button>
+);
 
 interface DesktopWalletProps {
   onNavigate: (page: string) => void;
 }
 
-// Initial Mock Data
-const INITIAL_ASSETS = [
-  { id: 'fld', symbol: 'FLD', name: 'Fluid', balance: 45200, price: 0.5, color: 'text-purple-400' },
-  { id: 'eth', symbol: 'ETH', name: 'Ethereum', balance: 4.20, price: 2450.00, color: 'text-blue-400' },
-  { id: 'sol', symbol: 'SOL', name: 'Solana', balance: 145.5, price: 150.00, color: 'text-emerald-400' },
-  { id: 'usdt', symbol: 'USDT', name: 'Tether', balance: 5000, price: 1.00, color: 'text-slate-400' },
-];
-
-const INITIAL_TRANSACTIONS = [
-  { id: 1, type: 'Sent', asset: 'USDT', amount: '200.00', date: 'Today, 14:30', status: 'Completed', icon: ArrowUpRight },
-  { id: 2, type: 'Received', asset: 'ETH', amount: '1.5', date: 'Yesterday, 09:15', status: 'Completed', icon: ArrowDownLeft },
-  { id: 3, type: 'Swapped', asset: 'FLD', amount: '5000', date: 'Oct 24, 2023', status: 'Completed', icon: RefreshCw },
-  { id: 4, type: 'Deposit', asset: 'USD', amount: '1,000.00', date: 'Yesterday, 18:20', status: 'Completed', icon: Landmark },
-];
-
-const INITIAL_NOTIFICATIONS = [
-  { id: 1, title: 'Staking Reward', message: 'You received 45.2 FLD', time: '2m ago', type: 'success' },
-  { id: 2, title: 'Security Alert', message: 'New login from Mac OS X', time: '1h ago', type: 'warning' },
-  { id: 3, title: 'System Update', message: 'Fluid Node v2.1 is live', time: '1d ago', type: 'info' },
-];
-
-const FluidLogo = ({ className }: { className?: string }) => (
-  <svg viewBox="0 0 100 100" className={className} fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path d="M48 20 H78 C83.5 20 88 24.5 88 30 C88 35.5 83.5 40 78 40 H38 L48 20 Z" fill="currentColor" />
-    <path d="M35 45 H65 C70.5 45 75 49.5 75 55 C75 60.5 70.5 65 65 65 H25 L35 45 Z" fill="currentColor" />
-    <path d="M22 70 H52 C57.5 70 62 74.5 62 80 C62 85.5 57.5 90 52 90 H12 L22 70 Z" fill="currentColor" />
-  </svg>
-);
-
-const MOCK_CARDS = [
-    { id: 1, type: 'Virtual', name: 'Fluid Black', number: '**** 4829', balance: 5000, color: 'bg-slate-900', border: 'border-slate-800' },
-    { id: 2, type: 'Physical', name: 'Fluid Steel', number: '**** 9921', balance: 1200, color: 'bg-slate-700', border: 'border-slate-600' }
-];
-
-const NavItem: React.FC<{ id: string; icon: any; label: string; activeTab: string; setActiveTab: (id: string) => void }> = ({ id, icon: Icon, label, activeTab, setActiveTab }) => (
-  <button 
-    onClick={() => setActiveTab(id)}
-    className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl font-medium transition-all duration-200 ${
-      activeTab === id 
-      ? 'bg-purple-500/10 text-purple-400 border border-purple-500/20' 
-      : 'text-slate-400 hover:text-white hover:bg-white/5'
-    }`}
-  >
-    <Icon size={20} />
-    <span>{label}</span>
-  </button>
-);
-
 const DesktopWallet: React.FC<DesktopWalletProps> = ({ onNavigate }) => {
-  const [activeTab, setActiveTab] = useState('dashboard');
   const [isLocked, setIsLocked] = useState(true);
   const [password, setPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [notifications, setNotifications] = useState(INITIAL_NOTIFICATIONS);
-
-  const totalBalance = INITIAL_ASSETS.reduce((acc, asset) => acc + (asset.balance * asset.price), 0);
+  const [activeTab, setActiveTab] = useState('dashboard');
+  const [showCardNumber, setShowCardNumber] = useState(false);
+  const [showCvv, setShowCvv] = useState(false);
 
   const handleLogin = () => {
     setIsLoading(true);
     setTimeout(() => {
-      setIsLocked(false);
-      setIsLoading(false);
-    }, 1000);
+        setIsLoading(false);
+        setIsLocked(false);
+    }, 1500);
   };
+
+  const assets = [
+    { name: 'Bitcoin', symbol: 'BTC', price: 64230, balance: 0.45, change: 2.4, color: 'bg-orange-500' },
+    { name: 'Ethereum', symbol: 'ETH', price: 3450, balance: 4.2, change: -1.2, color: 'bg-indigo-500' },
+    { name: 'Fluid', symbol: 'FLD', price: 0.85, balance: 15000, change: 5.7, color: 'bg-emerald-500' },
+    { name: 'Solana', symbol: 'SOL', price: 145, balance: 120, change: 0.8, color: 'bg-purple-500' },
+  ];
 
   if (isLocked) {
     return (
@@ -90,7 +72,7 @@ const DesktopWallet: React.FC<DesktopWalletProps> = ({ onNavigate }) => {
               <FluidLogo className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-white mb-2">Welcome Back</h1>
-            <p className="text-slate-400">Enter your password to access Fluid Vault</p>
+            <p className="text-slate-400">Enter your password to access Fluid Dapp</p>
           </div>
 
           <div className="space-y-4">
@@ -109,7 +91,7 @@ const DesktopWallet: React.FC<DesktopWalletProps> = ({ onNavigate }) => {
                 className="w-full bg-white text-slate-900 font-bold rounded-xl py-3.5 hover:bg-slate-200 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
              >
                 {isLoading ? <Loader2 className="animate-spin" size={20} /> : <Lock size={20} />}
-                Unlock Vault
+                Unlock Dapp
              </button>
              <div className="flex justify-between items-center mt-6">
                 <button className="text-sm text-slate-500 hover:text-white transition-colors">Forgot Password?</button>
@@ -130,7 +112,7 @@ const DesktopWallet: React.FC<DesktopWalletProps> = ({ onNavigate }) => {
              <div className="w-10 h-10 bg-gradient-to-tr from-purple-500 to-blue-500 rounded-xl flex items-center justify-center shadow-lg">
                 <FluidLogo className="w-6 h-6 text-white" />
              </div>
-             <span className="text-xl font-bold tracking-tight">Fluid Vault</span>
+             <span className="text-xl font-bold tracking-tight">Fluid Dapp</span>
          </div>
 
          <nav className="flex-grow p-4 space-y-2">
@@ -148,93 +130,183 @@ const DesktopWallet: React.FC<DesktopWalletProps> = ({ onNavigate }) => {
              </button>
          </div>
       </aside>
-
+      
       {/* Main Content */}
-      <main className="flex-grow flex flex-col h-screen overflow-hidden">
-         {/* Top Bar */}
-         <header className="h-16 border-b border-slate-800 flex justify-between items-center px-8 bg-slate-900/50 backdrop-blur-sm">
-             <h2 className="text-xl font-bold text-white capitalize">{activeTab}</h2>
-             <div className="flex items-center gap-6">
-                 <div className="flex items-center gap-3 bg-slate-900 border border-slate-700 rounded-full px-4 py-1.5">
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                    <span className="text-xs font-bold text-slate-300">Mainnet</span>
-                 </div>
-                 <div className="relative">
-                    <Bell size={20} className="text-slate-400 hover:text-white cursor-pointer" />
-                    {notifications.length > 0 && <div className="absolute -top-1 -right-1 w-2 h-2 bg-purple-500 rounded-full"></div>}
-                 </div>
-                 <div className="w-8 h-8 rounded-full bg-slate-800 border border-slate-700 flex items-center justify-center">
-                    <User size={16} className="text-slate-400" />
-                 </div>
-             </div>
-         </header>
+      <main className="flex-grow flex flex-col bg-slate-950">
+          {/* Header */}
+          <header className="h-20 border-b border-slate-800 flex items-center justify-between px-8 bg-slate-950/50 backdrop-blur-sm sticky top-0 z-10">
+              <div className="flex items-center gap-4 flex-1">
+                  <div className="relative w-full max-w-md">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                      <input 
+                         type="text" 
+                         placeholder="Search assets, transactions, or settings..." 
+                         className="w-full bg-slate-900 border border-slate-800 rounded-xl py-2.5 pl-10 pr-4 text-sm focus:outline-none focus:border-purple-500 transition-all text-white placeholder-slate-500"
+                      />
+                  </div>
+              </div>
+              
+              <div className="flex items-center gap-4">
+                   <button className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white hover:bg-slate-800 transition-all relative">
+                      <Bell size={20} />
+                      <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full border-2 border-slate-900"></span>
+                   </button>
+                   <div className="flex items-center gap-3 pl-4 border-l border-slate-800">
+                      <div className="text-right">
+                          <div className="text-sm font-bold text-white">Alexander Fluid</div>
+                          <div className="text-xs text-slate-500">Tier 1 • Verified</div>
+                      </div>
+                      <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-purple-500 to-blue-500 p-0.5">
+                         <img src="https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=100&auto=format&fit=crop" className="w-full h-full rounded-[10px] object-cover bg-slate-900" alt="Avatar" />
+                      </div>
+                   </div>
+              </div>
+          </header>
 
-         {/* Scrollable Area */}
-         <div className="flex-grow overflow-y-auto p-8 custom-scrollbar">
-            
-            {/* DASHBOARD TAB */}
-            {activeTab === 'dashboard' && (
-                <div className="max-w-6xl mx-auto space-y-8">
-                    <div className="grid grid-cols-3 gap-6">
-                        <div className="col-span-2 p-8 bg-gradient-to-br from-indigo-900 to-purple-900 rounded-3xl border border-white/10 relative overflow-hidden shadow-2xl">
-                           <div className="absolute top-0 right-0 p-12 opacity-10"><Wallet size={200} /></div>
-                           <h3 className="text-slate-300 font-medium mb-2">Total Balance</h3>
-                           <div className="text-5xl font-black text-white mb-6">${totalBalance.toLocaleString()}</div>
-                           <div className="flex gap-4">
-                               <button className="px-6 py-3 bg-white text-slate-900 rounded-xl font-bold hover:bg-slate-200 transition-colors">Deposit</button>
-                               <button className="px-6 py-3 bg-white/10 text-white border border-white/20 rounded-xl font-bold hover:bg-white/20 transition-colors">Send</button>
-                           </div>
+          {/* View Container */}
+          <div className="flex-grow overflow-y-auto p-8">
+             <div className="max-w-6xl mx-auto space-y-8 animate-fade-in-up">
+                
+                {/* --- DASHBOARD & ASSETS VIEW --- */}
+                {(activeTab === 'dashboard' || activeTab === 'assets') && (
+                    <>
+                        <div className="grid grid-cols-3 gap-6">
+                            <div className="col-span-2 p-8 rounded-3xl bg-gradient-to-br from-indigo-600 to-purple-800 relative overflow-hidden shadow-2xl">
+                                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+                                <div className="flex justify-between items-start mb-8 relative z-10">
+                                    <div><p className="text-indigo-200 font-medium mb-1">Total Balance</p><h2 className="text-5xl font-black text-white tracking-tight">$42,593.45</h2></div>
+                                    <div className="px-3 py-1.5 bg-white/20 backdrop-blur-md rounded-lg flex items-center gap-1.5 text-white font-bold text-sm"><TrendingUp size={16} /> +5.2%</div>
+                                </div>
+                                <div className="flex gap-4 relative z-10">
+                                    <button className="px-6 py-3 bg-white text-indigo-900 rounded-xl font-bold hover:bg-indigo-50 transition-colors flex items-center gap-2"><ArrowDownLeft size={18} /> Deposit</button>
+                                    <button className="px-6 py-3 bg-indigo-500/50 hover:bg-indigo-500/70 text-white border border-white/20 rounded-xl font-bold transition-all flex items-center gap-2"><ArrowUpRight size={18} /> Send</button>
+                                </div>
+                            </div>
+                            <div className="p-6 rounded-3xl bg-slate-900 border border-slate-800 flex flex-col justify-between">
+                                <div className="flex justify-between items-center mb-4"><h3 className="font-bold text-white">Your Card</h3><button onClick={() => setActiveTab('cards')} className="text-purple-400 text-sm font-medium hover:text-purple-300">Manage</button></div>
+                                <div className="flex-grow bg-gradient-to-br from-slate-800 to-slate-900 rounded-2xl p-5 border border-slate-700/50 relative overflow-hidden group">
+                                    <div className="absolute bottom-4 left-5 z-10"><div className="text-xs text-slate-400 mb-1">Fluid Black</div><div className="font-mono text-white text-lg tracking-widest">**** 4289</div></div>
+                                    <FluidLogo className="absolute -right-4 -bottom-4 w-32 h-32 text-slate-800 group-hover:text-purple-900/20 transition-colors" />
+                                </div>
+                            </div>
                         </div>
-                        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
-                           <h3 className="font-bold text-white mb-4">Quick Actions</h3>
-                           <div className="grid grid-cols-2 gap-4">
-                              <button onClick={() => setActiveTab('cards')} className="p-4 bg-slate-950 border border-slate-800 rounded-xl hover:border-purple-500/50 transition-all flex flex-col items-center gap-2">
-                                  <CreditCard className="text-purple-400" />
-                                  <span className="text-sm font-bold">Cards</span>
-                              </button>
-                              <button onClick={() => setActiveTab('host')} className="p-4 bg-slate-950 border border-slate-800 rounded-xl hover:border-blue-500/50 transition-all flex flex-col items-center gap-2">
-                                  <Globe className="text-blue-400" />
-                                  <span className="text-sm font-bold">Host</span>
-                              </button>
-                           </div>
-                        </div>
-                    </div>
-                </div>
-            )}
 
-            {/* CARDS TAB - Simple Grid */}
-            {activeTab === 'cards' && (
-                <div className="max-w-6xl mx-auto">
-                    <div className="flex justify-between items-center mb-8">
-                        <h2 className="text-2xl font-bold text-white">Your Cards</h2>
-                        <button className="px-6 py-2 bg-purple-600 rounded-xl text-white font-bold hover:bg-purple-500 transition-colors flex items-center gap-2">
-                            <Plus size={18} /> Add New
-                        </button>
-                    </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {MOCK_CARDS.map(card => (
-                            <div key={card.id} className={`aspect-[1.58/1] rounded-3xl ${card.color} border ${card.border} p-6 flex flex-col justify-between relative overflow-hidden group hover:scale-[1.02] transition-transform shadow-xl`}>
+                        <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden">
+                            <div className="p-6 border-b border-slate-800 flex justify-between items-center"><h3 className="font-bold text-white text-lg">Assets</h3></div>
+                            <table className="w-full text-left">
+                                <thead><tr className="border-b border-slate-800/50 text-slate-500 text-sm"><th className="px-6 py-4 font-medium">Asset</th><th className="px-6 py-4 font-medium">Price</th><th className="px-6 py-4 font-medium">Balance</th><th className="px-6 py-4 font-medium">Value</th><th className="px-6 py-4 font-medium text-right">Change (24h)</th></tr></thead>
+                                <tbody className="divide-y divide-slate-800/50">
+                                    {assets.map((asset, i) => (
+                                        <tr key={i} className="hover:bg-slate-800/50 transition-colors group">
+                                            <td className="px-6 py-4"><div className="flex items-center gap-3"><div className={`w-10 h-10 rounded-xl ${asset.color} flex items-center justify-center text-white font-bold`}>{asset.symbol[0]}</div><div><div className="font-bold text-white">{asset.name}</div><div className="text-xs text-slate-500">{asset.symbol}</div></div></div></td>
+                                            <td className="px-6 py-4 text-white font-medium">${asset.price.toLocaleString()}</td>
+                                            <td className="px-6 py-4 text-white font-medium">{asset.balance.toLocaleString()} {asset.symbol}</td>
+                                            <td className="px-6 py-4 text-white font-bold">${(asset.balance * asset.price).toLocaleString()}</td>
+                                            <td className={`px-6 py-4 text-right font-bold ${asset.change >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>{asset.change > 0 ? '+' : ''}{asset.change}%</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
+                )}
+
+                {/* --- CARDS VIEW --- */}
+                {activeTab === 'cards' && (
+                    <div className="grid grid-cols-2 gap-8">
+                        <div className="space-y-6">
+                            <h2 className="text-2xl font-bold text-white">Your Cards</h2>
+                            <div className="aspect-[1.58/1] rounded-3xl bg-slate-900 border border-slate-800 relative overflow-hidden p-8 shadow-2xl">
                                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
-                                <div className="absolute -bottom-10 -left-10 opacity-10">
-                                    <FluidLogo className="w-48 h-48" />
-                                </div>
-                                <div className="relative z-10 flex justify-between items-start">
-                                    <FluidLogo className="w-8 h-8 text-white" />
-                                    <span className="text-xs font-bold uppercase border px-2 py-1 rounded border-white/20">{card.type}</span>
-                                </div>
-                                <div className="relative z-10 text-white">
-                                    <div className="font-mono text-xl tracking-widest mb-2">{card.number}</div>
-                                    <div className="flex justify-between items-end">
-                                        <span className="text-sm opacity-80">{card.name}</span>
-                                        <span className="font-bold">${card.balance}</span>
+                                <div className="relative z-10 flex flex-col justify-between h-full">
+                                    <div className="flex justify-between items-start"><div className="flex items-center gap-2"><FluidLogo className="w-8 h-8 text-white" /><span className="font-bold text-2xl italic tracking-tight">Fluid</span></div><span className="bg-white/10 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Virtual</span></div>
+                                    <div>
+                                        <div className="flex items-center gap-4 mb-6">
+                                            <div className="font-mono text-3xl tracking-widest text-white">{showCardNumber ? '4829 1029 4829 4829' : '**** **** **** 4829'}</div>
+                                            <button onClick={() => setShowCardNumber(!showCardNumber)} className="p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors">{showCardNumber ? <EyeOff size={20}/> : <Eye size={20}/>}</button>
+                                        </div>
+                                        <div className="flex justify-between items-end">
+                                            <div>
+                                                <div className="text-xs uppercase text-slate-400 mb-1 font-bold">Card Holder</div>
+                                                <div className="font-bold text-lg text-white">ALEXANDER FLUID</div>
+                                            </div>
+                                            <div className="text-right flex gap-6">
+                                                <div>
+                                                    <div className="text-xs uppercase text-slate-400 mb-1 font-bold text-right">Expires</div>
+                                                    <div className="font-bold text-lg text-white">12/28</div>
+                                                </div>
+                                                <div>
+                                                    <div className="text-xs uppercase text-slate-400 mb-1 font-bold text-right">CVV</div>
+                                                    <div className="font-bold text-lg text-white">{showCvv ? '123' : '•••'}</div>
+                                                </div>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        ))}
+                            <div className="flex gap-4">
+                                <button className="flex-1 py-4 bg-slate-900 border border-slate-800 rounded-xl font-bold text-slate-400 hover:text-white hover:border-slate-700 flex items-center justify-center gap-2 transition-all"><Snowflake size={18}/> Freeze Card</button>
+                                <button onClick={() => setShowCvv(!showCvv)} className="flex-1 py-4 bg-slate-900 border border-slate-800 rounded-xl font-bold text-slate-400 hover:text-white hover:border-slate-700 flex items-center justify-center gap-2 transition-all">
+                                    {showCvv ? <EyeOff size={18}/> : <ScanEye size={18}/>} 
+                                    {showCvv ? 'Hide CVV' : 'Show CVV'}
+                                </button>
+                                <button className="flex-1 py-4 bg-slate-900 border border-slate-800 rounded-xl font-bold text-slate-400 hover:text-white hover:border-slate-700 flex items-center justify-center gap-2 transition-all"><Settings size={18}/> Settings</button>
+                            </div>
+                        </div>
+                        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
+                            <h3 className="font-bold text-white mb-6">Transaction History</h3>
+                            <div className="space-y-4">
+                                {[
+                                    { name: 'Uber Trip', date: 'Today, 2:30 PM', amount: -24.50 },
+                                    { name: 'Starbucks', date: 'Today, 9:15 AM', amount: -5.40 },
+                                    { name: 'Apple Store', date: 'Oct 20', amount: -1299.00 },
+                                    { name: 'Netflix', date: 'Oct 15', amount: -14.99 },
+                                ].map((tx, i) => (
+                                    <div key={i} className="flex items-center justify-between p-3 rounded-xl hover:bg-slate-800/50 transition-colors">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-400"><CreditCard size={18}/></div>
+                                            <div><div className="font-bold text-white text-sm">{tx.name}</div><div className="text-xs text-slate-500">{tx.date}</div></div>
+                                        </div>
+                                        <div className="font-bold text-white">{tx.amount.toFixed(2)}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
                     </div>
-                </div>
-            )}
-         </div>
+                )}
+
+                {/* --- HOST VIEW --- */}
+                {activeTab === 'host' && (
+                    <div className="space-y-6">
+                        <div className="grid grid-cols-3 gap-6">
+                            <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl"><div className="flex items-center gap-3 mb-2 text-indigo-400"><HardDrive size={24}/><span className="font-bold">Storage Used</span></div><div className="text-4xl font-black text-white">45.2 MB</div><div className="text-xs text-slate-500 mt-2">of Unlimited</div></div>
+                            <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl"><div className="flex items-center gap-3 mb-2 text-emerald-400"><Activity size={24}/><span className="font-bold">Uptime</span></div><div className="text-4xl font-black text-white">100%</div><div className="text-xs text-slate-500 mt-2">Last 30 days</div></div>
+                            <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl"><div className="flex items-center gap-3 mb-2 text-blue-400"><Globe size={24}/><span className="font-bold">Visitors</span></div><div className="text-4xl font-black text-white">12.5k</div><div className="text-xs text-slate-500 mt-2">+12% vs last month</div></div>
+                        </div>
+                        <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden">
+                            <div className="p-6 border-b border-slate-800 flex justify-between items-center"><h3 className="font-bold text-white text-lg">Active Deployments</h3><button className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-bold transition-colors">New Deployment</button></div>
+                            <div className="p-6 space-y-4">
+                                <div className="flex items-center justify-between p-4 bg-slate-950/50 border border-slate-800 rounded-xl">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-500"><Server size={20}/></div>
+                                        <div><div className="font-bold text-white">Personal Portfolio</div><div className="text-xs text-blue-400 hover:underline cursor-pointer">fluid://alex.fluid</div></div>
+                                    </div>
+                                    <div className="flex items-center gap-4"><span className="flex items-center gap-2 text-xs font-bold text-emerald-400 bg-emerald-400/10 px-2 py-1 rounded"><div className="w-2 h-2 rounded-full bg-emerald-400"></div> Online</span><ChevronRight size={18} className="text-slate-500"/></div>
+                                </div>
+                                <div className="flex items-center justify-between p-4 bg-slate-950/50 border border-slate-800 rounded-xl">
+                                    <div className="flex items-center gap-4">
+                                        <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500"><Server size={20}/></div>
+                                        <div><div className="font-bold text-white">Fluid DEX Interface</div><div className="text-xs text-blue-400 hover:underline cursor-pointer">fluid://dex.fluid</div></div>
+                                    </div>
+                                    <div className="flex items-center gap-4"><span className="flex items-center gap-2 text-xs font-bold text-amber-400 bg-amber-400/10 px-2 py-1 rounded"><div className="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></div> Syncing</span><ChevronRight size={18} className="text-slate-500"/></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+             </div>
+          </div>
       </main>
     </div>
   );

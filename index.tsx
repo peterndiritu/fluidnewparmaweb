@@ -1,8 +1,8 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import App from "./App";
-import { ThirdwebProvider } from "thirdweb/react";
-import { ThemeProvider } from "./context/ThemeContext";
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import App from './App';
+import { ThirdwebProvider } from 'thirdweb/react';
+import { ThemeProvider } from './context/ThemeContext';
 
 const rootElement = document.getElementById('root');
 if (!rootElement) {
