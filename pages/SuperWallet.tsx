@@ -300,7 +300,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
   const handleRegenerateCvv = (e: React.MouseEvent) => {
       e.stopPropagation();
       if (selectedCard?.isFrozen) {
-          alert("Card is frozen.");
+          alert("Card is frozen. Cannot rotate security code.");
           return;
       }
       // Generate new 3-digit CVV
@@ -699,8 +699,8 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                                                 <div className="text-[10px] uppercase opacity-70 mb-0.5">CVV</div>
                                                 <div 
                                                     onClick={showCvv ? handleRegenerateCvv : undefined}
-                                                    className={`font-bold text-sm font-mono flex items-center gap-1 ${showCvv ? 'cursor-pointer hover:text-blue-400 transition-colors' : ''}`}
-                                                    title={showCvv ? "Tap to regenerate" : ""}
+                                                    className={`font-bold text-sm font-mono flex items-center gap-1 ${showCvv ? 'cursor-pointer hover:text-blue-400 active:scale-95 transition-all' : ''}`}
+                                                    title={showCvv ? "Tap to rotate CVV" : "Hidden"}
                                                 >
                                                     {showCvv ? selectedCard.cvv : '***'}
                                                     {showCvv && <RefreshCw size={10} className="opacity-70" />}
