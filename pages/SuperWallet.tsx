@@ -205,14 +205,14 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
 
   const handleDeleteCard = () => {
       if (!selectedCard) return;
-      if (window.confirm(`Are you sure you want to delete your ${selectedCard.name}?`)) {
+      if (window.confirm(`Are you sure you want to delete your ${selectedCard.name} (${selectedCard.type})?`)) {
           setIsDeleting(true);
           setTimeout(() => {
               setCards(prev => prev.filter(c => c.id !== selectedCard.id));
               setSelectedCard(null);
               setView('cards');
               setIsDeleting(false);
-              setNotifications(prev => [{id: Date.now(), title: 'Card Deleted', message: `${selectedCard.name} removed`, time: 'Just now', type: 'success'}, ...prev]);
+              setNotifications(prev => [{id: Date.now(), title: 'Card Deleted', message: `${selectedCard.type} card removed`, time: 'Just now', type: 'success'}, ...prev]);
           }, 1500);
       }
   };
@@ -558,12 +558,17 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
                                 {/* Huge Visible Fluid Logo on Plate */}
                                 <div className={`absolute -bottom-12 -right-12 w-64 h-64 opacity-10 transform rotate-12 pointer-events-none ${card.text === 'text-slate-900' ? 'text-slate-900' : 'text-white'}`}>
-                                    <FluidLogo className="w-full h-full fill-current" />
+                                    <FluidLogo className="w-full h-full fill-current animate-pulse" />
                                 </div>
                                 
                                 {card.isFrozen && <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] z-20 flex items-center justify-center"><div className="bg-white/10 border border-white/20 px-4 py-2 rounded-xl flex items-center gap-2 text-white font-bold uppercase tracking-widest text-sm backdrop-blur-md shadow-xl"><Snowflake size={16} /> Frozen</div></div>}
                                 <div className={`relative z-10 p-5 flex flex-col justify-between h-full ${card.text || 'text-white'}`}>
-                                    <div className="flex justify-between items-start"><div className="flex items-center gap-1.5"><FluidLogo className="w-5 h-5 text-current" /><span className="font-bold text-lg tracking-tight italic">Fluid</span></div></div>
+                                    <div className="flex justify-between items-start">
+                                        <div className="flex items-center gap-1.5"><FluidLogo className="w-5 h-5 text-current" /><span className="font-bold text-lg tracking-tight italic">Fluid</span></div>
+                                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${card.text === 'text-slate-900' ? 'border-slate-900/30 text-slate-900' : 'border-white/30 text-white'}`}>
+                                            {card.type}
+                                        </span>
+                                    </div>
                                     <div>
                                         <div className="text-2xl font-bold mb-2 tracking-wide">
                                             {showBalance ? '$' + card.balance.toLocaleString() : '****'}
@@ -617,7 +622,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                              <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
                              {/* WATERMARK */}
                              <div className={`absolute -bottom-10 -right-10 opacity-10 rotate-12 pointer-events-none transform scale-110 ${selectedCardTier.text === 'text-slate-900' ? 'text-slate-900' : 'text-white'}`}>
-                                <FluidLogo className="w-48 h-48" />
+                                <FluidLogo className="w-48 h-48 animate-pulse" />
                              </div>
                              <div className={`relative z-10 flex flex-col justify-between h-full ${selectedCardTier.text}`}>
                                 <div className="flex justify-between items-start">
@@ -666,17 +671,26 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                 {/* --- CARD DETAILS VIEW --- */}
                 {view === 'card_details' && selectedCard && (
                     <div className="space-y-6 animate-fade-in-up">
-                        <div className="flex items-center gap-4 mb-4"><button onClick={() => setView('cards')} className="p-2 rounded-full bg-slate-900 text-slate-400 hover:text-white"><ChevronLeft size={20}/></button><h2 className="text-xl font-bold text-white">Card Management</h2></div>
+                        <div className="flex items-center gap-4 mb-4">
+                            <button onClick={() => setView('cards')} className="p-2 rounded-full bg-slate-900 text-slate-400 hover:text-white"><ChevronLeft size={20}/></button>
+                            <div>
+                                <h2 className="text-xl font-bold text-white leading-none">Manage Card</h2>
+                                <span className={`text-xs font-bold uppercase tracking-wider ${selectedCard.type === 'Virtual' ? 'text-blue-400' : 'text-emerald-400'}`}>{selectedCard.type} Card</span>
+                            </div>
+                        </div>
                         <div className={`relative aspect-[1.58/1] rounded-2xl ${selectedCard.color} border ${selectedCard.border} shadow-2xl overflow-hidden p-6 ${selectedCard.text || 'text-white'}`}>
                             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
                             {/* Logo Background in Details too */}
                             <div className={`absolute -bottom-12 -right-12 w-64 h-64 opacity-10 transform rotate-12 pointer-events-none ${selectedCard.text === 'text-slate-900' ? 'text-slate-900' : 'text-white'}`}>
-                                <FluidLogo className="w-full h-full fill-current" />
+                                <FluidLogo className="w-full h-full fill-current animate-pulse" />
                             </div>
                             <div className="relative z-10 flex flex-col justify-between h-full">
                                 <div className="flex justify-between items-start">
                                     <div className="flex items-center gap-2"><FluidLogo className="w-6 h-6 text-current" /><span className="font-bold text-lg italic">Fluid</span></div>
                                     <div className="text-right">
+                                        <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border mb-1 inline-block ${selectedCard.text === 'text-slate-900' ? 'border-slate-900/30 text-slate-900' : 'border-white/30 text-white'}`}>
+                                            {selectedCard.type}
+                                        </span>
                                         <div className="text-2xl font-bold">
                                             {showBalance ? '$' + selectedCard.balance.toLocaleString() : '****'}
                                         </div>
