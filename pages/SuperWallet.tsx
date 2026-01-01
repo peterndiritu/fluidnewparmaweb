@@ -12,7 +12,7 @@ import {
   QrCode, ChevronDown, Repeat, Settings, User, Mail, 
   FileText, HelpCircle, Edit3, Camera, ToggleLeft, ToggleRight,
   Eye, EyeOff, Timer, KeyRound, Map, Palette, Trash2, Snowflake,
-  Coffee, Car, Tv, ShoppingBag, ArrowDownCircle, Sparkles, Maximize2
+  Coffee, Car, Tv, ShoppingBag, ArrowDownCircle, Sparkles, Maximize2, Check
 } from 'lucide-react';
 
 // --- Components ---
@@ -60,6 +60,13 @@ const INITIAL_ASSETS = [
 const FIAT_ASSETS = [
   { id: 'usd', symbol: 'USD', name: 'US Dollar', balance: 2500.00, price: 1.00, color: 'text-emerald-500', flag: '🇺🇸', type: 'fiat' },
   { id: 'eur', symbol: 'EUR', name: 'Euro', balance: 140.50, price: 1.10, color: 'text-blue-500', flag: '🇪🇺', type: 'fiat' },
+];
+
+const NETWORKS = [
+  { id: 'eth', name: 'Ethereum', symbol: 'ETH', color: 'bg-blue-600', textColor: 'text-blue-400' },
+  { id: 'sol', name: 'Solana', symbol: 'SOL', color: 'bg-emerald-500', textColor: 'text-emerald-400' },
+  { id: 'bsc', name: 'BNB Smart Chain', symbol: 'BSC', color: 'bg-yellow-500', textColor: 'text-yellow-400' },
+  { id: 'poly', name: 'Polygon', symbol: 'MATIC', color: 'bg-purple-600', textColor: 'text-purple-400' },
 ];
 
 const MOCK_CARDS = [
@@ -115,14 +122,19 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
   const [swapAmount, setSwapAmount] = useState('');
   const [isSwapping, setIsSwapping] = useState(false);
   
-  // Asset Selection State for Swap
+  // Asset Selection State for Swap/Action
   const [showAssetSelector, setShowAssetSelector] = useState(false);
-  const [selectorSide, setSelectorSide] = useState<'from' | 'to'>('from');
+  const [showNetworkSelector, setShowNetworkSelector] = useState(false);
+  const [selectorSide, setSelectorSide] = useState<'from' | 'to' | 'deposit' | 'withdraw' | 'send'>('from');
   const [assetSearchQuery, setAssetSearchQuery] = useState('');
 
-  const [sendAddress, setSendAddress] = useState('');
-  const [sendAmount, setSendAmount] = useState('');
-  const [isSending, setIsSending] = useState(false);
+  // Action State (Deposit/Withdraw/Send)
+  const [actionAsset, setActionAsset] = useState(INITIAL_ASSETS[2]); // Default ETH
+  const [actionNetwork, setActionNetwork] = useState(NETWORKS[0]); // Default Ethereum
+  const [actionAddress, setActionAddress] = useState('');
+  const [actionAmount, setActionAmount] = useState('');
+  const [isProcessingAction, setIsProcessingAction] = useState(false);
+  const [copiedAddress, setCopiedAddress] = useState(false);
 
   // Card Management
   const [showFullNumber, setShowFullNumber] = useState(false);
@@ -172,7 +184,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
     }, 1500);
   };
 
-  const handleOpenAssetSelector = (side: 'from' | 'to') => {
+  const handleOpenAssetSelector = (side: 'from' | 'to' | 'deposit' | 'withdraw' | 'send') => {
       setSelectorSide(side);
       setAssetSearchQuery('');
       setShowAssetSelector(true);
@@ -180,17 +192,24 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
 
   const handleSelectAsset = (asset: any) => {
       if (selectorSide === 'from') {
-          if (asset.id === swapTo.id) {
-              setSwapTo(swapFrom);
-          }
+          if (asset.id === swapTo.id) setSwapTo(swapFrom);
           setSwapFrom(asset);
-      } else {
-          if (asset.id === swapFrom.id) {
-              setSwapFrom(swapTo);
-          }
+      } else if (selectorSide === 'to') {
+          if (asset.id === swapFrom.id) setSwapFrom(swapTo);
           setSwapTo(asset);
+      } else if (['deposit', 'withdraw', 'send'].includes(selectorSide)) {
+          setActionAsset(asset);
+          // Auto-select network if implied (simplified logic)
+          if (asset.symbol === 'SOL') setActionNetwork(NETWORKS.find(n => n.id === 'sol') || NETWORKS[0]);
+          else if (asset.symbol === 'BNB') setActionNetwork(NETWORKS.find(n => n.id === 'bsc') || NETWORKS[0]);
+          else setActionNetwork(NETWORKS[0]); // Default ETH
       }
       setShowAssetSelector(false);
+  };
+
+  const handleSelectNetwork = (network: any) => {
+      setActionNetwork(network);
+      setShowNetworkSelector(false);
   };
 
   const handleFlipAssets = () => {
@@ -201,6 +220,10 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
 
   const handleMaxSwap = () => {
       setSwapAmount(swapFrom.balance.toString());
+  };
+
+  const handleMaxAction = () => {
+      setActionAmount(actionAsset.balance.toString());
   };
 
   const handleSwap = () => {
@@ -214,41 +237,68 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
       setIsSwapping(true);
       setTimeout(() => {
           const output = parseFloat(swapOutputAmount);
-          
-          // Update Global State
           setAssets(prev => prev.map(a => {
               if (a.id === swapFrom.id) return { ...a, balance: a.balance - amount };
               if (a.id === swapTo.id) return { ...a, balance: a.balance + output };
               return a;
           }));
-
-          // Update Local Refs for UI consistency if needed (though global state update triggers re-render)
-          // Ensure the local swapFrom/swapTo objects reflect the new balance if they are just refs to INITIAL_ASSETS
           setSwapFrom(prev => ({ ...prev, balance: prev.balance - amount }));
           setSwapTo(prev => ({ ...prev, balance: prev.balance + output }));
-
           setIsSwapping(false);
           setSwapAmount('');
-          setNotifications(prev => [{
-              id: Date.now(), 
-              title: 'Swap Successful', 
-              message: `Swapped ${amount} ${swapFrom.symbol} to ${output.toFixed(4)} ${swapTo.symbol}`, 
-              time: 'Just now', 
-              type: 'success'
-          }, ...prev]);
+          setNotifications(prev => [{id: Date.now(), title: 'Swap Successful', message: `Swapped ${amount} ${swapFrom.symbol} to ${output.toFixed(4)} ${swapTo.symbol}`, time: 'Just now', type: 'success'}, ...prev]);
       }, 2000);
   };
 
   const handleSend = () => {
-      if (!sendAmount || !sendAddress) return;
-      setIsSending(true);
+      const amount = parseFloat(actionAmount);
+      if (!amount || !actionAddress) return;
+      if (amount > actionAsset.balance) {
+          alert('Insufficient balance');
+          return;
+      }
+      
+      setIsProcessingAction(true);
       setTimeout(() => {
-          setIsSending(false);
-          setSendAmount('');
-          setSendAddress('');
+          setAssets(prev => prev.map(a => a.id === actionAsset.id ? { ...a, balance: a.balance - amount } : a));
+          setActionAsset(prev => ({ ...prev, balance: prev.balance - amount }));
+          setIsProcessingAction(false);
+          setActionAmount('');
+          setActionAddress('');
           setView('assets');
-          setNotifications(prev => [{id: Date.now(), title: 'Transfer Sent', message: `Sent to ${sendAddress.slice(0,6)}...`, time: 'Just now', type: 'success'}, ...prev]);
+          setNotifications(prev => [{id: Date.now(), title: 'Transfer Sent', message: `Sent ${amount} ${actionAsset.symbol} to ${actionAddress.slice(0,6)}... on ${actionNetwork.name}`, time: 'Just now', type: 'success'}, ...prev]);
       }, 2000);
+  };
+
+  const handleWithdraw = () => {
+      const amount = parseFloat(actionAmount);
+      if (!amount || !actionAddress) return;
+      if (amount > actionAsset.balance) {
+          alert('Insufficient balance');
+          return;
+      }
+
+      setIsProcessingAction(true);
+      setTimeout(() => {
+          setAssets(prev => prev.map(a => a.id === actionAsset.id ? { ...a, balance: a.balance - amount } : a));
+          setActionAsset(prev => ({ ...prev, balance: prev.balance - amount }));
+          setIsProcessingAction(false);
+          setActionAmount('');
+          setActionAddress('');
+          setView('assets');
+          setNotifications(prev => [{id: Date.now(), title: 'Withdrawal Successful', message: `Withdrew ${amount} ${actionAsset.symbol}`, time: 'Just now', type: 'success'}, ...prev]);
+      }, 2000);
+  };
+
+  const handleDepositCopy = () => {
+      // Generate a mock address based on network
+      const mockAddress = actionNetwork.id === 'sol' 
+        ? '5U3bKWc56bhTf7e...3d2F' 
+        : '0x71C7656EC7ab88...9F6A';
+      
+      navigator.clipboard.writeText(mockAddress);
+      setCopiedAddress(true);
+      setTimeout(() => setCopiedAddress(false), 2000);
   };
 
   const handleAddCard = () => {
@@ -547,10 +597,10 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                     </div>
 
                     <div className="grid grid-cols-4 gap-4">
-                         <button onClick={() => setView('deposit')} className="flex flex-col items-center gap-2 group"><div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-white group-hover:bg-purple-600 transition-all shadow-lg"><Plus size={20} /></div><span className="text-[10px] font-bold text-slate-400 group-hover:text-purple-400">Deposit</span></button>
-                         <button onClick={() => setView('withdraw')} className="flex flex-col items-center gap-2 group"><div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-white group-hover:bg-purple-600 transition-all shadow-lg"><LogOut size={20} className="-rotate-90" /></div><span className="text-[10px] font-bold text-slate-400 group-hover:text-purple-400">Withdraw</span></button>
+                         <button onClick={() => { setView('deposit'); setActionAmount(''); setActionAddress(''); }} className="flex flex-col items-center gap-2 group"><div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-white group-hover:bg-purple-600 transition-all shadow-lg"><Plus size={20} /></div><span className="text-[10px] font-bold text-slate-400 group-hover:text-purple-400">Deposit</span></button>
+                         <button onClick={() => { setView('withdraw'); setActionAmount(''); setActionAddress(''); }} className="flex flex-col items-center gap-2 group"><div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-white group-hover:bg-purple-600 transition-all shadow-lg"><LogOut size={20} className="-rotate-90" /></div><span className="text-[10px] font-bold text-slate-400 group-hover:text-purple-400">Withdraw</span></button>
                          <button onClick={() => setView('swap')} className="flex flex-col items-center gap-2 group"><div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-white group-hover:bg-purple-600 transition-all shadow-lg"><RefreshCw size={20} /></div><span className="text-[10px] font-bold text-slate-400 group-hover:text-purple-400">Swap</span></button>
-                         <button onClick={() => setView('send')} className="flex flex-col items-center gap-2 group"><div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-white group-hover:bg-purple-600 transition-all shadow-lg"><Send size={20} /></div><span className="text-[10px] font-bold text-slate-400 group-hover:text-purple-400">Send</span></button>
+                         <button onClick={() => { setView('send'); setActionAmount(''); setActionAddress(''); }} className="flex flex-col items-center gap-2 group"><div className="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center text-white group-hover:bg-purple-600 transition-all shadow-lg"><Send size={20} /></div><span className="text-[10px] font-bold text-slate-400 group-hover:text-purple-400">Send</span></button>
                     </div>
 
                     <div>
@@ -578,127 +628,223 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                   </div>
                 )}
 
-                {/* --- MANAGE ASSETS VIEW --- */}
-                {view === 'manage_assets' && (
+                {/* --- DEPOSIT VIEW --- */}
+                {view === 'deposit' && (
                     <div className="space-y-6 animate-fade-in-up">
                         <div className="flex items-center gap-4 mb-4">
                             <button onClick={() => setView('assets')} className="p-2 rounded-full bg-slate-900 text-slate-400 hover:text-white"><ChevronLeft size={20}/></button>
-                            <h2 className="text-xl font-bold text-white">Manage Assets</h2>
-                        </div>
-                        
-                        <div className="relative mb-6">
-                            <input 
-                                type="text" 
-                                placeholder="Search tokens..." 
-                                value={manageQuery}
-                                onChange={(e) => setManageQuery(e.target.value)}
-                                className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-purple-500 transition-colors"
-                            />
-                            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                            <h2 className="text-xl font-bold text-white">Deposit Assets</h2>
                         </div>
 
-                        <div className="space-y-2">
-                            {assets.filter(a => a.name.toLowerCase().includes(manageQuery.toLowerCase()) || a.symbol.toLowerCase().includes(manageQuery.toLowerCase())).map((asset) => (
-                                <div key={asset.id} className="flex items-center justify-between p-4 bg-slate-900/50 border border-slate-800 rounded-2xl">
-                                    <div className="flex items-center gap-4">
-                                        <div className={`w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-black text-xs ${asset.color} border border-white/5`}>
-                                            {asset.id === 'fld' ? <FluidLogo className="w-5 h-5 text-current" /> : asset.symbol[0]}
-                                        </div>
-                                        <div>
-                                            <div className="font-bold text-white text-sm">{asset.name}</div>
-                                            <div className="text-xs text-slate-500">{asset.symbol}</div>
-                                        </div>
-                                    </div>
-                                    <button 
-                                        onClick={() => toggleAssetVisibility(asset.id)}
-                                        className={`w-12 h-7 rounded-full p-1 transition-colors duration-200 ease-in-out ${asset.visible ? 'bg-purple-600' : 'bg-slate-700'}`}
-                                    >
-                                        <div className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform duration-200 ease-in-out ${asset.visible ? 'translate-x-5' : 'translate-x-0'}`}></div>
-                                    </button>
+                        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 flex flex-col items-center">
+                            {/* Asset Selection */}
+                            <button 
+                                onClick={() => handleOpenAssetSelector('deposit')}
+                                className="flex items-center gap-3 bg-slate-800 hover:bg-slate-700 px-4 py-3 rounded-2xl border border-slate-700 transition-all w-full mb-4"
+                            >
+                                <div className={`w-8 h-8 rounded-full bg-slate-900 flex items-center justify-center font-bold text-sm ${actionAsset.color}`}>
+                                    {actionAsset.symbol[0]}
                                 </div>
-                            ))}
+                                <div className="text-left flex-1">
+                                    <div className="text-xs text-slate-400 font-bold uppercase">Asset</div>
+                                    <div className="font-bold text-white">{actionAsset.name}</div>
+                                </div>
+                                <ChevronDown size={16} className="text-slate-400"/>
+                            </button>
+
+                            {/* Network Selection */}
+                            <button 
+                                onClick={() => setShowNetworkSelector(true)}
+                                className="flex items-center gap-3 bg-slate-800 hover:bg-slate-700 px-4 py-3 rounded-2xl border border-slate-700 transition-all w-full mb-8"
+                            >
+                                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold text-sm text-white ${actionNetwork.color}`}>
+                                    {actionNetwork.symbol[0]}
+                                </div>
+                                <div className="text-left flex-1">
+                                    <div className="text-xs text-slate-400 font-bold uppercase">Network</div>
+                                    <div className="font-bold text-white">{actionNetwork.name}</div>
+                                </div>
+                                <ChevronDown size={16} className="text-slate-400"/>
+                            </button>
+
+                            {/* QR Code Area */}
+                            <div className="bg-white p-4 rounded-3xl shadow-2xl mb-8">
+                                <QrCode size={160} className="text-slate-900" />
+                            </div>
+
+                            {/* Address Display */}
+                            <div className="w-full">
+                                <div className="text-xs text-slate-500 font-bold uppercase mb-2 text-center">Wallet Address</div>
+                                <button 
+                                    onClick={handleDepositCopy}
+                                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-4 flex items-center justify-between group hover:border-purple-500/50 transition-all"
+                                >
+                                    <span className="font-mono text-xs text-slate-400 truncate max-w-[200px]">
+                                        {actionNetwork.id === 'sol' ? '5U3bKWc56bhTf7e...3d2F' : '0x71C7656EC7ab88...9F6A'}
+                                    </span>
+                                    {copiedAddress ? <Check size={16} className="text-emerald-500" /> : <Copy size={16} className="text-slate-500 group-hover:text-white" />}
+                                </button>
+                            </div>
+
+                            <div className="mt-6 p-3 bg-orange-500/10 border border-orange-500/20 rounded-xl flex gap-3">
+                                <AlertTriangle className="text-orange-500 shrink-0" size={18} />
+                                <p className="text-xs text-orange-200/80 leading-relaxed">
+                                    Send only <strong>{actionAsset.symbol}</strong> ({actionNetwork.name}) to this address. Sending other assets may result in permanent loss.
+                                </p>
+                            </div>
                         </div>
                     </div>
                 )}
 
-                {/* --- SWAP VIEW --- */}
-                {view === 'swap' && (
+                {/* --- WITHDRAW VIEW --- */}
+                {view === 'withdraw' && (
                     <div className="space-y-6 animate-fade-in-up">
                         <div className="flex items-center gap-4 mb-4">
                             <button onClick={() => setView('assets')} className="p-2 rounded-full bg-slate-900 text-slate-400 hover:text-white"><ChevronLeft size={20}/></button>
-                            <h2 className="text-xl font-bold text-white">Swap Assets</h2>
+                            <h2 className="text-xl font-bold text-white">Withdraw Assets</h2>
                         </div>
-                        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-4 relative">
-                            {/* FROM SECTION */}
-                            <div className="p-4 bg-slate-950 rounded-2xl mb-2">
-                                <div className="flex justify-between text-xs text-slate-500 mb-2">
-                                    <span>Pay</span>
-                                    <span className="flex items-center gap-1 cursor-pointer hover:text-blue-400" onClick={handleMaxSwap}>
-                                        Bal: {swapFrom.balance.toFixed(4)} <Maximize2 size={10} />
-                                    </span>
+
+                        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
+                            {/* Asset Selection */}
+                            <label className="text-xs text-slate-500 font-bold uppercase mb-2 block">Asset</label>
+                            <button 
+                                onClick={() => handleOpenAssetSelector('withdraw')}
+                                className="flex items-center gap-3 bg-slate-950 px-4 py-3 rounded-xl border border-slate-800 mb-4 w-full"
+                            >
+                                <div className={`w-6 h-6 rounded-full bg-slate-900 flex items-center justify-center font-bold text-[10px] ${actionAsset.color}`}>
+                                    {actionAsset.symbol[0]}
                                 </div>
-                                <div className="flex items-center justify-between">
-                                    <input 
-                                        type="number" 
-                                        placeholder="0.0" 
-                                        value={swapAmount} 
-                                        onChange={(e) => setSwapAmount(e.target.value)} 
-                                        className="bg-transparent text-2xl font-bold text-white w-24 outline-none placeholder-slate-600" 
-                                    />
-                                    <button 
-                                        onClick={() => handleOpenAssetSelector('from')}
-                                        className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-full border border-slate-700 transition-colors"
-                                    >
-                                        <span className={`font-bold ${swapFrom.color}`}>{swapFrom.symbol}</span>
-                                        <ChevronDown size={14} className="text-slate-400"/>
-                                    </button>
+                                <span className="font-bold text-white flex-1 text-left">{actionAsset.name}</span>
+                                <ChevronDown size={14} className="text-slate-400"/>
+                            </button>
+
+                            {/* Network Selection */}
+                            <label className="text-xs text-slate-500 font-bold uppercase mb-2 block">Network</label>
+                            <button 
+                                onClick={() => setShowNetworkSelector(true)}
+                                className="flex items-center gap-3 bg-slate-950 px-4 py-3 rounded-xl border border-slate-800 mb-6 w-full"
+                            >
+                                <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] text-white ${actionNetwork.color}`}>
+                                    {actionNetwork.symbol[0]}
                                 </div>
+                                <span className="font-bold text-white flex-1 text-left">{actionNetwork.name}</span>
+                                <ChevronDown size={14} className="text-slate-400"/>
+                            </button>
+
+                            {/* Address Input */}
+                            <label className="text-xs text-slate-500 font-bold uppercase mb-2 block">Destination Address</label>
+                            <div className="flex items-center gap-2 bg-slate-950 p-3 rounded-xl border border-slate-800 mb-6 focus-within:border-purple-500 transition-colors">
+                                <input 
+                                    type="text" 
+                                    placeholder={`Enter ${actionNetwork.name} Address`} 
+                                    value={actionAddress} 
+                                    onChange={(e) => setActionAddress(e.target.value)} 
+                                    className="bg-transparent w-full text-sm text-white outline-none font-mono" 
+                                />
+                                <button className="text-purple-400 hover:text-white"><Scan size={18} /></button>
                             </div>
 
-                            {/* FLIP BUTTON */}
-                            <div className="flex justify-center -my-5 relative z-10">
-                                <div 
-                                    onClick={handleFlipAssets}
-                                    className="bg-slate-800 p-2 rounded-xl border border-slate-700 shadow-xl cursor-pointer hover:rotate-180 transition-transform hover:bg-slate-700"
+                            {/* Amount Input */}
+                            <label className="text-xs text-slate-500 font-bold uppercase mb-2 flex justify-between">
+                                <span>Amount</span>
+                                <span onClick={handleMaxAction} className="text-blue-400 cursor-pointer hover:text-blue-300">Max: {actionAsset.balance}</span>
+                            </label>
+                            <div className="relative mb-8">
+                                <input 
+                                    type="number" 
+                                    placeholder="0.00" 
+                                    value={actionAmount} 
+                                    onChange={(e) => setActionAmount(e.target.value)} 
+                                    className="w-full bg-transparent text-5xl font-black text-center text-white outline-none placeholder-slate-800" 
+                                />
+                                <span className="block text-center text-sm text-slate-500 mt-2 font-bold">{actionAsset.symbol}</span>
+                            </div>
+
+                            <button 
+                                disabled={!actionAmount || !actionAddress || isProcessingAction} 
+                                onClick={handleWithdraw} 
+                                className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-2xl shadow-lg shadow-purple-900/20 disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {isProcessingAction ? <Loader2 className="animate-spin" size={20}/> : <LogOut size={20} className="-rotate-90" />}
+                                {isProcessingAction ? 'Processing...' : 'Confirm Withdrawal'}
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* --- SEND VIEW --- */}
+                {view === 'send' && (
+                    <div className="space-y-6 animate-fade-in-up">
+                        <div className="flex items-center gap-4 mb-4">
+                            <button onClick={() => setView('assets')} className="p-2 rounded-full bg-slate-900 text-slate-400 hover:text-white"><ChevronLeft size={20}/></button>
+                            <h2 className="text-xl font-bold text-white">Send Crypto</h2>
+                        </div>
+                        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
+                           {/* Asset & Network Row */}
+                           <div className="flex gap-3 mb-6">
+                               <button 
+                                    onClick={() => handleOpenAssetSelector('send')}
+                                    className="flex-1 bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center gap-2 hover:border-slate-700"
                                 >
-                                    <ArrowDown size={16} className="text-purple-400" />
-                                </div>
-                            </div>
+                                    <div className={`w-6 h-6 rounded-full bg-slate-900 flex items-center justify-center font-bold text-[10px] ${actionAsset.color}`}>
+                                        {actionAsset.symbol[0]}
+                                    </div>
+                                    <div className="text-left overflow-hidden">
+                                        <div className="text-[9px] text-slate-500 uppercase font-bold">Asset</div>
+                                        <div className="text-xs font-bold text-white truncate">{actionAsset.symbol}</div>
+                                    </div>
+                                    <ChevronDown size={12} className="text-slate-500 ml-auto"/>
+                               </button>
+                               <button 
+                                    onClick={() => setShowNetworkSelector(true)}
+                                    className="flex-1 bg-slate-950 border border-slate-800 rounded-xl p-3 flex items-center gap-2 hover:border-slate-700"
+                                >
+                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center font-bold text-[10px] text-white ${actionNetwork.color}`}>
+                                        {actionNetwork.symbol[0]}
+                                    </div>
+                                    <div className="text-left overflow-hidden">
+                                        <div className="text-[9px] text-slate-500 uppercase font-bold">Network</div>
+                                        <div className="text-xs font-bold text-white truncate">{actionNetwork.name}</div>
+                                    </div>
+                                    <ChevronDown size={12} className="text-slate-500 ml-auto"/>
+                               </button>
+                           </div>
 
-                            {/* TO SECTION */}
-                            <div className="p-4 bg-slate-950 rounded-2xl mt-2">
-                                <div className="flex justify-between text-xs text-slate-500 mb-2">
-                                    <span>Receive</span>
-                                    <span>Bal: {swapTo.balance.toFixed(4)}</span>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                    <span className="text-2xl font-bold text-slate-400">
-                                        {swapOutputAmount}
-                                    </span>
-                                    <button 
-                                        onClick={() => handleOpenAssetSelector('to')}
-                                        className="flex items-center gap-2 bg-slate-800 hover:bg-slate-700 px-3 py-1.5 rounded-full border border-slate-700 transition-colors"
-                                    >
-                                        <span className={`font-bold ${swapTo.color}`}>{swapTo.symbol}</span>
-                                        <ChevronDown size={14} className="text-slate-400"/>
-                                    </button>
-                                </div>
-                            </div>
+                           <label className="text-xs text-slate-500 font-bold uppercase mb-2 block">Recipient Address</label>
+                           <div className="flex items-center gap-2 bg-slate-950 p-3 rounded-xl border border-slate-800 mb-6 focus-within:border-purple-500 transition-colors">
+                              <input 
+                                type="text" 
+                                placeholder="0x..." 
+                                value={actionAddress} 
+                                onChange={(e) => setActionAddress(e.target.value)} 
+                                className="bg-transparent w-full text-sm text-white outline-none font-mono" 
+                              />
+                              <button className="text-purple-400 hover:text-white"><Scan size={18} /></button>
+                           </div>
+                           
+                           <label className="text-xs text-slate-500 font-bold uppercase mb-2 flex justify-between">
+                                <span>Amount</span>
+                                <span onClick={handleMaxAction} className="text-blue-400 cursor-pointer hover:text-blue-300">Max: {actionAsset.balance}</span>
+                           </label>
+                           <div className="relative mb-8">
+                               <input 
+                                    type="number" 
+                                    placeholder="0.00" 
+                                    value={actionAmount} 
+                                    onChange={(e) => setActionAmount(e.target.value)} 
+                                    className="w-full bg-transparent text-5xl font-black text-center text-white outline-none placeholder-slate-800" 
+                                />
+                               <span className="block text-center text-sm text-slate-500 mt-2 font-bold">{actionAsset.symbol}</span>
+                           </div>
+                           <button 
+                                disabled={!actionAmount || !actionAddress || isProcessingAction} 
+                                onClick={handleSend} 
+                                className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-2xl shadow-lg disabled:opacity-50 flex items-center justify-center gap-2"
+                            >
+                                {isProcessingAction ? <Loader2 className="animate-spin" /> : <Send size={20} />}
+                                {isProcessingAction ? 'Sending...' : 'Confirm Send'}
+                            </button>
                         </div>
-
-                        <div className="flex justify-between px-2 text-xs font-medium text-slate-500">
-                            <span>Rate</span>
-                            <span>1 {swapFrom.symbol} ≈ {swapExchangeRate.toFixed(4)} {swapTo.symbol}</span>
-                        </div>
-
-                        <button 
-                            disabled={!swapAmount || isSwapping} 
-                            onClick={handleSwap} 
-                            className="w-full py-4 bg-purple-600 hover:bg-purple-500 text-white font-bold rounded-2xl shadow-lg shadow-purple-900/20 disabled:opacity-50 flex items-center justify-center gap-2"
-                        >
-                            {isSwapping ? <Loader2 className="animate-spin" size={20} /> : <RefreshCw size={20} />}
-                            {isSwapping ? 'Swapping...' : 'Swipe to Swap'}
-                        </button>
                     </div>
                 )}
 
@@ -752,25 +898,36 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                     </div>
                 )}
 
-                {/* --- SEND VIEW --- */}
-                {view === 'send' && (
-                    <div className="space-y-6 animate-fade-in-up">
-                        <div className="flex items-center gap-4 mb-4">
-                            <button onClick={() => setView('assets')} className="p-2 rounded-full bg-slate-900 text-slate-400 hover:text-white"><ChevronLeft size={20}/></button>
-                            <h2 className="text-xl font-bold text-white">Send Crypto</h2>
+                {/* --- NETWORK SELECTOR MODAL --- */}
+                {showNetworkSelector && (
+                    <div className="absolute inset-0 bg-slate-950/90 backdrop-blur-sm z-50 animate-fade-in-up flex flex-col p-6">
+                        <div className="flex items-center justify-between mb-6">
+                            <h3 className="text-xl font-bold text-white">Select Network</h3>
+                            <button onClick={() => setShowNetworkSelector(false)} className="p-2 bg-slate-900 rounded-full text-slate-400 hover:text-white">
+                                <X size={20} />
+                            </button>
                         </div>
-                        <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
-                           <label className="text-xs text-slate-500 font-bold uppercase mb-2 block">Recipient Address</label>
-                           <div className="flex items-center gap-2 bg-slate-950 p-3 rounded-xl border border-slate-800 mb-6 focus-within:border-purple-500 transition-colors">
-                              <input type="text" placeholder="0x..." value={sendAddress} onChange={(e) => setSendAddress(e.target.value)} className="bg-transparent w-full text-sm text-white outline-none font-mono" />
-                              <button className="text-purple-400 hover:text-white"><Scan size={18} /></button>
-                           </div>
-                           <label className="text-xs text-slate-500 font-bold uppercase mb-2 block">Amount</label>
-                           <div className="relative mb-8">
-                               <input type="number" placeholder="0.00" value={sendAmount} onChange={(e) => setSendAmount(e.target.value)} className="w-full bg-transparent text-5xl font-black text-center text-white outline-none placeholder-slate-800" />
-                               <span className="block text-center text-sm text-slate-500 mt-2 font-bold">ETH</span>
-                           </div>
-                           <button disabled={!sendAmount || !sendAddress || isSending} onClick={handleSend} className="w-full py-4 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-bold rounded-2xl shadow-lg disabled:opacity-50 flex items-center justify-center gap-2">{isSending ? <Loader2 className="animate-spin" /> : <Send size={20} />}{isSending ? 'Sending...' : 'Confirm Send'}</button>
+                        <div className="flex-grow overflow-y-auto custom-scrollbar space-y-2">
+                            {NETWORKS.map((network) => (
+                                <button 
+                                    key={network.id}
+                                    onClick={() => handleSelectNetwork(network)}
+                                    className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all ${
+                                        actionNetwork.id === network.id 
+                                        ? 'bg-slate-900 border-purple-500/50 shadow-lg shadow-purple-500/10' 
+                                        : 'bg-slate-950 border-slate-800 hover:border-slate-700'
+                                    }`}
+                                >
+                                    <div className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-white ${network.color}`}>
+                                        {network.symbol[0]}
+                                    </div>
+                                    <div className="text-left">
+                                        <div className="font-bold text-white text-lg">{network.name}</div>
+                                        <div className={`text-xs font-bold ${network.textColor}`}>{network.symbol} Mainnet</div>
+                                    </div>
+                                    {actionNetwork.id === network.id && <CheckCircle2 size={20} className="ml-auto text-purple-500" />}
+                                </button>
+                            ))}
                         </div>
                     </div>
                 )}
