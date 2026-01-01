@@ -3,7 +3,8 @@ import {
   Loader2, Lock, LayoutDashboard, Wallet, CreditCard, 
   Globe, Settings, LogOut, ChevronRight, Bell, Search, 
   TrendingUp, ArrowUpRight, ArrowDownLeft, Copy, Server,
-  Activity, HardDrive, ShieldCheck, Eye, EyeOff, Snowflake, ScanEye
+  Activity, HardDrive, ShieldCheck, Eye, EyeOff, Snowflake, 
+  ScanEye, Trash2, Plus
 } from 'lucide-react';
 
 const FluidLogo = ({ className }: { className?: string }) => (
@@ -46,6 +47,10 @@ const DesktopWallet: React.FC<DesktopWalletProps> = ({ onNavigate }) => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [showCardNumber, setShowCardNumber] = useState(false);
   const [showCvv, setShowCvv] = useState(false);
+  
+  // Card Deletion State
+  const [isDeletingCard, setIsDeletingCard] = useState(false);
+  const [isCardDeleted, setIsCardDeleted] = useState(false);
 
   const handleLogin = () => {
     setIsLoading(true);
@@ -53,6 +58,16 @@ const DesktopWallet: React.FC<DesktopWalletProps> = ({ onNavigate }) => {
         setIsLoading(false);
         setIsLocked(false);
     }, 1500);
+  };
+
+  const handleDeleteCard = () => {
+    if (window.confirm("Are you sure you want to delete this card? This action cannot be undone.")) {
+        setIsDeletingCard(true);
+        setTimeout(() => {
+            setIsCardDeleted(true);
+            setIsDeletingCard(false);
+        }, 1500);
+    }
   };
 
   const assets = [
@@ -216,42 +231,69 @@ const DesktopWallet: React.FC<DesktopWalletProps> = ({ onNavigate }) => {
                     <div className="grid grid-cols-2 gap-8">
                         <div className="space-y-6">
                             <h2 className="text-2xl font-bold text-white">Your Cards</h2>
-                            <div className="aspect-[1.58/1] rounded-3xl bg-slate-900 border border-slate-800 relative overflow-hidden p-8 shadow-2xl">
-                                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
-                                <div className="relative z-10 flex flex-col justify-between h-full">
-                                    <div className="flex justify-between items-start"><div className="flex items-center gap-2"><FluidLogo className="w-8 h-8 text-white" /><span className="font-bold text-2xl italic tracking-tight">Fluid</span></div><span className="bg-white/10 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Virtual</span></div>
-                                    <div>
-                                        <div className="flex items-center gap-4 mb-6">
-                                            <div className="font-mono text-3xl tracking-widest text-white">{showCardNumber ? '4829 1029 4829 4829' : '**** **** **** 4829'}</div>
-                                            <button onClick={() => setShowCardNumber(!showCardNumber)} className="p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors">{showCardNumber ? <EyeOff size={20}/> : <Eye size={20}/>}</button>
-                                        </div>
-                                        <div className="flex justify-between items-end">
+                            
+                            {isCardDeleted ? (
+                                <div className="aspect-[1.58/1] rounded-3xl bg-slate-900 border border-slate-800 border-dashed flex flex-col items-center justify-center p-8 text-center animate-fade-in-up">
+                                    <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center mb-4 text-slate-500">
+                                        <CreditCard size={32} />
+                                    </div>
+                                    <h3 className="text-white font-bold mb-2">No Active Cards</h3>
+                                    <p className="text-slate-500 text-sm mb-6">You have no active cards. Issue a new one to start spending.</p>
+                                    <button 
+                                        onClick={() => setIsCardDeleted(false)}
+                                        className="px-6 py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl font-bold transition-colors flex items-center gap-2"
+                                    >
+                                        <Plus size={18} /> Issue New Card
+                                    </button>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="aspect-[1.58/1] rounded-3xl bg-slate-900 border border-slate-800 relative overflow-hidden p-8 shadow-2xl">
+                                        <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+                                        <div className="relative z-10 flex flex-col justify-between h-full">
+                                            <div className="flex justify-between items-start"><div className="flex items-center gap-2"><FluidLogo className="w-8 h-8 text-white" /><span className="font-bold text-2xl italic tracking-tight">Fluid</span></div><span className="bg-white/10 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Virtual</span></div>
                                             <div>
-                                                <div className="text-xs uppercase text-slate-400 mb-1 font-bold">Card Holder</div>
-                                                <div className="font-bold text-lg text-white">ALEXANDER FLUID</div>
-                                            </div>
-                                            <div className="text-right flex gap-6">
-                                                <div>
-                                                    <div className="text-xs uppercase text-slate-400 mb-1 font-bold text-right">Expires</div>
-                                                    <div className="font-bold text-lg text-white">12/28</div>
+                                                <div className="flex items-center gap-4 mb-6">
+                                                    <div className="font-mono text-3xl tracking-widest text-white">{showCardNumber ? '4829 1029 4829 4829' : '**** **** **** 4829'}</div>
+                                                    <button onClick={() => setShowCardNumber(!showCardNumber)} className="p-2 rounded-full hover:bg-white/10 text-slate-400 hover:text-white transition-colors">{showCardNumber ? <EyeOff size={20}/> : <Eye size={20}/>}</button>
                                                 </div>
-                                                <div>
-                                                    <div className="text-xs uppercase text-slate-400 mb-1 font-bold text-right">CVV</div>
-                                                    <div className="font-bold text-lg text-white">{showCvv ? '123' : '•••'}</div>
+                                                <div className="flex justify-between items-end">
+                                                    <div>
+                                                        <div className="text-xs uppercase text-slate-400 mb-1 font-bold">Card Holder</div>
+                                                        <div className="font-bold text-lg text-white">ALEXANDER FLUID</div>
+                                                    </div>
+                                                    <div className="text-right flex gap-6">
+                                                        <div>
+                                                            <div className="text-xs uppercase text-slate-400 mb-1 font-bold text-right">Expires</div>
+                                                            <div className="font-bold text-lg text-white">12/28</div>
+                                                        </div>
+                                                        <div>
+                                                            <div className="text-xs uppercase text-slate-400 mb-1 font-bold text-right">CVV</div>
+                                                            <div className="font-bold text-lg text-white">{showCvv ? '123' : '•••'}</div>
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-                                </div>
-                            </div>
-                            <div className="flex gap-4">
-                                <button className="flex-1 py-4 bg-slate-900 border border-slate-800 rounded-xl font-bold text-slate-400 hover:text-white hover:border-slate-700 flex items-center justify-center gap-2 transition-all"><Snowflake size={18}/> Freeze Card</button>
-                                <button onClick={() => setShowCvv(!showCvv)} className="flex-1 py-4 bg-slate-900 border border-slate-800 rounded-xl font-bold text-slate-400 hover:text-white hover:border-slate-700 flex items-center justify-center gap-2 transition-all">
-                                    {showCvv ? <EyeOff size={18}/> : <ScanEye size={18}/>} 
-                                    {showCvv ? 'Hide CVV' : 'Show CVV'}
-                                </button>
-                                <button className="flex-1 py-4 bg-slate-900 border border-slate-800 rounded-xl font-bold text-slate-400 hover:text-white hover:border-slate-700 flex items-center justify-center gap-2 transition-all"><Settings size={18}/> Settings</button>
-                            </div>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <button className="py-4 bg-slate-900 border border-slate-800 rounded-xl font-bold text-slate-400 hover:text-white hover:border-slate-700 flex items-center justify-center gap-2 transition-all"><Snowflake size={18}/> Freeze Card</button>
+                                        <button onClick={() => setShowCvv(!showCvv)} className="py-4 bg-slate-900 border border-slate-800 rounded-xl font-bold text-slate-400 hover:text-white hover:border-slate-700 flex items-center justify-center gap-2 transition-all">
+                                            {showCvv ? <EyeOff size={18}/> : <ScanEye size={18}/>} 
+                                            {showCvv ? 'Hide' : 'Show CVV'}
+                                        </button>
+                                        <button className="py-4 bg-slate-900 border border-slate-800 rounded-xl font-bold text-slate-400 hover:text-white hover:border-slate-700 flex items-center justify-center gap-2 transition-all"><Settings size={18}/> Settings</button>
+                                        <button 
+                                            onClick={handleDeleteCard}
+                                            disabled={isDeletingCard}
+                                            className="py-4 bg-slate-900 border border-slate-800 rounded-xl font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 hover:border-red-500/30 flex items-center justify-center gap-2 transition-all"
+                                        >
+                                            {isDeletingCard ? <Loader2 size={18} className="animate-spin"/> : <Trash2 size={18}/>} 
+                                            Delete
+                                        </button>
+                                    </div>
+                                </>
+                            )}
                         </div>
                         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6">
                             <h3 className="font-bold text-white mb-6">Transaction History</h3>

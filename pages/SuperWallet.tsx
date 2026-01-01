@@ -44,13 +44,17 @@ interface FluidWalletAppProps {
   initialView?: string;
 }
 
-type ViewState = 'locked' | 'assets' | 'swap' | 'cards' | 'host' | 'send' | 'receive' | 'deposit' | 'withdraw' | 'add_card' | 'settings' | 'profile' | 'card_details' | 'load_card';
+type ViewState = 'locked' | 'assets' | 'swap' | 'cards' | 'host' | 'send' | 'receive' | 'deposit' | 'withdraw' | 'add_card' | 'settings' | 'profile' | 'card_details' | 'load_card' | 'manage_assets';
 
 const INITIAL_ASSETS = [
-  { id: 'fld', symbol: 'FLD', name: 'Fluid', balance: 45200, price: 0.5, color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20', type: 'crypto' },
-  { id: 'eth', symbol: 'ETH', name: 'Ethereum', balance: 4.20, price: 2450.00, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', type: 'crypto' },
-  { id: 'sol', symbol: 'SOL', name: 'Solana', balance: 145.5, price: 150.00, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', type: 'crypto' },
-  { id: 'usdt', symbol: 'USDT', name: 'Tether', balance: 5000, price: 1.00, color: 'text-slate-400', bg: 'bg-slate-500/10', border: 'border-slate-500/20', type: 'crypto' },
+  { id: 'fld', symbol: 'FLD', name: 'Fluid', balance: 45200, price: 0.5, color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20', type: 'crypto', visible: true },
+  { id: 'btc', symbol: 'BTC', name: 'Bitcoin', balance: 0, price: 64200.00, color: 'text-orange-500', bg: 'bg-orange-500/10', border: 'border-orange-500/20', type: 'crypto', visible: false },
+  { id: 'eth', symbol: 'ETH', name: 'Ethereum', balance: 4.20, price: 2450.00, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', type: 'crypto', visible: true },
+  { id: 'sol', symbol: 'SOL', name: 'Solana', balance: 145.5, price: 150.00, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', type: 'crypto', visible: true },
+  { id: 'usdt', symbol: 'USDT', name: 'Tether', balance: 5000, price: 1.00, color: 'text-slate-400', bg: 'bg-slate-500/10', border: 'border-slate-500/20', type: 'crypto', visible: true },
+  { id: 'xrp', symbol: 'XRP', name: 'Ripple', balance: 0, price: 0.60, color: 'text-slate-300', bg: 'bg-slate-500/10', border: 'border-slate-500/20', type: 'crypto', visible: false },
+  { id: 'ada', symbol: 'ADA', name: 'Cardano', balance: 0, price: 0.35, color: 'text-blue-600', bg: 'bg-blue-600/10', border: 'border-blue-600/20', type: 'crypto', visible: false },
+  { id: 'doge', symbol: 'DOGE', name: 'Dogecoin', balance: 0, price: 0.10, color: 'text-yellow-400', bg: 'bg-yellow-400/10', border: 'border-yellow-400/20', type: 'crypto', visible: false },
 ];
 
 const FIAT_ASSETS = [
@@ -106,7 +110,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
   const [isSavingProfile, setIsSavingProfile] = useState(false);
 
   // Functionality State
-  const [swapFrom, setSwapFrom] = useState(INITIAL_ASSETS[1]); // ETH
+  const [swapFrom, setSwapFrom] = useState(INITIAL_ASSETS[2]); // ETH (index changed due to BTC insertion)
   const [swapTo, setSwapTo] = useState(INITIAL_ASSETS[0]); // FLD
   const [swapAmount, setSwapAmount] = useState('');
   const [isSwapping, setIsSwapping] = useState(false);
@@ -128,8 +132,11 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
   
   // Load Card State
   const [loadAmount, setLoadAmount] = useState('');
-  const [selectedLoadAsset, setSelectedLoadAsset] = useState<any>(INITIAL_ASSETS[1]); // Default ETH
+  const [selectedLoadAsset, setSelectedLoadAsset] = useState<any>(INITIAL_ASSETS[2]); // Default ETH
   const [isLoadingCard, setIsLoadingCard] = useState(false);
+
+  // Asset Management
+  const [manageQuery, setManageQuery] = useState('');
 
   // Host
   const [domainSearch, setDomainSearch] = useState('');
@@ -145,7 +152,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
       }
   }, [initialView]);
 
-  const totalBalance = assets.reduce((acc, asset) => acc + (asset.balance * (asset.price || 0)), 0);
+  const totalBalance = assets.filter(a => a.visible).reduce((acc, asset) => acc + (asset.balance * (asset.price || 0)), 0);
   const totalFiat = fiatAssets.reduce((acc, asset) => acc + (asset.symbol === 'USD' ? asset.balance : asset.balance / 1.1), 0);
 
   const handleUnlock = () => {
@@ -203,16 +210,21 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
       }, 1500);
   };
 
-  const handleDeleteCard = () => {
-      if (!selectedCard) return;
-      if (window.confirm(`Are you sure you want to delete your ${selectedCard.name} (${selectedCard.type})?`)) {
+  const handleDeleteCard = (e?: React.MouseEvent, targetCard = selectedCard) => {
+      if (e) e.stopPropagation();
+      const cardToDelete = targetCard || selectedCard;
+      if (!cardToDelete) return;
+      
+      if (window.confirm(`Are you sure you want to delete your ${cardToDelete.name} (${cardToDelete.type})?`)) {
           setIsDeleting(true);
           setTimeout(() => {
-              setCards(prev => prev.filter(c => c.id !== selectedCard.id));
-              setSelectedCard(null);
-              setView('cards');
+              setCards(prev => prev.filter(c => c.id !== cardToDelete.id));
+              if (selectedCard?.id === cardToDelete.id) {
+                  setSelectedCard(null);
+                  setView('cards');
+              }
               setIsDeleting(false);
-              setNotifications(prev => [{id: Date.now(), title: 'Card Deleted', message: `${selectedCard.type} card removed`, time: 'Just now', type: 'success'}, ...prev]);
+              setNotifications(prev => [{id: Date.now(), title: 'Card Deleted', message: `${cardToDelete.type} card removed`, time: 'Just now', type: 'success'}, ...prev]);
           }, 1500);
       }
   };
@@ -267,6 +279,10 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
       setIsSavingProfile(false);
       setView('settings');
     }, 1000);
+  };
+
+  const toggleAssetVisibility = (id: string) => {
+      setAssets(prev => prev.map(a => a.id === id ? { ...a, visible: !a.visible } : a));
   };
 
   // CVV Timer Logic
@@ -473,9 +489,12 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                     </div>
 
                     <div>
-                       <div className="flex justify-between items-center mb-4"><h3 className="text-lg font-bold text-white">Crypto Assets</h3><button className="text-xs font-bold text-purple-400">Manage</button></div>
+                       <div className="flex justify-between items-center mb-4">
+                           <h3 className="text-lg font-bold text-white">Crypto Assets</h3>
+                           <button onClick={() => setView('manage_assets')} className="text-xs font-bold text-purple-400 hover:text-purple-300">Manage</button>
+                       </div>
                        <div className="space-y-3">
-                          {assets.map((asset) => (
+                          {assets.filter(a => a.visible).map((asset) => (
                              <div key={asset.id} className="flex items-center justify-between p-4 bg-slate-900/50 border border-slate-800/50 rounded-2xl hover:bg-slate-800 transition-all">
                                 <div className="flex items-center gap-4">
                                    <div className={`w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-black text-xs ${asset.color} border border-white/5`}>{asset.id === 'fld' ? <FluidLogo className="w-5 h-5 text-current" /> : asset.symbol[0]}</div>
@@ -492,6 +511,49 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                        </div>
                     </div>
                   </div>
+                )}
+
+                {/* --- MANAGE ASSETS VIEW --- */}
+                {view === 'manage_assets' && (
+                    <div className="space-y-6 animate-fade-in-up">
+                        <div className="flex items-center gap-4 mb-4">
+                            <button onClick={() => setView('assets')} className="p-2 rounded-full bg-slate-900 text-slate-400 hover:text-white"><ChevronLeft size={20}/></button>
+                            <h2 className="text-xl font-bold text-white">Manage Assets</h2>
+                        </div>
+                        
+                        <div className="relative mb-6">
+                            <input 
+                                type="text" 
+                                placeholder="Search tokens..." 
+                                value={manageQuery}
+                                onChange={(e) => setManageQuery(e.target.value)}
+                                className="w-full bg-slate-900 border border-slate-800 rounded-xl py-3 pl-10 pr-4 text-white focus:outline-none focus:border-purple-500 transition-colors"
+                            />
+                            <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                        </div>
+
+                        <div className="space-y-2">
+                            {assets.filter(a => a.name.toLowerCase().includes(manageQuery.toLowerCase()) || a.symbol.toLowerCase().includes(manageQuery.toLowerCase())).map((asset) => (
+                                <div key={asset.id} className="flex items-center justify-between p-4 bg-slate-900/50 border border-slate-800 rounded-2xl">
+                                    <div className="flex items-center gap-4">
+                                        <div className={`w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center font-black text-xs ${asset.color} border border-white/5`}>
+                                            {asset.id === 'fld' ? <FluidLogo className="w-5 h-5 text-current" /> : asset.symbol[0]}
+                                        </div>
+                                        <div>
+                                            <div className="font-bold text-white text-sm">{asset.name}</div>
+                                            <div className="text-xs text-slate-500">{asset.symbol}</div>
+                                        </div>
+                                    </div>
+                                    <button 
+                                        onClick={() => toggleAssetVisibility(asset.id)}
+                                        className={`w-12 h-7 rounded-full p-1 transition-colors duration-200 ease-in-out ${asset.visible ? 'bg-purple-600' : 'bg-slate-700'}`}
+                                    >
+                                        <div className={`w-5 h-5 rounded-full bg-white shadow-md transform transition-transform duration-200 ease-in-out ${asset.visible ? 'translate-x-5' : 'translate-x-0'}`}></div>
+                                    </button>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 )}
 
                 {/* --- SWAP VIEW --- */}
@@ -585,6 +647,14 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                                         </div>
                                     </div>
                                 </div>
+                                {/* Added Trash Button to List View with improved visibility for mobile/simulator */}
+                                <button 
+                                    onClick={(e) => handleDeleteCard(e, card)}
+                                    className="absolute top-3 right-3 p-2 bg-slate-900/80 backdrop-blur-md rounded-full text-red-500 opacity-80 hover:opacity-100 transition-all hover:bg-white hover:text-red-600 z-30 shadow-lg border border-white/10"
+                                    title="Delete Card"
+                                >
+                                    <Trash2 size={14} />
+                                </button>
                             </div>
                         ))}
                       </div>
@@ -750,7 +820,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                             <button onClick={() => { const updated = cards.map(c => c.id === selectedCard.id ? {...c, isFrozen: !c.isFrozen} : c); setCards(updated); setSelectedCard(updated.find(c => c.id === selectedCard.id)); }} className={`p-3 border rounded-xl flex flex-col items-center gap-1 transition-colors ${selectedCard.isFrozen ? 'bg-blue-500/10 border-blue-500 text-blue-400' : 'bg-slate-900 border-slate-800'}`}><div className={`w-8 h-8 rounded-full flex items-center justify-center ${selectedCard.isFrozen ? 'bg-blue-500/20' : 'bg-slate-800'}`}>{selectedCard.isFrozen ? <Snowflake size={16}/> : <Lock size={16}/>}</div><span className="text-[10px] font-bold text-white">{selectedCard.isFrozen ? 'Unfrz' : 'Freeze'}</span></button>
                             <button onClick={handleToggleCvv} disabled={selectedCard.isFrozen} className="p-3 bg-slate-900 border border-slate-800 rounded-xl flex flex-col items-center gap-1 transition-colors relative overflow-hidden"><div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-blue-400"><ScanEye size={16} /></div><span className="text-[10px] font-bold text-white">{showCvv ? 'Hide' : 'CVV'}</span>{showCvv && <div className="absolute inset-0 bg-blue-600/10 flex flex-col items-center justify-center z-10 pointer-events-none"><div className="flex items-center gap-1 text-[8px] text-blue-200 mt-8"><Timer size={8} /> {cvvTimer}s</div></div>}</button>
                             <button 
-                                onClick={handleDeleteCard} 
+                                onClick={(e) => handleDeleteCard(e, selectedCard)}
                                 disabled={isDeleting}
                                 className="p-3 bg-slate-900 border border-slate-800 rounded-xl flex flex-col items-center gap-1 transition-colors hover:border-red-500/50 hover:bg-red-500/10 disabled:opacity-50"
                             >
