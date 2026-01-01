@@ -120,94 +120,113 @@ const WalletPage: React.FC = () => {
          </div>
 
          {/* Hero Visual */}
-         <div className="relative max-w-5xl mx-auto mt-24">
-            <div className="absolute inset-0 bg-gradient-to-t from-gray-50 dark:from-slate-950 to-transparent z-10 h-full w-full pointer-events-none"></div>
+         <div className="relative max-w-5xl mx-auto mt-24 flex flex-col items-center">
             
-            {/* Main App Mockup */}
-            <div className="relative z-0 mx-auto w-full max-w-[320px] sm:max-w-[380px]">
-               <div className="aspect-[9/19.5] bg-slate-950 rounded-[3rem] border-[8px] border-slate-900 shadow-2xl overflow-hidden relative ring-1 ring-white/10">
-                  <div className="absolute top-0 inset-x-0 h-7 bg-black z-20 flex justify-center">
-                     <div className="w-32 h-6 bg-black rounded-b-2xl"></div>
+            {/* Description Above */}
+            <div className="mb-10 text-center animate-fade-in-up delay-200">
+                <span className="text-blue-500 font-bold uppercase tracking-[0.2em] text-xs mb-3 block">Interactive Live Demo</span>
+                <p className="text-slate-500 dark:text-slate-400 text-sm font-medium">Explore the actual Fluid Wallet interface below.</p>
+                <div className="mx-auto w-px h-12 bg-gradient-to-b from-blue-500/50 to-transparent mt-6"></div>
+            </div>
+
+            <div className="relative w-full">
+               <div className="absolute inset-0 bg-gradient-to-t from-gray-50 dark:from-slate-950 to-transparent z-10 h-full w-full pointer-events-none"></div>
+               
+               {/* Main App Mockup */}
+               <div className="relative z-0 mx-auto w-full max-w-[320px] sm:max-w-[380px]">
+                  <div className="aspect-[9/19.5] bg-slate-950 rounded-[3rem] border-[8px] border-slate-900 shadow-2xl overflow-hidden relative ring-1 ring-white/10">
+                     <div className="absolute top-0 inset-x-0 h-7 bg-black z-20 flex justify-center">
+                        <div className="w-32 h-6 bg-black rounded-b-2xl"></div>
+                     </div>
+                     
+                     {/* Internal App Content Simulation */}
+                     <div className="h-full bg-slate-900 flex flex-col pt-12 p-6">
+                        <div className="flex justify-between items-center mb-8">
+                           <div className="flex items-center gap-2">
+                              <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-emerald-400 to-cyan-500"></div>
+                              <span className="font-bold text-white">Hello, Alex</span>
+                           </div>
+                           <div className="p-2 bg-slate-800 rounded-full text-slate-400"><Activity size={20}/></div>
+                        </div>
+
+                        <div className="mb-8">
+                           <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Total Balance</span>
+                           <div className="text-4xl font-black text-white mt-1">$42,593.00</div>
+                           <div className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-500/10 rounded-lg mt-2">
+                              <Activity size={12} className="text-emerald-500" />
+                              <span className="text-xs font-bold text-emerald-500">+2.4% today</span>
+                           </div>
+                        </div>
+
+                        <div className="grid grid-cols-4 gap-4 mb-8">
+                           {['Send', 'Receive', 'Buy', 'Swap'].map((action, i) => (
+                              <div key={action} className="flex flex-col items-center gap-2">
+                                 <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center text-white border border-slate-700 shadow-lg">
+                                    {i === 0 && <ArrowRight size={20} className="-rotate-45" />}
+                                    {i === 1 && <ArrowRight size={20} className="rotate-[135deg]" />}
+                                    {i === 2 && <CreditCard size={20} />}
+                                    {i === 3 && <RefreshCw size={20} />}
+                                 </div>
+                                 <span className="text-[10px] font-bold text-slate-400">{action}</span>
+                              </div>
+                           ))}
+                        </div>
+
+                        <div className="flex-grow space-y-4">
+                           <div className="flex justify-between items-center">
+                              <span className="text-sm font-bold text-white">Assets</span>
+                              <span className="text-xs font-bold text-blue-500">See All</span>
+                           </div>
+                           {coins.map((coin) => (
+                              <div key={coin.symbol} className="flex items-center justify-between p-3 rounded-2xl bg-slate-800/50 border border-slate-700/50">
+                                 <div className="flex items-center gap-3">
+                                    <div className={`w-10 h-10 rounded-xl ${coin.color} flex items-center justify-center text-white font-bold`}>
+                                       {coin.symbol === 'FLD' ? <FluidLogo className="w-6 h-6" /> : <Coins size={20} />}
+                                    </div>
+                                    <div>
+                                       <div className="font-bold text-white text-sm">{coin.name}</div>
+                                       <div className="text-xs text-slate-500">{coin.amount} {coin.symbol}</div>
+                                    </div>
+                                 </div>
+                                 <div className="text-right">
+                                    <div className="font-bold text-white text-sm">{coin.value}</div>
+                                 </div>
+                              </div>
+                           ))}
+                        </div>
+                     </div>
                   </div>
                   
-                  {/* Internal App Content Simulation */}
-                  <div className="h-full bg-slate-900 flex flex-col pt-12 p-6">
-                     <div className="flex justify-between items-center mb-8">
-                        <div className="flex items-center gap-2">
-                           <div className="w-8 h-8 rounded-full bg-gradient-to-tr from-emerald-400 to-cyan-500"></div>
-                           <span className="font-bold text-white">Hello, Alex</span>
-                        </div>
-                        <div className="p-2 bg-slate-800 rounded-full text-slate-400"><Activity size={20}/></div>
-                     </div>
-
-                     <div className="mb-8">
-                        <span className="text-slate-400 text-xs font-bold uppercase tracking-wider">Total Balance</span>
-                        <div className="text-4xl font-black text-white mt-1">$42,593.00</div>
-                        <div className="inline-flex items-center gap-1 px-2 py-1 bg-emerald-500/10 rounded-lg mt-2">
-                           <Activity size={12} className="text-emerald-500" />
-                           <span className="text-xs font-bold text-emerald-500">+2.4% today</span>
+                  {/* Floating Elements */}
+                  <div className="absolute top-1/4 -right-12 p-4 bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-slate-700 shadow-xl z-20 animate-bounce-slow">
+                     <div className="flex items-center gap-3">
+                        <div className="p-2 bg-emerald-500/20 text-emerald-500 rounded-xl"><Check size={20} /></div>
+                        <div>
+                           <div className="text-[10px] font-bold text-slate-400 uppercase">Received</div>
+                           <div className="text-sm font-black text-white">+ 4.20 ETH</div>
                         </div>
                      </div>
+                  </div>
 
-                     <div className="grid grid-cols-4 gap-4 mb-8">
-                        {['Send', 'Receive', 'Buy', 'Swap'].map((action, i) => (
-                           <div key={action} className="flex flex-col items-center gap-2">
-                              <div className="w-12 h-12 rounded-2xl bg-slate-800 flex items-center justify-center text-white border border-slate-700 shadow-lg">
-                                 {i === 0 && <ArrowRight size={20} className="-rotate-45" />}
-                                 {i === 1 && <ArrowRight size={20} className="rotate-[135deg]" />}
-                                 {i === 2 && <CreditCard size={20} />}
-                                 {i === 3 && <RefreshCw size={20} />}
-                              </div>
-                              <span className="text-[10px] font-bold text-slate-400">{action}</span>
-                           </div>
-                        ))}
-                     </div>
-
-                     <div className="flex-grow space-y-4">
-                        <div className="flex justify-between items-center">
-                           <span className="text-sm font-bold text-white">Assets</span>
-                           <span className="text-xs font-bold text-blue-500">See All</span>
+                  <div className="absolute bottom-1/4 -left-12 p-4 bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-slate-700 shadow-xl z-20 animate-bounce-slow delay-700">
+                     <div className="flex items-center gap-3">
+                        <div className="p-2 bg-blue-500/20 text-blue-500 rounded-xl"><Globe size={20} /></div>
+                        <div>
+                           <div className="text-[10px] font-bold text-slate-400 uppercase">Connected</div>
+                           <div className="text-sm font-black text-white">Fluid DEX</div>
                         </div>
-                        {coins.map((coin) => (
-                           <div key={coin.symbol} className="flex items-center justify-between p-3 rounded-2xl bg-slate-800/50 border border-slate-700/50">
-                              <div className="flex items-center gap-3">
-                                 <div className={`w-10 h-10 rounded-xl ${coin.color} flex items-center justify-center text-white font-bold`}>
-                                    {coin.symbol === 'FLD' ? <FluidLogo className="w-6 h-6" /> : <Coins size={20} />}
-                                 </div>
-                                 <div>
-                                    <div className="font-bold text-white text-sm">{coin.name}</div>
-                                    <div className="text-xs text-slate-500">{coin.amount} {coin.symbol}</div>
-                                 </div>
-                              </div>
-                              <div className="text-right">
-                                 <div className="font-bold text-white text-sm">{coin.value}</div>
-                              </div>
-                           </div>
-                        ))}
                      </div>
                   </div>
                </div>
-               
-               {/* Floating Elements */}
-               <div className="absolute top-1/4 -right-12 p-4 bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-slate-700 shadow-xl z-20 animate-bounce-slow">
-                  <div className="flex items-center gap-3">
-                     <div className="p-2 bg-emerald-500/20 text-emerald-500 rounded-xl"><Check size={20} /></div>
-                     <div>
-                        <div className="text-[10px] font-bold text-slate-400 uppercase">Received</div>
-                        <div className="text-sm font-black text-white">+ 4.20 ETH</div>
-                     </div>
-                  </div>
-               </div>
+            </div>
 
-               <div className="absolute bottom-1/4 -left-12 p-4 bg-slate-800/90 backdrop-blur-xl rounded-2xl border border-slate-700 shadow-xl z-20 animate-bounce-slow delay-700">
-                  <div className="flex items-center gap-3">
-                     <div className="p-2 bg-blue-500/20 text-blue-500 rounded-xl"><Globe size={20} /></div>
-                     <div>
-                        <div className="text-[10px] font-bold text-slate-400 uppercase">Connected</div>
-                        <div className="text-sm font-black text-white">Fluid DEX</div>
-                     </div>
-                  </div>
-               </div>
+            {/* Description Below */}
+            <div className="mt-12 text-center relative z-20">
+                <div className="flex flex-wrap items-center justify-center gap-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                    <span className="flex items-center gap-2 bg-slate-900/50 px-4 py-2 rounded-full border border-slate-800"><Lock size={12} className="text-emerald-500" /> Non-Custodial</span>
+                    <span className="flex items-center gap-2 bg-slate-900/50 px-4 py-2 rounded-full border border-slate-800"><Shield size={12} className="text-blue-500" /> Biometric Secured</span>
+                    <span className="flex items-center gap-2 bg-slate-900/50 px-4 py-2 rounded-full border border-slate-800"><Zap size={12} className="text-orange-500" /> Zero-Knowledge</span>
+                </div>
             </div>
          </div>
       </section>

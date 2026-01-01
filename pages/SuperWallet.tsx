@@ -12,7 +12,7 @@ import {
   QrCode, ChevronDown, Repeat, Settings, User, Mail, 
   FileText, HelpCircle, Edit3, Camera, ToggleLeft, ToggleRight,
   Eye, EyeOff, Timer, KeyRound, Map, Palette, Trash2, Snowflake,
-  Coffee, Car, Tv, ShoppingBag, ArrowDownCircle
+  Coffee, Car, Tv, ShoppingBag, ArrowDownCircle, Sparkles
 } from 'lucide-react';
 
 const FluidLogo = ({ className }: { className?: string }) => (
@@ -118,6 +118,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
   const [cvvTimer, setCvvTimer] = useState(0);
   const [tempCvv, setTempCvv] = useState('***');
   const [isAddingCard, setIsAddingCard] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false); // Added Deleting state
   const [selectedCardTier, setSelectedCardTier] = useState(CARD_TIERS[0]);
   const [newCardType, setNewCardType] = useState<'Virtual' | 'Physical'>('Virtual');
   
@@ -199,6 +200,20 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
       }, 1500);
   };
 
+  const handleDeleteCard = () => {
+      if (!selectedCard) return;
+      if (window.confirm(`Are you sure you want to delete your ${selectedCard.name}?`)) {
+          setIsDeleting(true);
+          setTimeout(() => {
+              setCards(prev => prev.filter(c => c.id !== selectedCard.id));
+              setSelectedCard(null);
+              setView('cards');
+              setIsDeleting(false);
+              setNotifications(prev => [{id: Date.now(), title: 'Card Deleted', message: `${selectedCard.name} removed`, time: 'Just now', type: 'success'}, ...prev]);
+          }, 1500);
+      }
+  };
+
   const handleLoadCard = () => {
       if (!loadAmount || !selectedCard || !selectedLoadAsset) return;
       const loadValueUSD = parseFloat(loadAmount);
@@ -268,9 +283,8 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
           return;
       }
       setTempCvv(selectedCard.cvv || '123');
-      setShowCvv(!showCvv);
-      if (!showCvv) setCvvTimer(30);
-      else setCvvTimer(0);
+      setShowCvv(true);
+      setCvvTimer(30);
   };
 
   return (
@@ -279,8 +293,19 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
       {/* Background Glows */}
       <div className="absolute top-20 left-1/2 -translate-x-1/2 w-[600px] h-[600px] bg-purple-900/10 rounded-full blur-[100px] pointer-events-none -z-10"></div>
       
+      {/* Description Above */}
+      <div className="text-center mb-10 animate-fade-in-up relative z-10">
+          <span className="text-blue-500 font-bold uppercase tracking-widest text-xs mb-2 block flex items-center justify-center gap-2">
+              <Sparkles size={12} /> Live Interactive Demo
+          </span>
+          <h2 className="text-3xl font-black text-white mb-4">Fluid Super App Simulator</h2>
+          <p className="text-slate-400 max-w-md mx-auto text-sm leading-relaxed">
+              Experience the full power of the Fluid ecosystem. No download required. Tap the phone to interact.
+          </p>
+      </div>
+
       {/* Device Frame (The Simulator) */}
-      <div className="relative w-full max-w-[400px] h-[850px] bg-slate-950 rounded-[3rem] border-8 border-slate-900 shadow-2xl overflow-hidden flex flex-col ring-1 ring-white/10">
+      <div className="relative w-full max-w-[400px] h-[850px] bg-slate-950 rounded-[3rem] border-8 border-slate-900 shadow-2xl overflow-hidden flex flex-col ring-1 ring-white/10 z-10">
         
         {/* Dynamic Island / Notch Area */}
         <div className="absolute top-0 inset-x-0 h-8 bg-black z-50 flex justify-center">
@@ -489,11 +514,17 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                         {cards.map((card) => (
                             <div key={card.id} onClick={() => { setSelectedCard(card); setView('card_details'); setShowFullNumber(false); }} className={`relative aspect-[1.58/1] rounded-2xl ${card.color} border ${card.border} shadow-xl overflow-hidden cursor-pointer group hover:scale-[1.02] transition-transform duration-300`}>
                                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+                                {/* Huge Visible Fluid Logo on Plate */}
+                                <div className={`absolute -bottom-12 -right-12 w-64 h-64 opacity-10 transform rotate-12 pointer-events-none ${card.text === 'text-slate-900' ? 'text-slate-900' : 'text-white'}`}>
+                                    <FluidLogo className="w-full h-full fill-current" />
+                                </div>
+                                
                                 {card.isFrozen && <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-[2px] z-20 flex items-center justify-center"><div className="bg-white/10 border border-white/20 px-4 py-2 rounded-xl flex items-center gap-2 text-white font-bold uppercase tracking-widest text-sm backdrop-blur-md shadow-xl"><Snowflake size={16} /> Frozen</div></div>}
                                 <div className={`relative z-10 p-5 flex flex-col justify-between h-full ${card.text || 'text-white'}`}>
                                     <div className="flex justify-between items-start"><div className="flex items-center gap-1.5"><FluidLogo className="w-5 h-5 text-current" /><span className="font-bold text-lg tracking-tight italic">Fluid</span></div></div>
                                     <div>
-                                        <div className="font-mono text-lg tracking-widest mb-1 opacity-80">{card.number}</div>
+                                        <div className="text-2xl font-bold mb-2 tracking-wide">${card.balance.toLocaleString()}</div>
+                                        <div className="font-mono text-sm tracking-widest mb-1 opacity-80">{card.number}</div>
                                         <div className="flex justify-between items-end"><span className="text-[10px] opacity-70 uppercase font-bold">{card.name}</span><span className={`text-[9px] font-bold uppercase border px-1.5 py-0.5 rounded ${card.text === 'text-slate-900' ? 'border-slate-900/30' : 'border-white/30'}`}>{card.type}</span></div>
                                     </div>
                                 </div>
@@ -503,40 +534,105 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                    </div>
                 )}
 
+                {/* --- ADD CARD VIEW --- */}
+                {view === 'add_card' && (
+                    <div className="space-y-6 animate-fade-in-up">
+                        <div className="flex items-center gap-4 mb-4">
+                            <button onClick={() => setView('cards')} className="p-2 rounded-full bg-slate-900 text-slate-400 hover:text-white">
+                                <ChevronLeft size={20}/>
+                            </button>
+                            <h2 className="text-xl font-bold text-white">Add New Card</h2>
+                        </div>
+
+                        {/* Card Type Toggle */}
+                        <div className="bg-slate-900 p-1 rounded-xl flex">
+                            <button 
+                                onClick={() => setNewCardType('Virtual')}
+                                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${newCardType === 'Virtual' ? 'bg-slate-800 text-white shadow-lg' : 'text-slate-500'}`}
+                            >
+                                Virtual
+                            </button>
+                            <button 
+                                onClick={() => setNewCardType('Physical')}
+                                className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${newCardType === 'Physical' ? 'bg-slate-800 text-white shadow-lg' : 'text-slate-500'}`}
+                            >
+                                Physical
+                            </button>
+                        </div>
+
+                        {/* Card Preview (Selected) */}
+                        <div className={`relative aspect-[1.58/1] rounded-2xl ${selectedCardTier.bg} ${selectedCardTier.border} border shadow-2xl p-6 overflow-hidden transition-all duration-500`}>
+                             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+                             {/* WATERMARK */}
+                             <div className={`absolute -bottom-10 -right-10 opacity-10 rotate-12 pointer-events-none transform scale-110 ${selectedCardTier.text === 'text-slate-900' ? 'text-slate-900' : 'text-white'}`}>
+                                <FluidLogo className="w-48 h-48" />
+                             </div>
+                             <div className={`relative z-10 flex flex-col justify-between h-full ${selectedCardTier.text}`}>
+                                <div className="flex justify-between items-start">
+                                    <div className="flex items-center gap-2"><FluidLogo className="w-6 h-6 text-current" /><span className="font-bold text-lg italic">Fluid</span></div>
+                                    <span className={`text-[10px] border px-1.5 py-0.5 rounded uppercase font-bold ${selectedCardTier.text === 'text-slate-900' ? 'border-slate-900/30' : 'border-white/30'}`}>{newCardType}</span>
+                                </div>
+                                <div>
+                                    <div className="text-xl tracking-widest mb-1 font-mono">**** **** **** 0000</div>
+                                    <div className="text-[10px] opacity-70 uppercase font-bold">{selectedCardTier.name}</div>
+                                </div>
+                             </div>
+                        </div>
+
+                        {/* Plate Selection */}
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase mb-3 block ml-1">Select Metal Plate</label>
+                            <div className="grid grid-cols-2 gap-3 max-h-48 overflow-y-auto custom-scrollbar pr-1">
+                                {CARD_TIERS.map(tier => (
+                                    <button
+                                        key={tier.id}
+                                        onClick={() => setSelectedCardTier(tier)}
+                                        className={`p-3 rounded-xl border-2 text-left transition-all relative overflow-hidden group ${
+                                            selectedCardTier.id === tier.id ? 'border-purple-500 ring-1 ring-purple-500/50' : 'border-slate-800 hover:border-slate-700'
+                                        }`}
+                                    >
+                                        <div className={`absolute inset-0 ${tier.bg} opacity-20 group-hover:opacity-30 transition-opacity`}></div>
+                                        <div className="relative z-10">
+                                            <span className={`block text-xs font-bold ${selectedCardTier.id === tier.id ? 'text-white' : 'text-slate-400'}`}>{tier.name}</span>
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <button 
+                            onClick={handleAddCard} 
+                            disabled={isAddingCard}
+                            className="w-full py-4 bg-white text-slate-900 font-bold rounded-2xl shadow-lg mt-auto flex items-center justify-center gap-2 hover:bg-slate-200 transition-colors"
+                        >
+                            {isAddingCard ? <Loader2 className="animate-spin" size={20}/> : <Plus size={20} />}
+                            {isAddingCard ? 'Issuing Card...' : 'Issue Card'}
+                        </button>
+                    </div>
+                )}
+
                 {/* --- CARD DETAILS VIEW --- */}
                 {view === 'card_details' && selectedCard && (
                     <div className="space-y-6 animate-fade-in-up">
                         <div className="flex items-center gap-4 mb-4"><button onClick={() => setView('cards')} className="p-2 rounded-full bg-slate-900 text-slate-400 hover:text-white"><ChevronLeft size={20}/></button><h2 className="text-xl font-bold text-white">Card Management</h2></div>
                         <div className={`relative aspect-[1.58/1] rounded-2xl ${selectedCard.color} border ${selectedCard.border} shadow-2xl overflow-hidden p-6 ${selectedCard.text || 'text-white'}`}>
                             <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20"></div>
+                            {/* Logo Background in Details too */}
+                            <div className={`absolute -bottom-12 -right-12 w-64 h-64 opacity-10 transform rotate-12 pointer-events-none ${selectedCard.text === 'text-slate-900' ? 'text-slate-900' : 'text-white'}`}>
+                                <FluidLogo className="w-full h-full fill-current" />
+                            </div>
                             <div className="relative z-10 flex flex-col justify-between h-full">
                                 <div className="flex justify-between items-start">
                                     <div className="flex items-center gap-2"><FluidLogo className="w-6 h-6 text-current" /><span className="font-bold text-lg italic">Fluid</span></div>
-                                    <div className="bg-white/10 backdrop-blur-md px-3 py-1 rounded-full border border-white/10">
-                                        <span className="text-[10px] font-bold uppercase tracking-wider opacity-80">Debit</span>
+                                    <div className="text-right">
+                                        <div className="text-2xl font-bold">${selectedCard.balance.toLocaleString()}</div>
+                                        <div className="text-[10px] opacity-70 uppercase font-bold">Balance</div>
                                     </div>
                                 </div>
-                                <div><div className="flex items-center gap-3 mb-4"><div className="font-mono text-xl tracking-widest shadow-sm">{showFullNumber ? selectedCard.realNumber : selectedCard.number}</div><button onClick={() => setShowFullNumber(!showFullNumber)} className="p-1.5 rounded-full hover:bg-white/20 transition-colors">{showFullNumber ? <EyeOff size={16} /> : <Eye size={16} />}</button></div>
-                                    <div className="flex justify-between items-end">
-                                        <div><div className="text-[10px] uppercase opacity-70 mb-0.5">Card Holder</div><div className="font-bold text-sm">{selectedCard.name}</div></div>
-                                        <div className="text-right flex gap-4">
-                                            <div><div className="text-[10px] uppercase opacity-70 mb-0.5">Expires</div><div className="font-bold text-sm font-mono">{selectedCard.expiry}</div></div>
-                                            <div><div className="text-[10px] uppercase opacity-70 mb-0.5">CVV</div><div className="font-bold text-sm font-mono">{showCvv ? tempCvv : '•••'}</div></div>
-                                        </div>
-                                    </div>
-                                </div>
+                                <div><div className="flex items-center gap-3 mb-4"><div className="font-mono text-xl tracking-widest shadow-sm">{showFullNumber ? selectedCard.realNumber : selectedCard.number}</div><button onClick={() => setShowFullNumber(!showFullNumber)} className="p-1.5 rounded-full hover:bg-white/20 transition-colors">{showFullNumber ? <EyeOff size={16} /> : <Eye size={16} />}</button></div><div className="flex justify-between items-end"><div><div className="text-[10px] uppercase opacity-70 mb-0.5">Card Holder</div><div className="font-bold text-sm">{selectedCard.name}</div></div><div className="text-right"><div className="text-[10px] uppercase opacity-70 mb-0.5">Expires</div><div className="font-bold text-sm">{selectedCard.expiry}</div></div></div></div>
                             </div>
                         </div>
-                        
-                        <div className="flex items-center justify-between bg-slate-900 border border-slate-800 p-4 rounded-2xl shadow-lg">
-                             <div className="flex items-center gap-3">
-                                 <div className="p-2 bg-emerald-500/10 rounded-full text-emerald-500"><Wallet size={20} /></div>
-                                 <span className="text-sm font-bold text-slate-400">Available Balance</span>
-                             </div>
-                             <span className="text-2xl font-bold text-white">${selectedCard.balance.toLocaleString()}</span>
-                        </div>
-
-                        <div className="grid grid-cols-3 gap-3">
+                        <div className="grid grid-cols-4 gap-2">
                             <button 
                                 onClick={() => { 
                                     setLoadAmount(''); 
@@ -544,15 +640,22 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
                                     setView('load_card'); 
                                 }} 
                                 disabled={selectedCard.isFrozen}
-                                className="p-4 bg-slate-900 border border-slate-800 rounded-xl flex flex-col items-center gap-2 transition-colors hover:border-emerald-500/50 disabled:opacity-50"
+                                className="p-3 bg-slate-900 border border-slate-800 rounded-xl flex flex-col items-center gap-1 transition-colors hover:border-emerald-500/50 disabled:opacity-50"
                             >
-                                <div className="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-emerald-400"><ArrowDownCircle size={20} /></div>
-                                <span className="text-xs font-bold text-white">Load</span>
+                                <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-emerald-400"><ArrowDownCircle size={16} /></div>
+                                <span className="text-[10px] font-bold text-white">Load</span>
                             </button>
-                            <button onClick={() => { const updated = cards.map(c => c.id === selectedCard.id ? {...c, isFrozen: !c.isFrozen} : c); setCards(updated); setSelectedCard(updated.find(c => c.id === selectedCard.id)); }} className={`p-4 border rounded-xl flex flex-col items-center gap-2 transition-colors ${selectedCard.isFrozen ? 'bg-blue-500/10 border-blue-500 text-blue-400' : 'bg-slate-900 border-slate-800'}`}><div className={`w-10 h-10 rounded-full flex items-center justify-center ${selectedCard.isFrozen ? 'bg-blue-500/20' : 'bg-slate-800'}`}>{selectedCard.isFrozen ? <Snowflake size={20}/> : <Lock size={20}/>}</div><span className="text-xs font-bold text-white">{selectedCard.isFrozen ? 'Unfreeze' : 'Freeze'}</span></button>
-                            <button onClick={handleRevealCvv} disabled={selectedCard.isFrozen} className={`p-4 border border-slate-800 rounded-xl flex flex-col items-center gap-2 transition-colors ${showCvv ? 'bg-blue-500/10 border-blue-500' : 'bg-slate-900'}`}>
-                                <div className={`w-10 h-10 rounded-full flex items-center justify-center ${showCvv ? 'text-blue-400 bg-blue-500/20' : 'text-blue-400 bg-slate-800'}`}><ScanEye size={20} /></div>
-                                <span className="text-xs font-bold text-white">{showCvv ? `${cvvTimer}s` : 'Show CVV'}</span>
+                            <button onClick={() => { const updated = cards.map(c => c.id === selectedCard.id ? {...c, isFrozen: !c.isFrozen} : c); setCards(updated); setSelectedCard(updated.find(c => c.id === selectedCard.id)); }} className={`p-3 border rounded-xl flex flex-col items-center gap-1 transition-colors ${selectedCard.isFrozen ? 'bg-blue-500/10 border-blue-500 text-blue-400' : 'bg-slate-900 border-slate-800'}`}><div className={`w-8 h-8 rounded-full flex items-center justify-center ${selectedCard.isFrozen ? 'bg-blue-500/20' : 'bg-slate-800'}`}>{selectedCard.isFrozen ? <Snowflake size={16}/> : <Lock size={16}/>}</div><span className="text-[10px] font-bold text-white">{selectedCard.isFrozen ? 'Unfrz' : 'Freeze'}</span></button>
+                            <button onClick={handleRevealCvv} disabled={selectedCard.isFrozen} className="p-3 bg-slate-900 border border-slate-800 rounded-xl flex flex-col items-center gap-1 transition-colors relative overflow-hidden"><div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-blue-400"><ScanEye size={16} /></div><span className="text-[10px] font-bold text-white">CVV</span>{showCvv && <div className="absolute inset-0 bg-blue-600 flex flex-col items-center justify-center z-10"><span className="text-xl font-black text-white tracking-widest">{tempCvv}</span><div className="flex items-center gap-1 text-[8px] text-blue-200 mt-0.5"><Timer size={8} /> {cvvTimer}s</div></div>}</button>
+                            <button 
+                                onClick={handleDeleteCard} 
+                                disabled={isDeleting}
+                                className="p-3 bg-slate-900 border border-slate-800 rounded-xl flex flex-col items-center gap-1 transition-colors hover:border-red-500/50 hover:bg-red-500/10 disabled:opacity-50"
+                            >
+                                <div className="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center text-red-500">
+                                    {isDeleting ? <Loader2 size={16} className="animate-spin"/> : <Trash2 size={16} />}
+                                </div>
+                                <span className="text-[10px] font-bold text-white">Delete</span>
                             </button>
                         </div>
                         <div className="mt-6 mb-6">
@@ -695,6 +798,17 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate, initialView
              </div>
           </div>
         )}
+      </div>
+
+      {/* Description Below */}
+      <div className="text-center mt-12 animate-fade-in-up delay-200 max-w-lg z-10">
+          <div className="flex justify-center gap-6 text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-4">
+              <span className="flex items-center gap-2"><Lock size={12} className="text-emerald-500" /> Non-Custodial</span>
+              <span className="flex items-center gap-2"><Zap size={12} className="text-blue-500" /> Instant Issue</span>
+          </div>
+          <p className="text-sm text-slate-500">
+              Try the "Load" feature to simulate adding crypto funds, or use "Host" to register a decentralized domain.
+          </p>
       </div>
     </div>
   );

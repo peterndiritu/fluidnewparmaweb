@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { CreditCard, Globe, Lock, Sliders, Smartphone, Check, MapPin, Truck, ChevronRight, CheckCircle2 } from 'lucide-react';
 
@@ -59,9 +58,9 @@ const CardsPage: React.FC = () => {
                <div className="absolute top-0 right-0 w-64 h-64 bg-gradient-to-bl from-cyan-500/10 to-transparent rounded-full -mr-16 -mt-16"></div>
                <div className="absolute bottom-0 left-0 w-full h-32 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-10"></div>
                
-               {/* Watermark Logo */}
-               <div className={`absolute -bottom-8 -left-8 ${selectedTier.watermark} opacity-20 transform rotate-12`}>
-                  <FluidLogo className="w-48 h-48" />
+               {/* Watermark Logo - INCREASED SIZE */}
+               <div className={`absolute -bottom-16 -left-16 ${selectedTier.watermark} opacity-20 transform rotate-12 pointer-events-none`}>
+                  <FluidLogo className="w-72 h-72" />
                </div>
 
                <div className={`flex justify-between items-start z-10 ${selectedTier.text}`}>
