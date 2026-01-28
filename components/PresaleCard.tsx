@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Coins, Zap, ShieldCheck, Timer, ChevronDown, TrendingUp, ArrowRight, Loader2, Globe, AlertCircle, DollarSign } from 'lucide-react';
-import { useReadContract, useSendTransaction, useActiveAccount, useActiveWalletChain, useSwitchActiveWalletChain } from "thirdweb/react";
+import { useReadContract, useSendTransaction, useActiveAccount, useActiveWalletChain, useSwitchActiveWalletChain, ConnectButton } from "thirdweb/react";
 import { prepareContractCall, toEther, toWei } from "thirdweb";
+import { client, wallets } from "../client";
 import { presaleContract, fluidTokenContract, chain as presaleChain, SUPPORTED_NETWORKS } from "../contracts/presale";
 
 const PresaleCard: React.FC = () => {
@@ -35,7 +36,7 @@ const PresaleCard: React.FC = () => {
     params: [account?.address || "0x0000000000000000000000000000000000000000"],
   });
 
-  // 2. Token Price in USD (18 decimals)
+  // 2. Token Price in USD (Assuming 18 decimals from contract)
   const { data: priceData, isLoading: isLoadingPrice } = useReadContract({
     contract: presaleContract,
     method: "function tokenPrice() view returns (uint256)",
@@ -65,7 +66,7 @@ const PresaleCard: React.FC = () => {
 
   // --- Derived State & Formatting ---
 
-  // Price of 1 FLD in USD. Default is 1.00 USD
+  // Price of 1 FLD in USD. Default is 1.00 USD if not found.
   const fldUsdPrice = useMemo(() => {
     if (!priceData || priceData === 0n) return 1.00; 
     try {
@@ -137,7 +138,7 @@ const PresaleCard: React.FC = () => {
   const { mutate: sendTx, isPending: isBuying } = useSendTransaction();
 
   const handleBuy = async () => {
-    if (!account) return alert("Please connect your wallet first.");
+    if (!account) return; // Managed by ConnectButton now
     if (isWrongNetwork) {
       try {
         await switchChain(presaleChain);
@@ -209,7 +210,7 @@ const PresaleCard: React.FC = () => {
         )}
 
         {/* Network Warning */}
-        {isWrongNetwork && (
+        {account && isWrongNetwork && (
           <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex flex-col gap-3">
             <div className="flex items-center gap-2 text-amber-500">
               <AlertCircle size={16} />
@@ -330,20 +331,32 @@ const PresaleCard: React.FC = () => {
           </div>
         </div>
 
-        {/* Buy Button */}
-        <button 
-          onClick={handleBuy}
-          disabled={isBuying || isDataLoading}
-          className="w-full py-4 bg-white text-slate-950 rounded-[1.5rem] font-nebula font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 transition-all flex items-center justify-center gap-2"
-        >
-          {isBuying ? (
-            <>Processing <Loader2 size={12} className="animate-spin" /></>
-          ) : isWrongNetwork ? (
-            <>Switch Network <ArrowRight size={12} /></>
-          ) : (
-            <>Secure Allocation <ArrowRight size={12} /></>
-          )}
-        </button>
+        {/* Dynamic Action Button */}
+        {!account ? (
+          <ConnectButton
+            client={client}
+            wallets={wallets}
+            theme="dark"
+            connectButton={{
+              label: "Secure Allocation",
+              className: "!w-full !py-4 !bg-white !text-slate-950 !rounded-[1.5rem] !font-nebula !font-black !text-[10px] !uppercase !tracking-[0.3em] !shadow-2xl hover:!scale-105 active:!scale-95 !transition-all !flex !items-center !justify-center !gap-2"
+            }}
+          />
+        ) : (
+          <button 
+            onClick={handleBuy}
+            disabled={isBuying || isDataLoading}
+            className="w-full py-4 bg-white text-slate-950 rounded-[1.5rem] font-nebula font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 transition-all flex items-center justify-center gap-2"
+          >
+            {isBuying ? (
+              <>Processing <Loader2 size={12} className="animate-spin" /></>
+            ) : isWrongNetwork ? (
+              <>Switch Network <ArrowRight size={12} /></>
+            ) : (
+              <>Secure Allocation <ArrowRight size={12} /></>
+            )}
+          </button>
+        )}
 
         <div className="mt-6 flex justify-center gap-8">
           <div className="flex items-center gap-1.5">
