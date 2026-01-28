@@ -182,7 +182,7 @@ const PresaleCard: React.FC = () => {
     });
 
     sendTx(tx, {
-      onSuccess: () => alert("Contribution successful! Allocation secured."),
+      onSuccess: () => alert("Purchase successful! Your Fluid tokens have been allocated."),
       onError: (err) => console.error("Presale Error:", err),
     });
   };
@@ -410,7 +410,7 @@ const PresaleCard: React.FC = () => {
             {isBuying ? (
               <>Processing <Loader2 size={12} className="animate-spin" /></>
             ) : (
-              <>Secure Allocation <ArrowRight size={12} /></>
+              <>Buy Fluid <ArrowRight size={12} /></>
             )}
           </button>
         )}
