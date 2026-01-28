@@ -72,11 +72,11 @@ const Tokenomics: React.FC = () => {
                             <item.icon size={18} />
                         </div>
                         <div>
-                            <h4 className="text-white font-nebula font-black text-[12px] uppercase italic leading-none mb-1">{item.name}</h4>
+                            <h4 className="text-white font-nebula font-black text-[12px] uppercase leading-none mb-1">{item.name}</h4>
                             <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">{item.desc}</p>
                         </div>
                     </div>
-                    <span className="text-lg font-nebula font-black italic" style={{ color: item.color }}>{item.value}%</span>
+                    <span className="text-lg font-nebula font-black" style={{ color: item.color }}>{item.value}%</span>
                 </div>
                 
                 <div className="space-y-1.5">
@@ -84,7 +84,7 @@ const Tokenomics: React.FC = () => {
                         <div className="h-full rounded-full" style={{ width: `${item.value}%`, backgroundColor: item.color }}></div>
                     </div>
                     <div className="flex justify-between items-center">
-                        <span className="text-[10px] text-slate-400 font-nebula font-black uppercase italic">{item.amount} FLD</span>
+                        <span className="text-[10px] text-slate-400 font-nebula font-black uppercase">{item.amount} FLD</span>
                         {item.vesting && (
                             <span className="flex items-center gap-1 text-slate-500 bg-white/5 px-2 py-0.5 rounded text-[8px] font-bold uppercase">
                                 <Clock size={8} /> {item.vesting}

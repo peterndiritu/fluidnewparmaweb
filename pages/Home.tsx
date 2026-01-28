@@ -100,7 +100,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
     const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
 
     await typeCommand("npm install -g @fluid/core");
-    addToTerminal({ type: 'output', content: <div className="text-slate-500 font-mono text-[10px] italic">⠋ fetching packages...</div> });
+    addToTerminal({ type: 'output', content: <div className="text-slate-500 font-mono text-[10px]">⠋ fetching packages...</div> });
     await wait(800);
     addToTerminal({ type: 'output', content: <div className="text-slate-400 font-mono text-[10px]">+ @fluid/core@1.4.2 added in 1.2s</div> });
     await wait(400);
@@ -257,7 +257,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                    <ArrowLeftRight size={32} />
                 </div>
                 <div>
-                   <h3 className="text-xl font-nebula font-black text-white uppercase italic">Fluid Omnibridge</h3>
+                   <h3 className="text-xl font-nebula font-black text-white uppercase">Fluid Omnibridge</h3>
                    <p className="text-slate-500 text-xs font-medium uppercase tracking-widest">Move any asset to Fluid in under 60 seconds with zero slippage.</p>
                 </div>
              </div>
@@ -323,7 +323,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                        <div className="p-2.5 bg-indigo-500/10 rounded-xl text-indigo-400">
                           <Globe size={18} />
                        </div>
-                       <h3 className="text-xl font-nebula font-black text-white uppercase italic tracking-tighter leading-none">Register .fluid Domain</h3>
+                       <h3 className="text-xl font-nebula font-black text-white uppercase tracking-tighter leading-none">Register .fluid Domain</h3>
                     </div>
                     <form onSubmit={handleDomainSearch} className="relative mb-8 group">
                         <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-indigo-500 transition-colors">
@@ -350,7 +350,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                             <div className="flex items-center gap-4">
                                <div className="w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500 border border-emerald-500/20 shadow-lg"><CheckCircle2 size={28} /></div>
                                <div>
-                                  <div className="flex items-center gap-3"><span className="text-white text-2xl font-nebula font-black italic">{domainQuery}.fluid</span><span className="text-[8px] bg-emerald-500 text-slate-950 px-2 py-1 rounded font-nebula font-black uppercase tracking-widest">Available</span></div>
+                                  <div className="flex items-center gap-3"><span className="text-white text-2xl font-nebula font-black">{domainQuery}.fluid</span><span className="text-[8px] bg-emerald-500 text-slate-950 px-2 py-1 rounded font-nebula font-black uppercase tracking-widest">Available</span></div>
                                   <div className="flex items-center gap-2 mt-1"><Lock size={10} className="text-slate-500" /><span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Immutable Ownership Secured</span></div>
                                </div>
                             </div>
@@ -380,7 +380,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
               <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-500 text-[8px] font-nebula font-black uppercase tracking-[0.2em] mb-4">
                  <Smartphone size={10} /> The Fluid Super-App
               </div>
-              <h2 className="text-4xl md:text-7xl font-nebula font-black text-white tracking-tight uppercase leading-none italic mb-6">
+              <h2 className="text-4xl md:text-7xl font-nebula font-black text-white tracking-tight uppercase leading-none mb-6">
                  Spend Fluid <span className="text-fluid-gradient">Anywhere</span>.
               </h2>
               <p className="text-slate-500 text-[11px] font-bold tracking-[0.3em] uppercase max-w-2xl mx-auto opacity-70">
@@ -396,7 +396,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                     <div className="w-12 h-12 bg-orange-500/10 rounded-2xl flex items-center justify-center mb-6 text-orange-500 group-hover:scale-110 transition-transform shadow-inner">
                        <Banknote size={24} />
                     </div>
-                    <h4 className="text-xl font-nebula font-black text-white uppercase italic mb-3">Fiat On-Chain</h4>
+                    <h4 className="text-xl font-nebula font-black text-white uppercase mb-3">Fiat On-Chain</h4>
                     <p className="text-slate-500 text-xs font-medium leading-relaxed">
                        Integrated bank rails for instant SEPA, Swift, and ACH transfers directly into your non-custodial vault.
                     </p>
@@ -406,7 +406,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                     <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-6 text-blue-400 group-hover:scale-110 transition-transform shadow-inner">
                        <RefreshCw size={24} />
                     </div>
-                    <h4 className="text-xl font-nebula font-black text-white uppercase italic mb-3">Atomic DEX</h4>
+                    <h4 className="text-xl font-nebula font-black text-white uppercase mb-3">Atomic DEX</h4>
                     <p className="text-slate-500 text-xs font-medium leading-relaxed">
                        Zero-slippage swaps between FLUID and 1,000+ multichain assets using the sharded settlement engine.
                     </p>
@@ -443,7 +443,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                           <div className="bg-slate-900 border border-white/10 rounded-[2.5rem] p-6 shadow-2xl relative overflow-hidden group hover:scale-[1.02] transition-all">
                              <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent"></div>
                              <div className="flex justify-between items-start mb-12 relative z-10">
-                                <span className="text-[10px] font-nebula font-black text-white italic tracking-tighter">Fluid Genesis</span>
+                                <span className="text-[10px] font-nebula font-black text-white tracking-tighter">Fluid Genesis</span>
                                 <div className="p-2 bg-white/10 rounded-lg"><CreditCard size={12} className="text-white" /></div>
                              </div>
                              <div className="relative z-10">
@@ -466,7 +466,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                     <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-6 text-emerald-500 group-hover:scale-110 transition-transform shadow-inner">
                        <ShoppingCart size={24} />
                     </div>
-                    <h4 className="text-xl font-nebula font-black text-white uppercase italic mb-3">Merchant Gateway</h4>
+                    <h4 className="text-xl font-nebula font-black text-white uppercase mb-3">Merchant Gateway</h4>
                     <p className="text-slate-500 text-xs font-medium leading-relaxed">
                        Bridge crypto to the real world. Spend at 60M+ merchants globally with instant fiat settlement at the POS.
                     </p>
@@ -476,7 +476,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                     <div className="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center mb-6 text-purple-400 group-hover:scale-110 transition-transform shadow-inner">
                        <Shield size={24} />
                     </div>
-                    <h4 className="text-xl font-nebula font-black text-white uppercase italic mb-3">Non-Custodial Vault</h4>
+                    <h4 className="text-xl font-nebula font-black text-white uppercase mb-3">Non-Custodial Vault</h4>
                     <p className="text-slate-500 text-xs font-medium leading-relaxed">
                        Total sovereignty. Your keys never leave your device secure enclave. Not even Fluid can access your assets.
                     </p>
@@ -489,14 +489,14 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
               <div className="bg-slate-900/40 border border-white/5 rounded-[3rem] p-10 flex flex-col md:flex-row items-center gap-8">
                  <div className="p-6 bg-indigo-500/10 rounded-[2rem] text-indigo-400"><ShieldAlert size={40} /></div>
                  <div>
-                    <h5 className="text-xl font-nebula font-black text-white uppercase italic mb-2">Immutable Security</h5>
+                    <h5 className="text-xl font-nebula font-black text-white uppercase mb-2">Immutable Security</h5>
                     <p className="text-slate-500 text-xs leading-relaxed font-medium">Your keys, your card, your control. Experience institutional-grade security with no compromise on usability.</p>
                  </div>
               </div>
               <div className="bg-slate-900/40 border border-white/5 rounded-[3rem] p-10 flex flex-col md:flex-row items-center gap-8">
                  <div className="p-6 bg-emerald-500/10 rounded-[2rem] text-emerald-400"><Zap size={40} /></div>
                  <div>
-                    <h5 className="text-xl font-nebula font-black text-white uppercase italic mb-2">Instant Settlement</h5>
+                    <h5 className="text-xl font-nebula font-black text-white uppercase mb-2">Instant Settlement</h5>
                     <p className="text-slate-500 text-xs leading-relaxed font-medium">No 3-day waiting periods for bank transfers. All transactions are settled instantly on the sharded layer.</p>
                  </div>
               </div>
@@ -536,13 +536,13 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                         <td className="py-8 px-4 text-white font-nebula font-black uppercase text-xs">Peak Throughput</td>
                         <td className="py-8 px-4 text-slate-500 text-xs">15-30 TPS</td>
                         <td className="py-8 px-4 text-slate-500 text-xs">65,000 TPS</td>
-                        <td className="py-8 px-4 text-emerald-400 font-nebula font-black text-sm italic">2,400,000+ TPS</td>
+                        <td className="py-8 px-4 text-emerald-400 font-nebula font-black text-sm">2,400,000+ TPS</td>
                      </tr>
                      <tr>
                         <td className="py-8 px-4 text-white font-nebula font-black uppercase text-xs">Block Finality</td>
                         <td className="py-8 px-4 text-slate-500 text-xs">~12 Minutes</td>
                         <td className="py-8 px-4 text-slate-500 text-xs">~2.5 Seconds</td>
-                        <td className="py-8 px-4 text-emerald-400 font-nebula font-black text-sm italic">~600 Milliseconds</td>
+                        <td className="py-8 px-4 text-emerald-400 font-nebula font-black text-sm">~600 Milliseconds</td>
                      </tr>
                   </tbody>
                </table>

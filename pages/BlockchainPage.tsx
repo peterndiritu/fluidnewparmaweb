@@ -146,10 +146,10 @@ const BlockchainPage: React.FC = () => {
           <div className="inline-block px-4 py-2 rounded-full bg-blue-600/10 border border-blue-600/30 mb-6 backdrop-blur-md">
              <span className="text-blue-500 font-nebula font-bold uppercase tracking-wider text-[10px]">Layer 1 Protocol v1.0.4</span>
           </div>
-          <h1 className="text-7xl md:text-9xl font-nebula font-black text-white mb-4 tracking-tighter leading-none text-fluid-gradient uppercase italic">
+          <h1 className="text-7xl md:text-9xl font-nebula font-black text-white mb-4 tracking-tighter leading-none text-fluid-gradient uppercase">
              Fluid Chain
           </h1>
-          <h2 className="text-2xl md:text-5xl font-nebula font-black text-white/50 mb-10 tracking-tight uppercase italic">
+          <h2 className="text-2xl md:text-5xl font-nebula font-black text-white/50 mb-10 tracking-tight uppercase">
              The Backbone of the New Internet
           </h2>
           <p className="text-xl text-slate-400 mb-10 leading-relaxed font-medium max-w-2xl">
@@ -182,7 +182,7 @@ const BlockchainPage: React.FC = () => {
                     </div>
                     <p className="text-slate-500 text-[10px] mb-3 font-nebula font-black uppercase tracking-widest">{stat.label}</p>
                     <div className="flex items-end justify-between mb-4">
-                       <span className="text-4xl font-nebula font-black text-white tracking-tight text-glow-cyan uppercase italic">{stat.value}</span>
+                       <span className="text-4xl font-nebula font-black text-white tracking-tight text-glow-cyan uppercase">{stat.value}</span>
                        <span className="text-[10px] text-emerald-500 font-nebula font-black mb-2 tracking-widest uppercase">{stat.trend}</span>
                     </div>
                     <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest opacity-60">{stat.desc}</p>
@@ -193,7 +193,7 @@ const BlockchainPage: React.FC = () => {
 
         {/* Innovations */}
         <section id="nodes" className="bg-slate-900/40 py-20 px-8 rounded-[4rem] border border-white/10 mb-24 backdrop-blur-md">
-           <h2 className="text-4xl font-nebula font-black text-center mb-16 text-white uppercase italic tracking-tighter">Protocol <span className="text-fluid-gradient">Innovations</span></h2>
+           <h2 className="text-4xl font-nebula font-black text-center mb-16 text-white uppercase tracking-tighter">Protocol <span className="text-fluid-gradient">Innovations</span></h2>
            <div className="grid md:grid-cols-3 gap-8">
               {[
                 { icon: Layers, title: "Dynamic Sharding", desc: "Network partitions based on real-time load for linear horizontal scaling.", color: "text-blue-500" },
@@ -204,7 +204,7 @@ const BlockchainPage: React.FC = () => {
                    <div className={`w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center mb-8 ${item.color} group-hover:scale-110 transition-transform shadow-inner`}>
                       <item.icon size={28} />
                    </div>
-                   <h3 className="text-lg font-nebula font-black mb-4 text-white uppercase italic tracking-tight">{item.title}</h3>
+                   <h3 className="text-lg font-nebula font-black mb-4 text-white uppercase tracking-tight">{item.title}</h3>
                    <p className="text-slate-500 leading-relaxed text-xs font-medium">
                       {item.desc}
                    </p>

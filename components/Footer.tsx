@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Download, Mail } from 'lucide-react';
 
@@ -5,7 +6,7 @@ const Footer: React.FC = () => {
   const logoPathData = `
     <path d="M45 22H80C83.3137 22 86 24.6863 86 28V32C86 35.3137 83.3137 38 80 38H40L45 22Z" fill="white" />
     <path d="M30 44H70C73.3137 44 76 46.6863 76 50V54C76 57.3137 73.3137 60 70 60H25L30 44Z" fill="white" />
-    <path d="M15 66H60C63.3137 66 66 68.6863 66 72V76C66 79.3137 63.3137 82 60 82H10L15 66Z" fill="white" />
+    <path d="M15 66H60C63.3137 66 66 68.6863 66 72V76C66 79.3137 83.3137 82 60 82H10L15 66Z" fill="white" />
   `;
 
   const handleDownloadLogo = () => {
@@ -43,7 +44,7 @@ const Footer: React.FC = () => {
               <svg width="64" height="64" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="mb-2 transition-transform group-hover:scale-110">
                 <path d="M45 22H80C83.3137 22 86 24.6863 86 28V32C86 35.3137 83.3137 38 80 38H40L45 22Z" fill="currentColor" className="text-slate-900 dark:text-white" />
                 <path d="M30 44H70C73.3137 44 76 46.6863 76 50V54C76 57.3137 73.3137 60 70 60H25L30 44Z" fill="currentColor" className="text-slate-900 dark:text-white" />
-                <path d="M15 66H60C63.3137 66 66 68.6863 66 72V76C66 79.3137 63.3137 82 60 82H10L15 66Z" fill="currentColor" className="text-slate-900 dark:text-white" />
+                <path d="M15 66H60C63.3137 66 66 68.6863 66 72V76C66 79.3137 83.3137 82 60 82H10L15 66Z" fill="currentColor" className="text-slate-900 dark:text-white" />
               </svg>
               <span className="font-black text-3xl tracking-tighter text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-cyan-400 transition-colors">FLUID</span>
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-[0.2em] mt-2 flex items-center gap-1">
@@ -72,7 +73,7 @@ const Footer: React.FC = () => {
             <a href="#" className="hover:text-blue-600 transition-colors">Sitemap</a>
           </div>
 
-          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">© 2024 Fluid Blockchain Protocol</p>
+          <p className="text-slate-400 text-xs font-bold uppercase tracking-widest">© {new Date().getFullYear()} Fluid Blockchain Protocol</p>
       </div>
     </footer>
   );

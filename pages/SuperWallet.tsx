@@ -61,7 +61,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
                 <div>
                   <p className="text-indigo-200 font-nebula font-black uppercase text-[10px] tracking-widest mb-2">Total Combined Value</p>
                   <div className="flex items-center gap-4">
-                    <h2 className="text-4xl md:text-6xl font-nebula font-black text-white italic">
+                    <h2 className="text-4xl md:text-6xl font-nebula font-black text-white">
                       {balanceVisible ? `$${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '••••••••'}
                     </h2>
                     <button onClick={() => setBalanceVisible(!balanceVisible)} className="text-white/40 hover:text-white transition-colors">
@@ -95,7 +95,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
             {/* Assets List */}
             <div className="bg-slate-900/50 backdrop-blur-xl border border-white/5 rounded-[3rem] overflow-hidden">
                <div className="p-8 border-b border-white/5 flex justify-between items-center">
-                  <h3 className="text-lg font-nebula font-black text-white uppercase italic">Portfolio Assets</h3>
+                  <h3 className="text-lg font-nebula font-black text-white uppercase">Portfolio Assets</h3>
                   <div className="flex gap-2">
                     <button className="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-[10px] font-nebula font-black uppercase tracking-widest text-slate-400">Crypto</button>
                     <button className="px-4 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-[10px] font-nebula font-black uppercase tracking-widest text-indigo-400">Fiat</button>
@@ -113,12 +113,12 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
                              )}
                           </div>
                           <div>
-                             <div className="text-sm font-nebula font-black text-white uppercase italic">{asset.name}</div>
+                             <div className="text-sm font-nebula font-black text-white uppercase">{asset.name}</div>
                              <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{asset.symbol}</div>
                           </div>
                        </div>
                        <div className="text-right">
-                          <div className="text-sm font-nebula font-black text-white italic">
+                          <div className="text-sm font-nebula font-black text-white">
                             {balanceVisible ? `${asset.balance.toLocaleString()} ${asset.symbol}` : '••••'}
                           </div>
                           <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
@@ -136,7 +136,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
           <div className="max-w-md mx-auto animate-fade-in-up">
             <div className="bg-slate-900 border border-white/5 rounded-[3rem] p-8 shadow-2xl">
                <div className="flex justify-between items-center mb-8">
-                  <h2 className="text-2xl font-nebula font-black text-white uppercase italic">Fluid Swap</h2>
+                  <h2 className="text-2xl font-nebula font-black text-white uppercase">Fluid Swap</h2>
                   <Settings size={20} className="text-slate-500" />
                </div>
 
@@ -188,7 +188,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
       case 'cards':
         return (
           <div className="space-y-8 animate-fade-in-up">
-            <h2 className="text-2xl font-nebula font-black text-white uppercase italic">My Fluid Cards</h2>
+            <h2 className="text-2xl font-nebula font-black text-white uppercase">My Fluid Cards</h2>
             <div className="grid gap-6">
                {MOCK_CARDS.map((card) => (
                   <div key={card.id} className={`${card.color} border border-white/10 rounded-[2.5rem] p-8 aspect-[1.6/1] relative overflow-hidden group shadow-2xl`}>
@@ -197,7 +197,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
                     <div className="flex justify-between items-start relative z-10">
                        <div className="flex items-center gap-2">
                           <FluidLogo className="w-8 h-8 text-white" />
-                          <span className="text-xl font-nebula font-black text-white italic tracking-tighter">Fluid</span>
+                          <span className="text-xl font-nebula font-black text-white tracking-tighter">Fluid</span>
                        </div>
                        <div className="px-3 py-1 rounded-full bg-white/10 text-[10px] font-nebula font-black text-white uppercase tracking-widest">{card.type}</div>
                     </div>
@@ -230,14 +230,14 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
                       <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl">
                          <div className="flex items-center gap-3">
                             <Fingerprint size={20} className="text-indigo-400" />
-                            <span className="text-sm font-nebula font-black text-white uppercase italic">Biometric Vault</span>
+                            <span className="text-sm font-nebula font-black text-white uppercase">Biometric Vault</span>
                          </div>
                          <div className="w-12 h-6 bg-indigo-500 rounded-full flex items-center px-1"><div className="w-4 h-4 bg-white rounded-full translate-x-6"></div></div>
                       </div>
                       <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl">
                          <div className="flex items-center gap-3">
                             <Zap size={20} className="text-amber-400" />
-                            <span className="text-sm font-nebula font-black text-white uppercase italic">Gas-Less Mode</span>
+                            <span className="text-sm font-nebula font-black text-white uppercase">Gas-Less Mode</span>
                          </div>
                          <div className="w-12 h-6 bg-slate-700 rounded-full flex items-center px-1"><div className="w-4 h-4 bg-white rounded-full"></div></div>
                       </div>
@@ -257,7 +257,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
           <div className="w-10 h-10 bg-fluid-gradient rounded-xl flex items-center justify-center text-white">
             <FluidLogo className="w-6 h-6" />
           </div>
-          <span className="text-2xl font-nebula font-black text-white italic tracking-tighter uppercase">Fluid</span>
+          <span className="text-2xl font-nebula font-black text-white tracking-tighter uppercase">Fluid</span>
         </div>
         
         <nav className="space-y-4 flex-grow">
@@ -292,7 +292,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
       <div className="flex-1 lg:ml-72 p-6 md:p-12">
         <div className="max-w-4xl mx-auto">
           <header className="flex justify-between items-center mb-12">
-             <h1 className="text-4xl font-nebula font-black text-white uppercase italic tracking-tighter">
+             <h1 className="text-4xl font-nebula font-black text-white uppercase tracking-tighter">
                 {activeTab === 'dashboard' ? 'My Vault' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
              </h1>
              <div className="flex items-center gap-4">
@@ -301,7 +301,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
                 </button>
                 <div className="hidden sm:flex items-center gap-3 pl-4 border-l border-white/5">
                    <div className="text-right">
-                      <div className="text-[10px] font-nebula font-black text-white uppercase italic">Alexander Fluid</div>
+                      <div className="text-[10px] font-nebula font-black text-white uppercase">Alexander Fluid</div>
                       <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Tier 1 Genesis</div>
                    </div>
                    <div className="w-10 h-10 bg-slate-800 rounded-xl"></div>

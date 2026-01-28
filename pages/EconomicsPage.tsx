@@ -96,7 +96,7 @@ const EconomicsPage: React.FC<EconomicsPageProps> = ({ onNavigate }) => {
             <div className="inline-block px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/20 mb-8 backdrop-blur-sm">
                 <span className="text-amber-500 font-nebula font-black uppercase tracking-[0.2em] text-[10px]">Endowment Emission Model</span>
             </div>
-            <h1 className="text-7xl md:text-9xl font-nebula font-black text-white mb-8 tracking-tighter leading-none italic uppercase">
+            <h1 className="text-7xl md:text-9xl font-nebula font-black text-white mb-8 tracking-tighter leading-none uppercase">
                 Economic <br/>
                 <span className="text-fluid-gradient">Sustainability.</span>
             </h1>
@@ -120,7 +120,7 @@ const EconomicsPage: React.FC<EconomicsPageProps> = ({ onNavigate }) => {
                       <div className={`w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center mb-8 ${p.color} group-hover:scale-110 transition-transform shadow-inner`}>
                         <p.icon size={28} />
                       </div>
-                      <h3 className="text-lg font-nebula font-black mb-4 text-white uppercase italic tracking-tight">{p.title}</h3>
+                      <h3 className="text-lg font-nebula font-black mb-4 text-white uppercase tracking-tight">{p.title}</h3>
                       <p className="text-slate-500 text-xs leading-relaxed font-medium">
                         {p.desc}
                       </p>
@@ -133,7 +133,7 @@ const EconomicsPage: React.FC<EconomicsPageProps> = ({ onNavigate }) => {
               <div className="relative bg-gradient-to-r from-amber-600 to-orange-700 rounded-[4rem] p-16 shadow-2xl overflow-hidden group">
                 <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 mix-blend-overlay"></div>
                 <div className="relative z-10">
-                    <h2 className="text-5xl md:text-7xl font-nebula font-black text-white mb-8 uppercase tracking-tighter italic">100M Fixed Supply.</h2>
+                    <h2 className="text-5xl md:text-7xl font-nebula font-black text-white mb-8 uppercase tracking-tighter">100M Fixed Supply.</h2>
                     <p className="text-white/80 text-lg mb-10 max-w-2xl mx-auto leading-relaxed font-medium uppercase tracking-wide">
                         Join the economy that aligns users, validators, and stakers for a truly permanent internet.
                     </p>
