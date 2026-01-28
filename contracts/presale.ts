@@ -1,13 +1,26 @@
 import { getContract } from "thirdweb";
 import { client } from "../client";
-import { defineChain, ethereum, bsc, polygon, base, arbitrum } from "thirdweb/chains";
+import { 
+  defineChain, 
+  ethereum, 
+  bsc, 
+  polygon, 
+  base, 
+  arbitrum, 
+  avalanche, 
+  optimism, 
+  zksync, 
+  linea, 
+  scroll, 
+  blast 
+} from "thirdweb/chains";
 
 // Fluid Network / Target Chain (e.g., Sepolia for testing or Fluid Mainnet)
 export const chain = defineChain(11155111); // Using Sepolia as a placeholder for the presale contract
 
-// Replace with actual deployed contract address
-export const PRESALE_CONTRACT_ADDRESS = "0x0000000000000000000000000000000000000000";
-// Replace with actual FLUID token address
+// Updated with the user provided contract address
+export const PRESALE_CONTRACT_ADDRESS = "0xec9123Aa60651ceee7c0E084c884Cd33478c92a5";
+// Placeholder for FLUID token address (usually the reward token)
 export const FLUID_TOKEN_ADDRESS = "0x0000000000000000000000000000000000000000";
 
 export const presaleContract = getContract({
@@ -74,6 +87,16 @@ export const SUPPORTED_NETWORKS: NetworkInfo[] = [
     ]
   },
   { 
+    id: avalanche.id, 
+    name: "Avalanche", 
+    chain: avalanche, 
+    icon: "https://cryptologos.cc/logos/avalanche-avax-logo.png",
+    tokens: [
+      { symbol: "AVAX", name: "Avalanche", icon: "https://cryptologos.cc/logos/avalanche-avax-logo.png", priceUsd: 35 },
+      { symbol: "USDT", name: "Tether", icon: "https://cryptologos.cc/logos/tether-usdt-logo.png", address: "0x970b9bb2C0444F5E81e9d0eFb84C8ccdcdcAf84d", priceUsd: 1 },
+    ]
+  },
+  { 
     id: base.id, 
     name: "Base", 
     chain: base, 
@@ -93,11 +116,56 @@ export const SUPPORTED_NETWORKS: NetworkInfo[] = [
       { symbol: "USDC", name: "USD Coin", icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png", address: "0xaf88d065e77c8cC2239327C5EDb3A432268e5831", priceUsd: 1 },
     ]
   },
+  { 
+    id: optimism.id, 
+    name: "Optimism", 
+    chain: optimism, 
+    icon: "https://cryptologos.cc/logos/optimism-ethereum-op-logo.png",
+    tokens: [
+      { symbol: "ETH", name: "Ethereum", icon: "https://cryptologos.cc/logos/ethereum-eth-logo.png", priceUsd: 2450 },
+      { symbol: "OP", name: "Optimism", icon: "https://cryptologos.cc/logos/optimism-ethereum-op-logo.png", priceUsd: 3.5 },
+    ]
+  },
+  { 
+    id: zksync.id, 
+    name: "zkSync", 
+    chain: zksync, 
+    icon: "https://cryptologos.cc/logos/zksync-era-logo.png",
+    tokens: [
+      { symbol: "ETH", name: "Ethereum", icon: "https://cryptologos.cc/logos/ethereum-eth-logo.png", priceUsd: 2450 },
+      { symbol: "USDC", name: "USD Coin", icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png", address: "0x3355df6D4c9C3035744d0160243B98A0b1eaE493", priceUsd: 1 },
+    ]
+  },
+  { 
+    id: linea.id, 
+    name: "Linea", 
+    chain: linea, 
+    icon: "https://lineascan.build/images/logo.png",
+    tokens: [
+      { symbol: "ETH", name: "Ethereum", icon: "https://cryptologos.cc/logos/ethereum-eth-logo.png", priceUsd: 2450 },
+    ]
+  },
+  { 
+    id: scroll.id, 
+    name: "Scroll", 
+    chain: scroll, 
+    icon: "https://scrollscan.com/images/logo.png",
+    tokens: [
+      { symbol: "ETH", name: "Ethereum", icon: "https://cryptologos.cc/logos/ethereum-eth-logo.png", priceUsd: 2450 },
+    ]
+  },
+  { 
+    id: blast.id, 
+    name: "Blast", 
+    chain: blast, 
+    icon: "https://blastscan.io/images/logo.png",
+    tokens: [
+      { symbol: "ETH", name: "Ethereum", icon: "https://cryptologos.cc/logos/ethereum-eth-logo.png", priceUsd: 2450 },
+      { symbol: "USDB", name: "Blast Dollar", icon: "https://cryptologos.cc/logos/usdb-logo.png", address: "0x4300000000000000000000000000000000000003", priceUsd: 1 },
+    ]
+  },
 ];
 
-/**
- * Common Presale ABI functions
- */
 export const PRESALE_ABI_FUNCTIONS = {
   getPrice: "function tokenPrice() view returns (uint256)",
   getSold: "function totalTokensSold() view returns (uint256)",
