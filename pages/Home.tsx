@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import HowItWorks from '../components/HowItWorks';
 import Tokenomics from '../components/Tokenomics';
@@ -8,14 +7,15 @@ import {
   ArrowRight, Layers, TrendingUp, Star, Landmark, Rocket, 
   ShieldCheck, Activity, Database, Coins, Server, BarChart,
   Network, CreditCard, Zap, Globe2, ArrowLeftRight, ShieldAlert,
-  Cpu, PieChart, Users, BarChart3
+  Cpu, PieChart, Users, BarChart3, Search, Lock, CheckCircle2,
+  Sparkles, Globe, UserCheck, Timer, Banknote, RefreshCw, ShoppingCart,
+  Shield, Smartphone, MoveUpRight, ArrowDownLeft, Wallet
 } from 'lucide-react';
 
 interface HomeProps {
   onNavigate: (page: string) => void;
 }
 
-// Add comment to fix FluidLogo component definition
 const FluidLogo = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 100 100" fill="currentColor" className={className} xmlns="http://www.w3.org/2000/svg">
     <path d="M55 20 H90 A5 5 0 0 1 90 35 H55 A5 5 0 0 1 55 20 Z" transform="skewX(-20)" />
@@ -29,6 +29,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   const [isTyping, setIsTyping] = useState(false);
   const terminalRef = useRef<HTMLDivElement>(null);
   const [domainQuery, setDomainQuery] = useState('');
+  const [isSearchingDomain, setIsSearchingDomain] = useState(false);
   const [showDomainResults, setShowDomainResults] = useState(false);
 
   useEffect(() => {
@@ -50,6 +51,12 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
     };
   }, []);
 
+  useEffect(() => {
+    if (terminalRef.current) {
+      terminalRef.current.scrollTop = terminalRef.current.scrollHeight;
+    }
+  }, [terminalLines]);
+
   const runTerminalAnimation = async () => {
     setTerminalLines([]);
     setIsTyping(true);
@@ -68,7 +75,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
       addToTerminal({ type: 'prompt', content: <div className="flex items-center font-mono">{prompt}<span className="typing-cursor ml-1"></span></div> });
       let typed = "";
       for (let i = 0; i < cmd.length; i++) {
-        await new Promise(r => setTimeout(r, 40));
+        await new Promise(r => setTimeout(r, 30));
         typed += cmd[i];
         setTerminalLines(prev => {
           const newLines = [...prev];
@@ -90,13 +97,43 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
       });
     };
 
-    await typeCommand("npm install -g fluid-cli");
-    addToTerminal({ type: 'output', content: <div className="text-slate-400 font-mono text-[10px]">+ fluid-cli@1.0.4 added in 0.8s</div> });
-    await new Promise(r => setTimeout(r, 500));
-    await typeCommand("fluid deploy");
-    addToTerminal({ type: 'output', content: <div className="text-slate-400 font-mono text-[10px]">Verifying shards...</div> });
-    await new Promise(r => setTimeout(r, 800));
-    addToTerminal({ type: 'output', content: <div className="text-emerald-400 font-bold font-mono text-[10px]">✔ Success: Site hosted infinitely.</div> });
+    const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
+
+    await typeCommand("npm install -g @fluid/core");
+    addToTerminal({ type: 'output', content: <div className="text-slate-500 font-mono text-[10px] italic">⠋ fetching packages...</div> });
+    await wait(800);
+    addToTerminal({ type: 'output', content: <div className="text-slate-400 font-mono text-[10px]">+ @fluid/core@1.4.2 added in 1.2s</div> });
+    await wait(400);
+
+    await typeCommand("fluid login --genesis");
+    addToTerminal({ type: 'output', content: <div className="text-cyan-400 font-mono text-[10px]">? Authenticating via Secure Vault...</div> });
+    await wait(600);
+    addToTerminal({ type: 'output', content: <div className="text-emerald-400 font-mono text-[10px]">✔ Identity verified: genesis_admin_01</div> });
+    await wait(400);
+
+    await typeCommand("fluid deploy --site ./dist");
+    addToTerminal({ type: 'output', content: <div className="text-slate-400 font-mono text-[10px] mt-2">📦 Optimizing assets (42 files)...</div> });
+    await wait(500);
+    addToTerminal({ type: 'output', content: <div className="text-slate-500 font-mono text-[10px] ml-4">↳ Main bundle: 145KB (Gzipped)</div> });
+    await wait(400);
+    
+    addToTerminal({ type: 'output', content: <div className="text-indigo-400 font-mono text-[10px] mt-2">🧩 Partitioning into micro-shards...</div> });
+    await wait(700);
+    addToTerminal({ type: 'output', content: <div className="text-slate-400 font-mono text-[10px] ml-4">⚄ Generated Shard #01 [Merkle: 0x4f...a2]</div> });
+    await wait(500);
+
+    addToTerminal({ type: 'output', content: <div className="text-cyan-400 font-mono text-[10px] mt-2">🚀 Distributing to validator clusters...</div> });
+    await wait(600);
+
+    addToTerminal({ type: 'output', content: <div className="text-indigo-300 font-mono text-[10px] mt-2">🛡 Verifying sharding integrity (ZK-STARK)...</div> });
+    await wait(1000);
+    addToTerminal({ type: 'output', content: <div className="text-emerald-400 font-bold font-mono text-[10px] mt-1">✔ Proof valid. State synchronized across 3,240 nodes.</div> });
+    await wait(200);
+    
+    addToTerminal({ type: 'output', content: <div className="text-white font-black font-mono text-[11px] mt-4 bg-emerald-500/20 px-2 py-1 border border-emerald-500/30 rounded inline-block">DEPLOYMENT COMPLETE</div> });
+    addToTerminal({ type: 'output', content: <div className="text-emerald-400 font-mono text-[10px] mt-1">🔗 Site infinitely live at: <span className="underline cursor-pointer">https://genesis.fluid</span></div> });
+    
+    addToTerminal({ type: 'prompt', content: <div className="flex items-center font-mono mt-4">{prompt}<span className="typing-cursor ml-1"></span></div> });
     setIsTyping(false);
   };
 
@@ -107,7 +144,13 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
   const handleDomainSearch = (e: React.FormEvent) => {
     e.preventDefault();
     if (!domainQuery) return;
-    setShowDomainResults(true);
+    setIsSearchingDomain(true);
+    setShowDomainResults(false);
+    
+    setTimeout(() => {
+      setIsSearchingDomain(false);
+      setShowDomainResults(true);
+    }, 1500);
   };
 
   return (
@@ -175,7 +218,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         </div>
       </section>
 
-      {/* NEW: MULTICHAIN NEXUS SECTION */}
+      {/* MULTICHAIN NEXUS SECTION */}
       <section className="py-20 bg-slate-950 relative border-t border-white/5 overflow-hidden">
         <div className="absolute top-1/2 left-0 w-full h-px bg-gradient-to-r from-transparent via-indigo-500/20 to-transparent"></div>
         <div className="max-w-7xl mx-auto px-4 relative z-10">
@@ -260,47 +303,69 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
       {/* HOSTING SECTION */}
       <section id="hosting" className="py-20 bg-slate-950 relative border-t border-white/5">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="text-center mb-10">
+          <div className="text-center mb-16">
             <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-[8px] font-nebula font-black uppercase tracking-[0.2em] mb-4">
               <Rocket size={10} /> Immutable Infrastructure
             </div>
-            <h2 className="text-3xl md:text-6xl font-nebula font-black text-white tracking-tight uppercase leading-none">
+            <h2 className="text-3xl md:text-6xl font-nebula font-black text-white tracking-tight uppercase leading-none mb-6">
               Host <span className="text-fluid-gradient">Infinitely</span>
             </h2>
+            <p className="text-slate-500 text-xs font-bold tracking-[0.2em] uppercase max-w-xl mx-auto opacity-70">
+              Decentralized hosting for a censorship-resistant internet.
+            </p>
           </div>
 
           <div className="grid lg:grid-cols-2 gap-8 mb-10">
-             <div className="bg-slate-900/50 backdrop-blur-3xl border border-white/10 rounded-[3rem] p-10 md:p-14 relative overflow-hidden shadow-2xl flex flex-col justify-center scroll-card">
-                <div className="absolute top-0 right-0 w-80 h-80 bg-indigo-500/5 rounded-full blur-[120px]"></div>
-                <h3 className="text-lg font-nebula font-black text-white mb-6 uppercase tracking-tight leading-none">Register .fluid Domain</h3>
-                <form onSubmit={handleDomainSearch} className="relative mb-6">
-                    <input 
-                        type="text" 
-                        value={domainQuery}
-                        onChange={(e) => setDomainQuery(e.target.value)}
-                        placeholder="search.fluid" 
-                        className="w-full bg-black/50 border border-white/10 rounded-full py-4 pl-6 pr-32 text-white font-nebula font-black text-base focus:outline-none focus:border-indigo-500 transition-all placeholder:text-slate-800"
-                    />
-                    <button type="submit" className="absolute right-2 top-2 bottom-2 bg-indigo-600 rounded-full px-6 text-white font-nebula font-black text-[8px] uppercase tracking-widest hover:bg-indigo-500 active:scale-95 transition-all">Search</button>
-                </form>
-                {showDomainResults && (
-                   <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-[2rem] flex justify-between items-center animate-fade-in-up">
-                      <div><span className="text-white text-base font-nebula font-black">{domainQuery}.fluid</span><span className="ml-3 text-[7px] bg-emerald-500 text-black px-1.5 py-1 rounded font-nebula font-black uppercase tracking-widest">Available</span></div>
-                      <button className="text-[9px] font-nebula font-black text-emerald-400 uppercase tracking-widest hover:underline">Claim Now</button>
-                   </div>
-                )}
-             </div>
-
-             <div className="bg-slate-900 border border-slate-800 rounded-[3rem] shadow-2xl overflow-hidden relative min-h-[350px] scroll-card flex flex-col">
-                <div className="bg-slate-800/80 px-8 py-4 flex items-center justify-between border-b border-white/5">
-                   <div className="flex gap-2">
-                     <div className="w-2 h-2 rounded-full bg-red-500/30"></div>
-                     <div className="w-2 h-2 rounded-full bg-yellow-500/30"></div>
-                     <div className="w-2 h-2 rounded-full bg-green-500/30"></div>
-                   </div>
-                   <span className="text-slate-500 font-black uppercase tracking-[0.3em] text-[8px]">fluid-sharding-engine v1</span>
+             <div className="bg-slate-900 border border-white/10 rounded-[3rem] p-10 md:p-14 relative overflow-hidden shadow-2xl flex flex-col scroll-card">
+                <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-indigo-500/5 rounded-full blur-[100px] -mr-48 -mt-48"></div>
+                <div className="relative z-10 mb-8">
+                    <div className="flex items-center gap-3 mb-4">
+                       <div className="p-2.5 bg-indigo-500/10 rounded-xl text-indigo-400">
+                          <Globe size={18} />
+                       </div>
+                       <h3 className="text-xl font-nebula font-black text-white uppercase italic tracking-tighter leading-none">Register .fluid Domain</h3>
+                    </div>
+                    <form onSubmit={handleDomainSearch} className="relative mb-8 group">
+                        <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-600 group-focus-within:text-indigo-500 transition-colors">
+                            <Search size={22} />
+                        </div>
+                        <input 
+                            type="text" 
+                            value={domainQuery}
+                            onChange={(e) => setDomainQuery(e.target.value)}
+                            placeholder="Enter desired handle..." 
+                            className="w-full bg-black/40 border-2 border-white/10 rounded-[2rem] py-5 pl-16 pr-32 text-white font-nebula font-black text-lg focus:outline-none focus:border-indigo-500/50 transition-all placeholder:text-slate-800 shadow-inner"
+                        />
+                        <button 
+                           type="submit" 
+                           disabled={isSearchingDomain || !domainQuery}
+                           className="absolute right-3 top-3 bottom-3 bg-indigo-600 rounded-[1.5rem] px-8 text-white font-nebula font-black text-[9px] uppercase tracking-[0.2em] hover:bg-indigo-500 active:scale-95 transition-all shadow-xl disabled:opacity-50 disabled:scale-100 flex items-center justify-center gap-2 min-w-[120px]"
+                        >
+                           {isSearchingDomain ? <Activity size={12} className="animate-spin" /> : <>CLAIM <ArrowRight size={12} /></>}
+                        </button>
+                    </form>
+                    <div className="min-h-[100px] relative">
+                       {showDomainResults && (
+                         <div className="p-6 bg-emerald-500/5 border border-emerald-500/20 rounded-[2.5rem] flex flex-col md:flex-row justify-between items-center gap-6 animate-fade-in-up">
+                            <div className="flex items-center gap-4">
+                               <div className="w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-500 border border-emerald-500/20 shadow-lg"><CheckCircle2 size={28} /></div>
+                               <div>
+                                  <div className="flex items-center gap-3"><span className="text-white text-2xl font-nebula font-black italic">{domainQuery}.fluid</span><span className="text-[8px] bg-emerald-500 text-slate-950 px-2 py-1 rounded font-nebula font-black uppercase tracking-widest">Available</span></div>
+                                  <div className="flex items-center gap-2 mt-1"><Lock size={10} className="text-slate-500" /><span className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Immutable Ownership Secured</span></div>
+                               </div>
+                            </div>
+                            <button className="px-6 py-2.5 bg-white text-slate-950 rounded-xl font-nebula font-black text-[9px] uppercase tracking-widest hover:scale-105 transition-all shadow-xl">CLAIM IDENTITY</button>
+                         </div>
+                       )}
+                    </div>
                 </div>
-                <div ref={terminalRef} className="p-8 text-slate-300 flex-grow flex flex-col gap-2 bg-black/60 overflow-y-auto font-mono text-[10px] leading-relaxed">
+             </div>
+             <div className="bg-slate-900 border border-slate-800 rounded-[3rem] shadow-2xl overflow-hidden relative min-h-[450px] scroll-card flex flex-col">
+                <div className="bg-slate-800/80 px-8 py-4 flex items-center justify-between border-b border-white/5">
+                   <div className="flex gap-2"><div className="w-2.5 h-2.5 rounded-full bg-red-500/50"></div><div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50"></div><div className="w-2.5 h-2.5 rounded-full bg-green-500/50"></div></div>
+                   <span className="text-slate-500 font-black uppercase tracking-[0.3em] text-[8px]">fluid-node-operator v1.4.2</span>
+                </div>
+                <div ref={terminalRef} className="p-8 text-slate-300 flex-grow flex flex-col gap-1.5 bg-black/80 overflow-y-auto font-mono text-[10px] leading-relaxed custom-scrollbar">
                    {terminalLines.map((line, idx) => <div key={idx}>{line.content}</div>)}
                 </div>
              </div>
@@ -308,64 +373,144 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         </div>
       </section>
 
-      {/* NEW: FLUID PAY / SPEND SECTION */}
+      {/* ENHANCED: FLUID SUPER-APP ECOSYSTEM / SPEND SECTION */}
       <section id="spend" className="py-24 bg-slate-950 relative border-t border-white/5">
         <div className="max-w-7xl mx-auto px-4">
-           <div className="flex flex-col md:flex-row items-center gap-16">
-              <div className="flex-1 space-y-8 animate-fade-in-up">
-                 <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-500 text-[8px] font-nebula font-black uppercase tracking-[0.2em]">
-                    <CreditCard size={10} /> Fiat On-Chain
-                 </div>
-                 <h2 className="text-3xl md:text-6xl font-nebula font-black text-white tracking-tight uppercase leading-none">
-                    Spend Fluid <br/> <span className="text-fluid-gradient">Anywhere</span>.
-                 </h2>
-                 <p className="text-slate-400 text-sm leading-relaxed font-medium">
-                    Bridge your crypto to the real world. Fluid Cards allow you to spend your digital assets at over 60 million merchants worldwide with instant fiat conversion.
-                 </p>
-                 <div className="grid grid-cols-2 gap-6">
-                    <div className="p-6 bg-slate-900 border border-white/5 rounded-3xl">
-                       <ShieldAlert size={20} className="text-indigo-400 mb-4" />
-                       <h4 className="text-white font-nebula font-black uppercase text-[10px] tracking-widest mb-1">Non-Custodial</h4>
-                       <p className="text-slate-500 text-[9px] font-bold uppercase tracking-tighter">Your keys, your card, your control.</p>
-                    </div>
-                    <div className="p-6 bg-slate-900 border border-white/5 rounded-3xl">
-                       <Zap size={20} className="text-emerald-400 mb-4" />
-                       <h4 className="text-white font-nebula font-black uppercase text-[10px] tracking-widest mb-1">Instant Settlement</h4>
-                       <p className="text-slate-500 text-[9px] font-bold uppercase tracking-tighter">No 3-day waiting periods for transfers.</p>
-                    </div>
-                 </div>
-                 <button onClick={() => onNavigate('wallet')} className="px-8 py-4 bg-white text-slate-950 font-nebula font-black rounded-full text-[10px] uppercase tracking-widest shadow-2xl hover:scale-105 transition-all">Request Genesis Card</button>
+           <div className="text-center mb-20">
+              <div className="inline-flex items-center gap-3 px-4 py-1.5 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-500 text-[8px] font-nebula font-black uppercase tracking-[0.2em] mb-4">
+                 <Smartphone size={10} /> The Fluid Super-App
               </div>
-              <div className="flex-1 relative group scroll-card">
-                 <div className="absolute inset-0 bg-fluid-gradient blur-[100px] opacity-10 group-hover:opacity-20 transition-opacity"></div>
-                 <div className="relative aspect-[1.6/1] bg-slate-900 border-2 border-white/10 rounded-[2.5rem] p-10 overflow-hidden shadow-2xl transform rotate-3 group-hover:rotate-0 transition-transform duration-700">
-                    <div className="flex justify-between items-start mb-20">
-                       <div className="flex items-center gap-3">
+              <h2 className="text-4xl md:text-7xl font-nebula font-black text-white tracking-tight uppercase leading-none italic mb-6">
+                 Spend Fluid <span className="text-fluid-gradient">Anywhere</span>.
+              </h2>
+              <p className="text-slate-500 text-[11px] font-bold tracking-[0.3em] uppercase max-w-2xl mx-auto opacity-70">
+                 A seamless bridge between sharded liquidity and real-world utility.
+              </p>
+           </div>
+
+           <div className="grid lg:grid-cols-12 gap-8 items-stretch mb-12">
+              {/* Feature Showcase Grid - LEFT COL */}
+              <div className="lg:col-span-4 flex flex-col gap-6">
+                 {/* Fiat Module */}
+                 <div className="p-10 bg-slate-900 border border-white/5 rounded-[3rem] hover:border-orange-500/30 transition-all group scroll-card">
+                    <div className="w-12 h-12 bg-orange-500/10 rounded-2xl flex items-center justify-center mb-6 text-orange-500 group-hover:scale-110 transition-transform shadow-inner">
+                       <Banknote size={24} />
+                    </div>
+                    <h4 className="text-xl font-nebula font-black text-white uppercase italic mb-3">Fiat On-Chain</h4>
+                    <p className="text-slate-500 text-xs font-medium leading-relaxed">
+                       Integrated bank rails for instant SEPA, Swift, and ACH transfers directly into your non-custodial vault.
+                    </p>
+                 </div>
+                 {/* Atomic DEX Module */}
+                 <div className="p-10 bg-slate-900 border border-white/5 rounded-[3rem] hover:border-blue-500/30 transition-all group scroll-card">
+                    <div className="w-12 h-12 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-6 text-blue-400 group-hover:scale-110 transition-transform shadow-inner">
+                       <RefreshCw size={24} />
+                    </div>
+                    <h4 className="text-xl font-nebula font-black text-white uppercase italic mb-3">Atomic DEX</h4>
+                    <p className="text-slate-500 text-xs font-medium leading-relaxed">
+                       Zero-slippage swaps between FLUID and 1,000+ multichain assets using the sharded settlement engine.
+                    </p>
+                 </div>
+              </div>
+
+              {/* CARD PREVIEW - MIDDLE COL */}
+              <div className="lg:col-span-4 flex flex-col items-center justify-center relative scroll-card">
+                 <div className="absolute inset-0 bg-fluid-gradient blur-[150px] opacity-10"></div>
+                 <div className="relative w-full aspect-[0.6/1] bg-slate-900 border border-white/10 rounded-[4rem] p-1 overflow-hidden shadow-2xl">
+                    <div className="h-full w-full bg-slate-950 rounded-[3.8rem] flex flex-col p-8 pt-12 relative overflow-hidden">
+                       <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-[80px] -mr-32 -mt-32"></div>
+                       <div className="flex justify-between items-center mb-10">
                           <FluidLogo className="w-10 h-10 text-white" />
-                          <span className="text-2xl font-nebula font-black text-white uppercase italic">Fluid</span>
+                          <div className="flex gap-1.5"><div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div><div className="w-1.5 h-1.5 rounded-full bg-slate-800"></div></div>
                        </div>
-                       <div className="px-4 py-2 rounded-xl bg-white/5 border border-white/10 text-[10px] font-nebula font-black text-white uppercase">Genesis Black</div>
-                    </div>
-                    <div>
-                       <div className="text-2xl font-nebula font-black text-white tracking-[0.3em] mb-4">**** **** **** 4829</div>
-                       <div className="flex justify-between items-end">
-                          <div>
-                             <div className="text-[8px] font-nebula font-black text-slate-500 uppercase tracking-widest mb-1">Card Holder</div>
-                             <div className="text-xs font-nebula font-black text-white uppercase">Alexander Fluid</div>
+                       <div className="mb-10">
+                          <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest block mb-1">Combined Portfolio</span>
+                          <h4 className="text-3xl font-nebula font-black text-white">$42,593.10</h4>
+                          <span className="text-[8px] font-bold text-emerald-500 uppercase">+4.2% (24H)</span>
+                       </div>
+                       <div className="grid grid-cols-2 gap-3 mb-10">
+                          <div className="p-4 bg-white/5 border border-white/10 rounded-2xl flex flex-col gap-1 items-center">
+                             <MoveUpRight size={14} className="text-indigo-400" />
+                             <span className="text-[8px] font-black text-slate-500 uppercase">Send</span>
                           </div>
-                          <div className="text-right">
-                             <div className="text-[8px] font-nebula font-black text-slate-500 uppercase tracking-widest mb-1">Expires</div>
-                             <div className="text-xs font-nebula font-black text-white uppercase">12/28</div>
+                          <div className="p-4 bg-white/5 border border-white/10 rounded-2xl flex flex-col gap-1 items-center">
+                             <ArrowDownLeft size={14} className="text-emerald-400" />
+                             <span className="text-[8px] font-black text-slate-500 uppercase">Receive</span>
+                          </div>
+                       </div>
+                       {/* The Card Element Inside Phone */}
+                       <div className="flex-grow flex flex-col justify-end">
+                          <div className="bg-slate-900 border border-white/10 rounded-[2.5rem] p-6 shadow-2xl relative overflow-hidden group hover:scale-[1.02] transition-all">
+                             <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent"></div>
+                             <div className="flex justify-between items-start mb-12 relative z-10">
+                                <span className="text-[10px] font-nebula font-black text-white italic tracking-tighter">Fluid Genesis</span>
+                                <div className="p-2 bg-white/10 rounded-lg"><CreditCard size={12} className="text-white" /></div>
+                             </div>
+                             <div className="relative z-10">
+                                <div className="text-base font-nebula font-black text-white tracking-[0.2em] mb-4">**** 4829</div>
+                                <div className="flex justify-between items-end">
+                                   <div className="text-[8px] font-black text-slate-500 uppercase">Alex Fluid</div>
+                                   <div className="text-[8px] font-black text-white">12/28</div>
+                                </div>
+                             </div>
                           </div>
                        </div>
                     </div>
                  </div>
               </div>
+
+              {/* RIGHT COL */}
+              <div className="lg:col-span-4 flex flex-col gap-6">
+                 {/* Payments Module */}
+                 <div className="p-10 bg-slate-900 border border-white/5 rounded-[3rem] hover:border-emerald-500/30 transition-all group scroll-card">
+                    <div className="w-12 h-12 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-6 text-emerald-500 group-hover:scale-110 transition-transform shadow-inner">
+                       <ShoppingCart size={24} />
+                    </div>
+                    <h4 className="text-xl font-nebula font-black text-white uppercase italic mb-3">Merchant Gateway</h4>
+                    <p className="text-slate-500 text-xs font-medium leading-relaxed">
+                       Bridge crypto to the real world. Spend at 60M+ merchants globally with instant fiat settlement at the POS.
+                    </p>
+                 </div>
+                 {/* Vault Module */}
+                 <div className="p-10 bg-slate-900 border border-white/5 rounded-[3rem] hover:border-purple-500/30 transition-all group scroll-card">
+                    <div className="w-12 h-12 bg-purple-500/10 rounded-2xl flex items-center justify-center mb-6 text-purple-400 group-hover:scale-110 transition-transform shadow-inner">
+                       <Shield size={24} />
+                    </div>
+                    <h4 className="text-xl font-nebula font-black text-white uppercase italic mb-3">Non-Custodial Vault</h4>
+                    <p className="text-slate-500 text-xs font-medium leading-relaxed">
+                       Total sovereignty. Your keys never leave your device secure enclave. Not even Fluid can access your assets.
+                    </p>
+                 </div>
+              </div>
+           </div>
+
+           {/* Value Props Row */}
+           <div className="grid md:grid-cols-2 gap-8 scroll-card">
+              <div className="bg-slate-900/40 border border-white/5 rounded-[3rem] p-10 flex flex-col md:flex-row items-center gap-8">
+                 <div className="p-6 bg-indigo-500/10 rounded-[2rem] text-indigo-400"><ShieldAlert size={40} /></div>
+                 <div>
+                    <h5 className="text-xl font-nebula font-black text-white uppercase italic mb-2">Immutable Security</h5>
+                    <p className="text-slate-500 text-xs leading-relaxed font-medium">Your keys, your card, your control. Experience institutional-grade security with no compromise on usability.</p>
+                 </div>
+              </div>
+              <div className="bg-slate-900/40 border border-white/5 rounded-[3rem] p-10 flex flex-col md:flex-row items-center gap-8">
+                 <div className="p-6 bg-emerald-500/10 rounded-[2rem] text-emerald-400"><Zap size={40} /></div>
+                 <div>
+                    <h5 className="text-xl font-nebula font-black text-white uppercase italic mb-2">Instant Settlement</h5>
+                    <p className="text-slate-500 text-xs leading-relaxed font-medium">No 3-day waiting periods for bank transfers. All transactions are settled instantly on the sharded layer.</p>
+                 </div>
+              </div>
+           </div>
+
+           <div className="mt-16 flex justify-center">
+              <button onClick={() => onNavigate('wallet')} className="px-12 py-6 bg-white text-slate-950 font-nebula font-black rounded-[2rem] text-[12px] uppercase tracking-[0.3em] shadow-2xl hover:scale-105 transition-all flex items-center gap-4 group">
+                 Request Genesis Card <ArrowRight size={18} className="group-hover:translate-x-2 transition-transform" />
+              </button>
            </div>
         </div>
       </section>
 
-      {/* NEW: PERFORMANCE COMPARISON SECTION */}
+      {/* PERFORMANCE COMPARISON SECTION */}
       <section id="benchmarks" className="py-24 bg-slate-950 relative border-t border-white/5">
          <div className="max-w-7xl mx-auto px-4">
             <div className="text-center mb-16">
@@ -376,7 +521,6 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                   Quantitative analysis of Fluid's performance vs. legacy monolithic chains.
                </p>
             </div>
-
             <div className="overflow-x-auto">
                <table className="w-full text-left border-collapse scroll-card">
                   <thead>
@@ -400,18 +544,6 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                         <td className="py-8 px-4 text-slate-500 text-xs">~2.5 Seconds</td>
                         <td className="py-8 px-4 text-emerald-400 font-nebula font-black text-sm italic">~600 Milliseconds</td>
                      </tr>
-                     <tr>
-                        <td className="py-8 px-4 text-white font-nebula font-black uppercase text-xs">Avg. Transaction Fee</td>
-                        <td className="py-8 px-4 text-slate-500 text-xs">$5.00 - $50.00</td>
-                        <td className="py-8 px-4 text-slate-500 text-xs">$0.00025</td>
-                        <td className="py-8 px-4 text-emerald-400 font-nebula font-black text-sm italic">$0.000001 (Static)</td>
-                     </tr>
-                     <tr>
-                        <td className="py-8 px-4 text-white font-nebula font-black uppercase text-xs">Hosting Architecture</td>
-                        <td className="py-8 px-4 text-slate-500 text-xs">Off-chain (IPFS)</td>
-                        <td className="py-8 px-4 text-slate-500 text-xs">Centralized Cloud</td>
-                        <td className="py-8 px-4 text-emerald-400 font-nebula font-black text-sm italic">Integrated Shards</td>
-                     </tr>
                   </tbody>
                </table>
             </div>
@@ -429,11 +561,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
               A deep dive into our revolutionary permanent storage sharding architecture.
             </p>
           </div>
-
-          <div className="mb-12">
-            <HowItWorks />
-          </div>
-
+          <div className="mb-12"><HowItWorks /></div>
           <div className="grid md:grid-cols-3 gap-8 mt-10">
             {[
               { icon: ShieldCheck, title: "Censorship Resistant", desc: "Data stored immutably across a globally sharded network with high redundancy." },
@@ -461,11 +589,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
               Economic <span className="text-fluid-gradient">Scarcity</span>.
             </h2>
           </div>
-          
-          <div className="mb-10 scroll-card">
-            <LifecycleSimulation />
-          </div>
-
+          <div className="mb-10 scroll-card"><LifecycleSimulation /></div>
           <div className="grid md:grid-cols-3 gap-8">
             {[
               { title: "Endowment Protocol", desc: "Fees fuel the Protocol Treasury, generating perpetual yield for node operators.", icon: TrendingUp, color: "text-amber-400" },
@@ -482,7 +606,7 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
         </div>
       </section>
 
-      {/* NEW: DAO GOVERNANCE SECTION */}
+      {/* DAO GOVERNANCE SECTION */}
       <section id="governance" className="py-24 bg-slate-950 relative border-t border-white/5">
          <div className="max-w-7xl mx-auto px-4">
             <div className="grid lg:grid-cols-2 gap-16 items-center">
@@ -520,17 +644,6 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                   <p className="text-slate-400 text-sm leading-relaxed font-medium">
                      FLUID is more than a token; it's your seat at the table. Participate in the Fluid DAO to vote on protocol upgrades, treasury allocations, and shard configurations.
                   </p>
-                  <ul className="space-y-4">
-                     <li className="flex items-center gap-4 text-xs font-nebula font-black text-white uppercase tracking-widest italic">
-                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div> 1 Token = 1 Vote
-                     </li>
-                     <li className="flex items-center gap-4 text-xs font-nebula font-black text-white uppercase tracking-widest italic">
-                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div> On-Chain Execution
-                     </li>
-                     <li className="flex items-center gap-4 text-xs font-nebula font-black text-white uppercase tracking-widest italic">
-                        <div className="w-1.5 h-1.5 rounded-full bg-indigo-500"></div> Quadratic Funding Support
-                     </li>
-                  </ul>
                   <button onClick={() => onNavigate('whitepaper')} className="px-8 py-4 bg-transparent border-2 border-white/10 text-white font-nebula font-black rounded-full text-[10px] uppercase tracking-widest hover:bg-white/5 transition-all">Read Governance Specs</button>
                </div>
             </div>
