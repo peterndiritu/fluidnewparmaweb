@@ -116,11 +116,11 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
-              <a href="#token" className="group px-10 py-4 bg-fluid-gradient text-white font-nebula font-black rounded-full text-[12px] uppercase tracking-[0.2em] shadow-2xl hover:scale-105 transition-all flex items-center gap-2">
-                EXPLORE ECONOMY <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              <a href="#hosting" className="group px-10 py-4 bg-fluid-gradient text-white font-nebula font-black rounded-full text-[12px] uppercase tracking-[0.2em] shadow-2xl hover:scale-105 transition-all flex items-center gap-2">
+                GET STARTED <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
               </a>
-              <a href="#hosting" className="px-10 py-4 bg-white/5 border border-white/10 text-white font-nebula font-black rounded-full text-[12px] uppercase tracking-[0.2em] hover:bg-white/10 transition-all">
-                NETWORK SPECS
+              <a href="#token" className="px-10 py-4 bg-white/5 border border-white/10 text-white font-nebula font-black rounded-full text-[12px] uppercase tracking-[0.2em] hover:bg-white/10 transition-all">
+                TOKENOMICS
               </a>
             </div>
           </div>
@@ -153,22 +153,21 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
 
       {/* FLUID TOKEN SECTION */}
       <section id="token" className="py-24 bg-slate-950 relative border-t border-white/5">
-        <div className="max-w-7xl mx-auto px-4">
-          <div className="flex flex-col items-center text-center space-y-12">
-             <div className="max-w-3xl">
-                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-nebula font-black uppercase tracking-widest mb-6">
-                  <Coins size={12} /> Utility Fuel
-                </div>
-                <h2 className="text-5xl md:text-7xl font-nebula font-black text-white tracking-tighter uppercase italic leading-none mb-6">
-                   Fluid <span className="text-fluid-gradient">Token</span>.
-                </h2>
-                <p className="text-slate-400 text-lg leading-relaxed font-medium">
-                   Participate in the genesis of a sharded economy. Own FLUID to govern the network, secure hosting rights, and earn from global transaction fees.
-                </p>
-             </div>
-             <div className="w-full max-w-5xl">
-                <Tokenomics />
-             </div>
+        <div className="max-w-5xl mx-auto px-4">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-nebula font-black uppercase tracking-widest mb-6">
+              <Coins size={12} /> Utility Fuel
+            </div>
+            <h2 className="text-5xl md:text-7xl font-nebula font-black text-white tracking-tighter uppercase italic leading-none mb-6">
+              Fluid <span className="text-fluid-gradient">Token</span>.
+            </h2>
+            <p className="text-slate-400 text-lg leading-relaxed font-medium max-w-2xl mx-auto">
+              Own a piece of the network. FLUID is the native utility token used to govern the protocol, secure hosting resources, and distribute network incentives.
+            </p>
+          </div>
+          
+          <div className="max-w-4xl mx-auto">
+            <Tokenomics />
           </div>
         </div>
       </section>
@@ -217,4 +216,94 @@ const Home: React.FC<HomeProps> = ({ onNavigate }) => {
                    </div>
                    <span className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px]">fluid-sharding-engine v1</span>
                 </div>
-                <div ref={terminalRef} className="p-8 text-slate-300 min-h-[220px] flex flex-col gap-1.
+                <div ref={terminalRef} className="p-8 text-slate-300 min-h-[220px] flex flex-col gap-1.5 bg-black/40 overflow-y-auto">
+                   {terminalLines.map((line, idx) => <div key={idx}>{line.content}</div>)}
+                </div>
+             </div>
+          </div>
+
+          <HowItWorks />
+
+          <div className="grid md:grid-cols-3 gap-6 mt-16">
+            {[
+              { icon: ShieldCheck, title: "Censorship Resistant", desc: "Data stored immutably across a globally sharded network." },
+              { icon: Activity, title: "100% Uptime", desc: "Redundant micro-sharding ensures content is always online." },
+              { icon: Database, title: "Eternal Storage", desc: "One-time payment in FLUID stores your site forever." }
+            ].map((f, i) => (
+              <div key={i} className="p-8 bg-slate-900/40 border border-white/5 rounded-[2.5rem] hover:border-cyan-500/30 transition-all group">
+                  <div className="w-12 h-12 bg-indigo-500/10 rounded-2xl flex items-center justify-center mb-6 text-indigo-400 group-hover:scale-110 transition-transform"><f.icon size={24} /></div>
+                  <h4 className="text-lg font-nebula font-black mb-3 text-white uppercase italic">{f.title}</h4>
+                  <p className="text-slate-500 text-sm leading-relaxed font-medium">{f.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ECONOMY SECTION */}
+      <section id="economy" className="py-24 bg-slate-950 relative border-t border-white/5">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-amber-500/10 border border-amber-500/30 text-amber-500 text-[10px] font-nebula font-black uppercase tracking-widest mb-6">
+              <Landmark size={12} /> Algorithmic Governance
+            </div>
+            <h2 className="text-5xl md:text-7xl font-nebula font-black text-white tracking-tighter uppercase italic leading-none mb-6">
+              Economic <span className="text-fluid-gradient">Scarcity</span>.
+            </h2>
+          </div>
+          
+          <div className="mb-12"><LifecycleSimulation /></div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              { title: "Endowment Model", desc: "Fees fuel the Treasury, generating perpetual yield for nodes.", icon: TrendingUp, color: "text-amber-400" },
+              { title: "Proof of Useful Storage", desc: "Validators prove data retention to earn block rewards.", icon: Server, color: "text-blue-400" },
+              { title: "Halving Protocols", desc: "Deflationary supply cap with periodic reward halvings.", icon: BarChart, color: "text-purple-400" }
+            ].map((p, i) => (
+              <div key={i} className="p-8 bg-slate-900/40 border border-white/5 rounded-[2.5rem] hover:border-amber-500/30 transition-all group">
+                  <div className={`w-12 h-12 bg-white/5 rounded-2xl flex items-center justify-center mb-6 ${p.color} group-hover:scale-110 transition-transform`}><p.icon size={24} /></div>
+                  <h3 className="text-lg font-nebula font-black mb-3 text-white uppercase italic">{p.title}</h3>
+                  <p className="text-slate-500 text-sm leading-relaxed font-medium">{p.desc}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FINAL CTA */}
+      <section className="py-32 bg-slate-950 text-center relative overflow-hidden border-t border-white/5">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[1000px] h-[1000px] bg-cyan-500/5 rounded-full blur-[180px] pointer-events-none"></div>
+        <div className="max-w-4xl mx-auto px-4 relative z-10">
+          <h2 className="text-6xl md:text-9xl font-nebula font-black text-white mb-8 tracking-tighter uppercase italic leading-none">
+            Secure <br/><span className="text-fluid-gradient">Genesis</span>.
+          </h2>
+          <p className="text-slate-400 text-lg mb-12 font-medium leading-relaxed max-w-lg mx-auto uppercase tracking-wide">
+            Join the founding ring of the first sharded Layer-1 with integrated profit sharing.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-6 justify-center">
+            <button onClick={() => onNavigate('wallet')} className="px-12 py-5 bg-white text-slate-950 font-nebula font-black rounded-full text-[12px] uppercase tracking-[0.3em] shadow-2xl hover:scale-105 active:scale-95 transition-all">Launch Wallet</button>
+            <button onClick={() => onNavigate('whitepaper')} className="px-12 py-5 bg-transparent border-2 border-white/20 text-white font-nebula font-black rounded-full text-[12px] uppercase tracking-[0.3em] hover:bg-white/10 transition-all">Whitepaper</button>
+          </div>
+        </div>
+      </section>
+
+      <style dangerouslySetInnerHTML={{__html: `
+        .typing-cursor {
+          display: inline-block;
+          width: 8px;
+          height: 16px;
+          background-color: #22d3ee;
+          animation: terminal-blink 1s infinite;
+          vertical-align: middle;
+          box-shadow: 0 0 10px rgba(34, 211, 238, 0.8);
+        }
+        @keyframes terminal-blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0; }
+        }
+      `}} />
+    </div>
+  );
+};
+
+export default Home;
