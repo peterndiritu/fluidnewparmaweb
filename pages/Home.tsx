@@ -1,192 +1,220 @@
-
-import React from 'react';
-import { ArrowRight, Shield, Globe, Zap, CreditCard, LayoutDashboard, Coins, TrendingUp } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import HowItWorks from '../components/HowItWorks';
+import Tokenomics from '../components/Tokenomics';
+import LifecycleSimulation from '../components/LifecycleSimulation';
+import { 
+  ArrowRight, Layers, TrendingUp, Star, Landmark, Rocket, 
+  ShieldCheck, Activity, Database, Coins, Server, BarChart
+} from 'lucide-react';
 
 interface HomeProps {
   onNavigate: (page: string) => void;
 }
 
+const FLUID_LOGO_SVG = (
+  <svg viewBox="0 0 100 100" fill="currentColor" className="w-full h-full" xmlns="http://www.w3.org/2000/svg">
+    <path d="M55 20 H90 A5 5 0 0 1 90 35 H55 A5 5 0 0 1 55 20 Z" transform="skewX(-20)" />
+    <path d="M40 42 H85 A5 5 0 0 1 85 57 H40 A5 5 0 0 1 40 42 Z" transform="skewX(-20)" />
+    <path d="M25 64 H60 A5 5 0 0 1 60 79 H25 A5 5 0 0 1 25 64 Z" transform="skewX(-20)" />
+  </svg>
+);
+
 const Home: React.FC<HomeProps> = ({ onNavigate }) => {
+  const [terminalLines, setTerminalLines] = useState<Array<{ type: string; content: React.ReactNode }>>([]);
+  const [isTyping, setIsTyping] = useState(false);
+  const terminalRef = useRef<HTMLDivElement>(null);
+  const [domainQuery, setDomainQuery] = useState('');
+  const [showDomainResults, setShowDomainResults] = useState(false);
+
+  const runTerminalAnimation = async () => {
+    setTerminalLines([]);
+    setIsTyping(true);
+    const prompt = (
+      <div className="flex">
+        <span className="text-green-400 mr-2 font-bold font-mono">➜</span>
+        <span className="text-cyan-400 mr-2 font-mono">~</span>
+      </div>
+    );
+
+    const addToTerminal = (line: { type: string; content: React.ReactNode }) => {
+      setTerminalLines(prev => [...prev, line]);
+    };
+
+    const typeCommand = async (cmd: string) => {
+      addToTerminal({ type: 'prompt', content: <div className="flex items-center font-mono">{prompt}<span className="typing-cursor ml-1"></span></div> });
+      let typed = "";
+      for (let i = 0; i < cmd.length; i++) {
+        await new Promise(r => setTimeout(r, 40));
+        typed += cmd[i];
+        setTerminalLines(prev => {
+          const newLines = [...prev];
+          newLines[newLines.length - 1] = { 
+            type: 'prompt', 
+            content: <div className="flex items-center font-mono">{prompt}<span className="text-white ml-2">{typed}</span><span className="typing-cursor"></span></div> 
+          };
+          return newLines;
+        });
+      }
+      await new Promise(r => setTimeout(r, 200));
+      setTerminalLines(prev => {
+        const newLines = [...prev];
+        newLines[newLines.length - 1] = { 
+          type: 'prompt', 
+          content: <div className="flex items-center font-mono">{prompt}<span className="text-white ml-2">{typed}</span></div> 
+        };
+        return newLines;
+      });
+    };
+
+    await typeCommand("npm install -g fluid-cli");
+    addToTerminal({ type: 'output', content: <div className="text-slate-400 font-mono">+ fluid-cli@1.0.4 added in 0.8s</div> });
+    await new Promise(r => setTimeout(r, 500));
+    await typeCommand("fluid deploy");
+    addToTerminal({ type: 'output', content: <div className="text-slate-400 font-mono">Verifying shards...</div> });
+    await new Promise(r => setTimeout(r, 800));
+    addToTerminal({ type: 'output', content: <div className="text-emerald-400 font-bold font-mono">✔ Success: Site hosted infinitely.</div> });
+    setIsTyping(false);
+  };
+
+  useEffect(() => {
+    runTerminalAnimation();
+  }, []);
+
+  const handleDomainSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!domainQuery) return;
+    setShowDomainResults(true);
+  };
+
   return (
-    <div className="min-h-screen pt-20">
-      
-      {/* Hero Section */}
-      <section className="relative px-4 pt-20 pb-32 overflow-hidden">
-        {/* Abstract Background */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-full z-0 pointer-events-none">
-            <div className="absolute top-20 left-10 w-[500px] h-[500px] bg-purple-600/20 rounded-full blur-[120px]"></div>
-            <div className="absolute bottom-0 right-10 w-[500px] h-[500px] bg-blue-600/20 rounded-full blur-[120px]"></div>
-        </div>
-
-        <div className="max-w-7xl mx-auto text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-slate-900/50 border border-slate-700/50 mb-8 backdrop-blur-sm animate-fade-in-up">
-            <span className="relative flex h-2 w-2">
-              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-            </span>
-            <span className="text-emerald-400 text-xs font-bold tracking-widest uppercase">Protocol V2 Live</span>
-          </div>
-
-          <h1 className="text-5xl md:text-8xl font-black text-slate-900 dark:text-white mb-6 tracking-tight leading-[1.1]">
-            The Future of <br/>
-            <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-purple-500 to-emerald-400">Decentralization</span>
-          </h1>
-
-          <h2 className="text-2xl md:text-4xl font-extrabold text-slate-800 dark:text-white mb-8 tracking-tight animate-fade-in-up delay-100 max-w-4xl mx-auto">
-            Store. Spend. Host Infinitely & Eternally.
-          </h2>
-
-          <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto mb-12 leading-relaxed animate-fade-in-up delay-150">
-            Fluid is the all-in-one non-custodial ecosystem. Manage assets, host permanent websites, and spend crypto globally with zero friction.
-          </p>
-
-          <div className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up delay-200">
-            <button 
-              onClick={() => onNavigate('buy')}
-              className="px-8 py-4 bg-blue-600 text-white font-bold rounded-full hover:bg-blue-500 transition-all shadow-lg shadow-blue-500/25 flex items-center justify-center gap-2"
-            >
-              Join Presale <ArrowRight size={20} />
-            </button>
-            <button 
-              onClick={() => onNavigate('wallet')}
-              className="px-8 py-4 bg-white dark:bg-slate-900 text-slate-900 dark:text-white border border-slate-200 dark:border-slate-700 font-bold rounded-full hover:bg-slate-50 dark:hover:bg-slate-800 transition-all"
-            >
-              Launch Wallet
-            </button>
-          </div>
-        </div>
-      </section>
-
-      {/* Ecosystem Grid */}
-      <section className="max-w-7xl mx-auto px-4 py-20">
-        <h2 className="text-3xl font-black text-center mb-16 text-slate-900 dark:text-white">Integrated Ecosystem</h2>
+    <div className="flex flex-col bg-slate-950">
+      {/* HERO SECTION */}
+      <section id="hero" className="relative min-h-[90vh] flex flex-col items-center justify-center pt-24 pb-8 overflow-hidden">
+        <div className="absolute top-1/4 -left-20 w-[600px] h-[600px] bg-indigo-900/10 rounded-full blur-[120px]"></div>
+        <div className="absolute bottom-1/4 -right-20 w-[600px] h-[600px] bg-purple-900/10 rounded-full blur-[120px]"></div>
         
-        <div className="grid md:grid-cols-2 xl:grid-cols-4 gap-6">
-          {/* Card 1: Wallet */}
-          <div onClick={() => onNavigate('wallet')} className="group p-8 rounded-[2.5rem] bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 hover:border-blue-500/50 transition-all cursor-pointer relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-              <LayoutDashboard size={100} />
+        <div className="max-w-7xl mx-auto px-4 relative z-10 text-center flex flex-col items-center">
+          <div className="flex flex-col items-center animate-fade-in-up">
+            {/* LOGO AND MAIN TITLE */}
+            <div className="flex items-center gap-6 mb-4">
+              <div className="w-20 h-20 md:w-28 md:h-28 text-white p-1 drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">{FLUID_LOGO_SVG}</div>
+              <h1 className="text-8xl md:text-[10rem] font-nebula font-black tracking-tighter italic leading-none text-fluid-gradient">Fluid</h1>
             </div>
-            <div className="w-14 h-14 bg-blue-500/10 rounded-2xl flex items-center justify-center mb-6 text-blue-500">
-              <LayoutDashboard size={28} />
+            
+            {/* SUBTITLES */}
+            <div className="flex flex-col items-center mb-10">
+              <h2 className="text-5xl md:text-7xl font-nebula font-black tracking-tighter text-white italic leading-tight uppercase">
+                Store. spend. host.
+              </h2>
+              <h3 className="text-7xl md:text-9xl font-nebula font-black tracking-tighter text-transparent bg-clip-text bg-gradient-to-b from-white to-white/20 italic leading-none uppercase">
+                Infinitely.
+              </h3>
             </div>
-            <h3 className="text-2xl font-bold mb-3 text-slate-900 dark:text-white">Super Wallet</h3>
-            <p className="text-slate-600 dark:text-slate-400 mb-6">Non-custodial, multichain wallet with built-in privacy and biometrics.</p>
-            <span className="text-blue-500 font-bold flex items-center gap-2 text-sm group-hover:gap-3 transition-all">Try Wallet <ArrowRight size={16} /></span>
-          </div>
 
-          {/* Card 2: Host */}
-          <div onClick={() => onNavigate('host')} className="group p-8 rounded-[2.5rem] bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 hover:border-purple-500/50 transition-all cursor-pointer relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-              <Globe size={100} />
-            </div>
-            <div className="w-14 h-14 bg-purple-500/10 rounded-2xl flex items-center justify-center mb-6 text-purple-500">
-              <Globe size={28} />
-            </div>
-            <h3 className="text-2xl font-bold mb-3 text-slate-900 dark:text-white">Fluid Host</h3>
-            <p className="text-slate-600 dark:text-slate-400 mb-6">Deploy permanent, censorship-resistant websites on the blockchain.</p>
-            <span className="text-purple-500 font-bold flex items-center gap-2 text-sm group-hover:gap-3 transition-all">Start Hosting <ArrowRight size={16} /></span>
-          </div>
+            <p className="max-w-xl text-sm md:text-base font-bold text-white/50 tracking-tight leading-relaxed mb-12 px-4 uppercase">
+              The first sharded Layer-1 delivering <span className="text-white">2.4M+ TPS</span> with <span className="text-cyan-400">zero-downtime hosting</span>. Non-custodial, institutional security.
+            </p>
 
-          {/* Card 3: Cards */}
-          <div onClick={() => onNavigate('cards')} className="group p-8 rounded-[2.5rem] bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 hover:border-emerald-500/50 transition-all cursor-pointer relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-              <CreditCard size={100} />
+            <div className="flex flex-col sm:flex-row gap-6 justify-center items-center mb-16">
+              <a href="#token" className="group px-10 py-4 bg-fluid-gradient text-white font-nebula font-black rounded-full text-[12px] uppercase tracking-[0.2em] shadow-2xl hover:scale-105 transition-all flex items-center gap-2">
+                EXPLORE ECONOMY <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              </a>
+              <a href="#hosting" className="px-10 py-4 bg-white/5 border border-white/10 text-white font-nebula font-black rounded-full text-[12px] uppercase tracking-[0.2em] hover:bg-white/10 transition-all">
+                NETWORK SPECS
+              </a>
             </div>
-            <div className="w-14 h-14 bg-emerald-500/10 rounded-2xl flex items-center justify-center mb-6 text-emerald-500">
-              <CreditCard size={28} />
-            </div>
-            <h3 className="text-2xl font-bold mb-3 text-slate-900 dark:text-white">Crypto Cards</h3>
-            <p className="text-slate-600 dark:text-slate-400 mb-6">Spend your crypto instantly worldwide with virtual and physical cards.</p>
-            <span className="text-emerald-500 font-bold flex items-center gap-2 text-sm group-hover:gap-3 transition-all">Order Card <ArrowRight size={16} /></span>
           </div>
-
-          {/* Card 4: Protocol Economy */}
-          <div onClick={() => onNavigate('economics')} className="group p-8 rounded-[2.5rem] bg-white dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 hover:border-amber-500/50 transition-all cursor-pointer relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-8 opacity-10 group-hover:opacity-20 transition-opacity">
-              <TrendingUp size={100} />
-            </div>
-            <div className="w-14 h-14 bg-amber-500/10 rounded-2xl flex items-center justify-center mb-6 text-amber-500">
-              <TrendingUp size={28} />
-            </div>
-            <h3 className="text-2xl font-bold mb-3 text-slate-900 dark:text-white">Protocol Economy</h3>
-            <p className="text-slate-600 dark:text-slate-400 mb-6">Endowment-based yield generation with deflationary halving mechanics.</p>
-            <span className="text-amber-500 font-bold flex items-center gap-2 text-sm group-hover:gap-3 transition-all">View Tokenomics <ArrowRight size={16} /></span>
-          </div>
-
         </div>
-      </section>
 
-      {/* Stats Section */}
-      <section className="bg-slate-900 py-20 border-y border-slate-800">
-        <div className="max-w-7xl mx-auto px-4 grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
-          <div>
-            <div className="text-4xl font-black text-white mb-2">2M+</div>
-            <div className="text-slate-500 text-sm font-bold uppercase tracking-wider">Transactions</div>
-          </div>
-          <div>
-            <div className="text-4xl font-black text-white mb-2">&lt;1s</div>
-            <div className="text-slate-500 text-sm font-bold uppercase tracking-wider">Finality</div>
-          </div>
-          <div>
-            <div className="text-4xl font-black text-white mb-2">$0</div>
-            <div className="text-slate-500 text-sm font-bold uppercase tracking-wider">Gas (Sponsored)</div>
-          </div>
-          <div>
-            <div className="text-4xl font-black text-white mb-2">100%</div>
-            <div className="text-slate-500 text-sm font-bold uppercase tracking-wider">Uptime</div>
+        {/* Hero Visual Engine */}
+        <div className="w-full max-w-4xl px-4 relative animate-fade-in-up">
+          <div className="relative rounded-[3rem] overflow-hidden bg-white/5 border border-white/10 backdrop-blur-3xl p-8 flex flex-row items-center justify-between shadow-2xl">
+             <div className="flex flex-col gap-4">
+                <div className="flex items-center gap-3">
+                   <Layers size={18} className="text-cyan-400" />
+                   <span className="text-[10px] font-nebula font-black text-slate-400 uppercase tracking-widest">2.4M TPS / MICRO-SHARDED</span>
+                </div>
+                <div className="flex items-center gap-3">
+                   <Star size={18} className="text-purple-400" />
+                   <span className="text-[10px] font-nebula font-black text-slate-400 uppercase tracking-widest">Programmable Dividends</span>
+                </div>
+             </div>
+             <div className="relative w-16 h-16 flex items-center justify-center">
+                <div className="absolute inset-0 border-2 border-dashed border-cyan-500/30 rounded-full animate-spin-slow"></div>
+                <TrendingUp size={24} className="text-white text-glow-cyan" />
+             </div>
+             <div className="flex flex-col gap-4 text-right items-end">
+                <span className="text-[10px] font-nebula font-black text-slate-400 uppercase tracking-widest">~600ms DETERMINISTIC FINALITY</span>
+                <span className="text-[10px] font-nebula font-black text-slate-400 uppercase tracking-widest">PROOF-OF-USEFUL-STORAGE</span>
+             </div>
           </div>
         </div>
       </section>
 
-      {/* Features List */}
-      <section className="max-w-7xl mx-auto px-4 py-32">
-        <div className="flex flex-col md:flex-row gap-16 items-center">
-          <div className="md:w-1/2">
-            <h2 className="text-4xl font-black text-slate-900 dark:text-white mb-8">Security without Compromise</h2>
-            <div className="space-y-8">
-              <div className="flex gap-4">
-                <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 shrink-0">
-                  <Shield size={24} />
+      {/* FLUID TOKEN SECTION */}
+      <section id="token" className="py-24 bg-slate-950 relative border-t border-white/5">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="flex flex-col items-center text-center space-y-12">
+             <div className="max-w-3xl">
+                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-[10px] font-nebula font-black uppercase tracking-widest mb-6">
+                  <Coins size={12} /> Utility Fuel
                 </div>
-                <div>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Non-Custodial Architecture</h3>
-                  <p className="text-slate-600 dark:text-slate-400">Your keys never leave your device. You are the only one with access to your funds.</p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center text-purple-500 shrink-0">
-                  <Zap size={24} />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Lightning Fast</h3>
-                  <p className="text-slate-600 dark:text-slate-400">Powered by our Layer-1 sharding technology for instant transaction confirmation.</p>
-                </div>
-              </div>
-              <div className="flex gap-4">
-                <div className="w-12 h-12 rounded-full bg-orange-500/10 flex items-center justify-center text-orange-500 shrink-0">
-                  <Coins size={24} />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">Low Fees</h3>
-                  <p className="text-slate-600 dark:text-slate-400">Transactions cost fractions of a cent, making Fluid ideal for everyday payments.</p>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div className="md:w-1/2 relative">
-            <div className="absolute inset-0 bg-gradient-to-r from-blue-500 to-purple-500 rounded-[3rem] blur-3xl opacity-20"></div>
-            <img 
-              src="https://images.unsplash.com/photo-1639762681485-074b7f938ba0?q=80&w=2832&auto=format&fit=crop" 
-              alt="Security" 
-              className="relative rounded-[3rem] shadow-2xl border border-slate-200 dark:border-slate-800"
-            />
+                <h2 className="text-5xl md:text-7xl font-nebula font-black text-white tracking-tighter uppercase italic leading-none mb-6">
+                   Fluid <span className="text-fluid-gradient">Token</span>.
+                </h2>
+                <p className="text-slate-400 text-lg leading-relaxed font-medium">
+                   Participate in the genesis of a sharded economy. Own FLUID to govern the network, secure hosting rights, and earn from global transaction fees.
+                </p>
+             </div>
+             <div className="w-full max-w-5xl">
+                <Tokenomics />
+             </div>
           </div>
         </div>
       </section>
 
-    </div>
-  );
-};
+      {/* HOSTING SECTION */}
+      <section id="hosting" className="py-24 bg-slate-950 relative border-t border-white/5">
+        <div className="max-w-7xl mx-auto px-4">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/30 text-indigo-400 text-[10px] font-nebula font-black uppercase tracking-widest mb-6">
+              <Rocket size={12} /> Immutable Infrastructure
+            </div>
+            <h2 className="text-5xl md:text-7xl font-nebula font-black text-white tracking-tighter uppercase italic leading-none">
+              Host <span className="text-fluid-gradient">Infinitely</span>
+            </h2>
+          </div>
 
-export default Home;
+          <div className="grid lg:grid-cols-2 gap-8 mb-16">
+             <div className="bg-slate-900/50 backdrop-blur-xl border border-white/10 rounded-[3rem] p-8 md:p-12 relative overflow-hidden shadow-2xl">
+                <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/5 rounded-full blur-[100px]"></div>
+                <h3 className="text-2xl font-nebula font-black text-white mb-6 uppercase italic">Register .fluid Domain</h3>
+                <form onSubmit={handleDomainSearch} className="relative mb-6">
+                    <input 
+                        type="text" 
+                        value={domainQuery}
+                        onChange={(e) => setDomainQuery(e.target.value)}
+                        placeholder="search.fluid" 
+                        className="w-full bg-black/40 border border-white/10 rounded-full py-5 pl-8 pr-36 text-white font-nebula font-black text-xl focus:outline-none focus:border-indigo-500 transition-all placeholder:text-slate-800"
+                    />
+                    <button type="submit" className="absolute right-2 top-2 bottom-2 bg-indigo-600 rounded-full px-8 text-white font-nebula font-black text-[12px] uppercase tracking-widest hover:bg-indigo-500 transition-colors">Search</button>
+                </form>
+                {showDomainResults && (
+                   <div className="p-4 bg-emerald-500/10 border border-emerald-500/20 rounded-2xl flex justify-between items-center animate-fade-in-up">
+                      <div><span className="text-white text-lg font-nebula font-black">{domainQuery}.fluid</span><span className="ml-3 text-[10px] bg-emerald-500 text-black px-2 py-1 rounded font-nebula font-black uppercase tracking-widest">Available</span></div>
+                      <button className="text-[12px] font-nebula font-black text-emerald-400 uppercase tracking-widest hover:underline">Claim</button>
+                   </div>
+                )}
+             </div>
+
+             {/* TERMINAL */}
+             <div className="bg-slate-900 border border-slate-800 rounded-[3.5rem] shadow-2xl overflow-hidden relative">
+                <div className="bg-slate-800/80 px-6 py-3 flex items-center justify-between border-b border-white/5">
+                   <div className="flex gap-2">
+                     <div className="w-2.5 h-2.5 rounded-full bg-red-500/50"></div>
+                     <div className="w-2.5 h-2.5 rounded-full bg-yellow-500/50"></div>
+                     <div className="w-2.5 h-2.5 rounded-full bg-green-500/50"></div>
+                   </div>
+                   <span className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px]">fluid-sharding-engine v1</span>
+                </div>
+                <div ref={terminalRef} className="p-8 text-slate-300 min-h-[220px] flex flex-col gap-1.

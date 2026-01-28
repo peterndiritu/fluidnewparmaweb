@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import HowItWorks from '../components/HowItWorks';
 import { Server, Database, Cloud, Lock, Terminal, Cpu, Globe, ArrowRight, ChevronDown, Rocket, Layers, Code2, Search, CheckCircle2, ShoppingCart, RefreshCw } from 'lucide-react';
@@ -248,9 +247,9 @@ const HostPage: React.FC = () => {
            <div className="inline-block px-4 py-2 rounded-full bg-indigo-500/10 border border-indigo-500/30 mb-6 animate-pulse">
               <span className="text-indigo-500 font-bold uppercase tracking-wider text-sm">Fluid Host Protocol V1</span>
            </div>
-           <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 dark:text-white mb-6">
+           <h1 className="text-5xl md:text-7xl font-extrabold text-slate-900 dark:text-white mb-6 uppercase tracking-tighter italic">
               The Permanent Web. <br/>
-              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500">Unstoppable Hosting.</span>
+              <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-500">Host Infinitely</span>
            </h1>
            <p className="text-xl text-slate-600 dark:text-slate-400 max-w-2xl mx-auto lg:mx-0 mb-10 font-medium leading-relaxed">
               Deploy full-stack applications to the Fluid Blockchain. Censorship-resistant, 100% uptime, and one-time payment for eternal storage.
@@ -274,7 +273,7 @@ const HostPage: React.FC = () => {
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/30 text-emerald-500 text-[10px] font-bold uppercase tracking-wider mb-4">
                    <Globe size={12} /> Domain Registrar
                 </div>
-                <h2 className="text-3xl font-black text-white mb-4">Claim Your Web3 Identity</h2>
+                <h2 className="text-3xl font-black text-white mb-4 uppercase italic">Claim Your Web3 Identity</h2>
                 <p className="text-slate-400 text-sm max-w-lg mx-auto">Search and register domains directly on Fluid. Get a .fluid domain free with your hosting plan, or purchase traditional TLDs.</p>
             </div>
 
@@ -317,7 +316,7 @@ const HostPage: React.FC = () => {
                             </div>
                             <div>
                                 <div className="flex items-center gap-2">
-                                    <span className="text-xl font-black text-white">{baseName}<span className="text-indigo-400">.fluid</span></span>
+                                    <span className="text-xl font-black text-white uppercase italic">{baseName}<span className="text-indigo-400">.fluid</span></span>
                                     <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500 text-slate-950 uppercase tracking-wide">Available</span>
                                 </div>
                                 <p className="text-xs text-slate-400 mt-0.5 font-medium flex items-center gap-1">
@@ -422,14 +421,14 @@ const HostPage: React.FC = () => {
         {/* Features Grid */}
         <section id="tech" className="bg-white dark:bg-slate-900/50 py-24 border-y border-slate-200 dark:border-slate-800 rounded-[3rem] px-8">
            <div className="max-w-7xl mx-auto">
-              <h2 className="text-3xl font-extrabold text-center mb-16 text-slate-900 dark:text-white uppercase tracking-tighter">Why Host on Fluid?</h2>
+              <h2 className="text-3xl font-extrabold text-center mb-16 text-slate-900 dark:text-white uppercase tracking-tighter italic">Why Host on Fluid?</h2>
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                  
                  <div className="p-8 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-2xl hover:border-indigo-500/50 transition-colors group">
                     <div className="w-12 h-12 bg-indigo-500/10 rounded-xl flex items-center justify-center mb-6 text-indigo-500 group-hover:scale-110 transition-transform">
                        <Lock size={24} />
                     </div>
-                    <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white uppercase tracking-tight">Censorship Resistant</h3>
+                    <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white uppercase tracking-tight italic">Censorship Resistant</h3>
                     <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
                        Data is stored immutably across a distributed network of nodes. No central authority can take your site down.
                     </p>
@@ -439,7 +438,7 @@ const HostPage: React.FC = () => {
                     <div className="w-12 h-12 bg-purple-500/10 rounded-xl flex items-center justify-center mb-6 text-purple-500 group-hover:scale-110 transition-transform">
                        <Cloud size={24} />
                     </div>
-                    <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white uppercase tracking-tight">100% Uptime</h3>
+                    <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white uppercase tracking-tight italic">100% Uptime</h3>
                     <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
                        Redundant sharding ensures your content is always available, even if multiple nodes go offline simultaneously.
                     </p>
@@ -449,7 +448,7 @@ const HostPage: React.FC = () => {
                     <div className="w-12 h-12 bg-emerald-500/10 rounded-xl flex items-center justify-center mb-6 text-emerald-500 group-hover:scale-110 transition-transform">
                        <Database size={24} />
                     </div>
-                    <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white uppercase tracking-tight">One-Time Payment</h3>
+                    <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white uppercase tracking-tight italic">One-Time Payment</h3>
                     <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
                        Pay once in FLUID tokens to store data forever. No monthly subscription fees for storage.
                     </p>
@@ -459,7 +458,7 @@ const HostPage: React.FC = () => {
                     <div className="w-12 h-12 bg-blue-500/10 rounded-xl flex items-center justify-center mb-6 text-blue-500 group-hover:scale-110 transition-transform">
                        <Globe size={24} />
                     </div>
-                    <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white uppercase tracking-tight">Global CDN</h3>
+                    <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white uppercase tracking-tight italic">Global CDN</h3>
                     <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
                        Built-in content delivery network serves your dApp from the node closest to the user for blazing fast speeds.
                     </p>
@@ -469,7 +468,7 @@ const HostPage: React.FC = () => {
                     <div className="w-12 h-12 bg-orange-500/10 rounded-xl flex items-center justify-center mb-6 text-orange-500 group-hover:scale-110 transition-transform">
                        <Cpu size={24} />
                     </div>
-                    <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white uppercase tracking-tight">Serverless Compute</h3>
+                    <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white uppercase tracking-tight italic">Serverless Compute</h3>
                     <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
                        Run serverless functions directly on-chain for dynamic applications and backend logic.
                     </p>
@@ -479,7 +478,7 @@ const HostPage: React.FC = () => {
                     <div className="w-12 h-12 bg-pink-500/10 rounded-xl flex items-center justify-center mb-6 text-pink-500 group-hover:scale-110 transition-transform">
                        <ArrowRight size={24} />
                     </div>
-                    <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white uppercase tracking-tight">GitHub Deploy</h3>
+                    <h3 className="text-xl font-bold mb-3 text-slate-900 dark:text-white uppercase tracking-tight italic">GitHub Deploy</h3>
                     <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed">
                        CI/CD integration allows you to deploy from GitHub automatically with every commit.
                     </p>

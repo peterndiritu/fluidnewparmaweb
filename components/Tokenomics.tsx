@@ -1,12 +1,12 @@
 import React from 'react';
-import { Lock, Clock, Coins, Users, Landmark, Wallet, Rocket } from 'lucide-react';
+import { Lock, Clock, Coins, Users, Landmark, Wallet, Rocket, PieChart } from 'lucide-react';
 
 const data = [
   { 
     name: 'Presale', 
-    value: 40, 
+    value: 30, 
     color: '#10b981', 
-    amount: '4,000,000', 
+    amount: '3,000,000', 
     icon: Rocket,
     desc: 'Public sale allocation',
     vesting: null
@@ -44,8 +44,17 @@ const data = [
     color: '#f97316', 
     amount: '1,000,000', 
     icon: Landmark,
-    desc: 'Ecosystem Growth',
+    desc: 'Protocol Reserve',
     vesting: '10 Year Vesting' 
+  },
+  { 
+    name: 'Ecosystem Growth', 
+    value: 10, 
+    color: '#f43f5e', 
+    amount: '1,000,000', 
+    icon: PieChart,
+    desc: 'Strategic Partnerships',
+    vesting: null 
   },
 ];
 
@@ -55,7 +64,7 @@ const Tokenomics: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         <div className="text-center mb-8">
-          <h2 className="text-3xl md:text-5xl font-extrabold mb-4 text-slate-900 dark:text-white">Tokenomics</h2>
+          <h2 className="text-3xl md:text-5xl font-extrabold mb-4 text-slate-900 dark:text-white uppercase tracking-tighter italic">Tokenomics</h2>
           <p className="text-slate-700 dark:text-slate-300 max-w-2xl mx-auto text-lg font-medium">
             A balanced model for long-term sustainability.
           </p>
@@ -66,7 +75,7 @@ const Tokenomics: React.FC = () => {
               {data.map((item, index) => (
                   <div 
                     key={item.name} 
-                    className={`scroll-card bg-white/10 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/50 dark:border-slate-800/50 rounded-2xl p-5 hover:border-opacity-50 transition-all hover:-translate-y-1 duration-300 group shadow-sm dark:shadow-none ${index === 0 ? 'sm:col-span-2' : ''}`}
+                    className={`scroll-card bg-white/10 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/50 dark:border-slate-800/50 rounded-2xl p-5 hover:border-opacity-50 transition-all hover:-translate-y-1 duration-300 group shadow-sm dark:shadow-none`}
                     style={{ borderColor: `${item.color}40` }}
                   >
                       <div className="flex items-start justify-between mb-4">
@@ -75,7 +84,7 @@ const Tokenomics: React.FC = () => {
                                   <item.icon size={20} />
                               </div>
                               <div>
-                                  <h4 className="text-slate-900 dark:text-white font-bold text-lg">{item.name}</h4>
+                                  <h4 className="text-slate-900 dark:text-white font-bold text-lg uppercase italic">{item.name}</h4>
                                   <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">{item.desc}</p>
                               </div>
                           </div>
