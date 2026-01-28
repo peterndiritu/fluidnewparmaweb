@@ -9,19 +9,8 @@ import {
   arbitrum, 
   avalanche, 
   optimism, 
-  fantom,
-  gnosis,
-  celo,
-  moonbeam,
-  moonriver,
-  cronos,
-  metis,
-  kava,
-  core,
-  klaytn,
   linea, 
-  scroll, 
-  blast 
+  scroll
 } from "thirdweb/chains";
 
 // Fluid Network / Target Chain (e.g., Sepolia for testing or Fluid Mainnet)
@@ -80,6 +69,7 @@ export const SUPPORTED_NETWORKS: NetworkInfo[] = [
     tokens: [
       { symbol: "POL", name: "Polygon", icon: "https://cryptologos.cc/logos/polygon-matic-logo.png", priceUsd: 0.5 },
       { symbol: "USDT", name: "Tether", icon: "https://cryptologos.cc/logos/tether-usdt-logo.png", address: "0xc2132D05D31c914a87C6611C10748AEb04B58e8F", priceUsd: 1 },
+      { symbol: "USDC", name: "USD Coin", icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png", address: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174", priceUsd: 1 },
     ]
   },
   { 
@@ -133,33 +123,6 @@ export const SUPPORTED_NETWORKS: NetworkInfo[] = [
     ]
   },
   { 
-    id: fantom.id, 
-    name: "Fantom", 
-    chain: fantom, 
-    icon: "https://cryptologos.cc/logos/fantom-ftm-logo.png",
-    tokens: [
-      { symbol: "FTM", name: "Fantom", icon: "https://cryptologos.cc/logos/fantom-ftm-logo.png", priceUsd: 0.8 },
-    ]
-  },
-  { 
-    id: gnosis.id, 
-    name: "Gnosis", 
-    chain: gnosis, 
-    icon: "https://cryptologos.cc/logos/gnosis-gno-logo.png",
-    tokens: [
-      { symbol: "xDAI", name: "xDAI", icon: "https://cryptologos.cc/logos/xdai-staked-xdai-logo.png", priceUsd: 1 },
-    ]
-  },
-  { 
-    id: celo.id, 
-    name: "Celo", 
-    chain: celo, 
-    icon: "https://cryptologos.cc/logos/celo-celo-logo.png",
-    tokens: [
-      { symbol: "CELO", name: "Celo", icon: "https://cryptologos.cc/logos/celo-celo-logo.png", priceUsd: 0.6 },
-    ]
-  },
-  { 
     id: linea.id, 
     name: "Linea", 
     chain: linea, 
@@ -173,15 +136,6 @@ export const SUPPORTED_NETWORKS: NetworkInfo[] = [
     name: "Scroll", 
     chain: scroll, 
     icon: "https://scrollscan.com/images/logo.png",
-    tokens: [
-      { symbol: "ETH", name: "Ethereum", icon: "https://cryptologos.cc/logos/ethereum-eth-logo.png", priceUsd: 2450 },
-    ]
-  },
-  { 
-    id: blast.id, 
-    name: "Blast", 
-    chain: blast, 
-    icon: "https://blastscan.io/images/logo.png",
     tokens: [
       { symbol: "ETH", name: "Ethereum", icon: "https://cryptologos.cc/logos/ethereum-eth-logo.png", priceUsd: 2450 },
     ]

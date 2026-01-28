@@ -5,7 +5,7 @@ import { prepareContractCall, toEther, toWei } from "thirdweb";
 import { client, wallets } from "../client";
 import { presaleContract, fluidTokenContract, chain as presaleChain, SUPPORTED_NETWORKS, TokenInfo, NetworkInfo, PRESALE_CONTRACT_ADDRESS } from "../contracts/presale";
 import {
-  ethereum, polygon, bsc, arbitrum, optimism, base, avalanche, fantom, gnosis, celo, moonbeam, moonriver, cronos, metis, kava, core, klaytn, linea, scroll
+  ethereum, polygon, bsc, arbitrum, optimism, base, avalanche, linea, scroll
 } from "thirdweb/chains";
 
 const FluidLogo = ({ className }: { className?: string }) => (
@@ -17,7 +17,7 @@ const FluidLogo = ({ className }: { className?: string }) => (
 );
 
 const ALL_CHAINS = [
-  ethereum, polygon, bsc, arbitrum, optimism, base, avalanche, fantom, gnosis, celo, moonbeam, moonriver, cronos, metis, kava, core, klaytn, linea, scroll
+  ethereum, polygon, bsc, arbitrum, optimism, base, avalanche, linea, scroll
 ];
 
 const PresaleCard: React.FC = () => {
@@ -63,14 +63,14 @@ const PresaleCard: React.FC = () => {
 
   // --- Contract Data Fetching ---
 
-  // 1. FLUID Balance
+  // 1. FLUID Balance of the user
   const { data: fluidBalanceData, isLoading: isLoadingBalance } = useReadContract({
     contract: fluidTokenContract,
     method: "function balanceOf(address) view returns (uint256)",
     params: [account?.address || "0x0000000000000000000000000000000000000000"],
   });
 
-  // 2. Token Price in USD
+  // 2. Token Price in USD (Assuming contract returns price in 18 decimals or equivalent)
   const { data: priceData, isLoading: isLoadingPrice } = useReadContract({
     contract: presaleContract,
     method: "function tokenPrice() view returns (uint256)",
@@ -81,6 +81,13 @@ const PresaleCard: React.FC = () => {
   const { data: soldData, isLoading: isLoadingSold } = useReadContract({
     contract: presaleContract,
     method: "function totalTokensSold() view returns (uint256)",
+    params: [],
+  });
+
+  // 4. Hard Cap
+  const { data: capData, isLoading: isLoadingCap } = useReadContract({
+    contract: presaleContract,
+    method: "function hardCap() view returns (uint256)",
     params: [],
   });
 
@@ -96,6 +103,7 @@ const PresaleCard: React.FC = () => {
   const fldUsdPrice = useMemo(() => {
     if (!priceData || priceData === 0n) return 0.50; 
     try {
+        // Assuming price is stored in a way where toEther works (e.g., 0.5 * 10^18)
         return parseFloat(toEther(priceData as bigint));
     } catch (e) {
         return 0.50;
@@ -130,9 +138,13 @@ const PresaleCard: React.FC = () => {
     return purchasedBalance * 0.5;
   }, [purchasedBalance]);
 
-  const sold = useMemo(() => (soldData ? Number(toEther(soldData as bigint)) : 1250000), [soldData]);
-  const cap = 5000000;
-  const progress = useMemo(() => Math.min(Math.round((sold / cap) * 100), 100), [sold, cap]);
+  const sold = useMemo(() => (soldData ? Number(toEther(soldData as bigint)) : 0), [soldData]);
+  const cap = useMemo(() => (capData ? Number(toEther(capData as bigint)) : 5000000), [capData]);
+  
+  const progress = useMemo(() => {
+    if (cap === 0) return 0;
+    return Math.min(Math.round((sold / cap) * 100), 100);
+  }, [sold, cap]);
   
   // Calculate amount of selected token to send based on USD input
   const tokenAmountToSend = useMemo(() => {
@@ -141,7 +153,7 @@ const PresaleCard: React.FC = () => {
   }, [usdAmount, selectedToken]);
 
   // --- Timer Logic ---
-  const [timeLeft, setTimeLeft] = useState({ h: 24, m: 0, s: 0 });
+  const [timeLeft, setTimeLeft] = useState({ h: 0, m: 0, s: 0 });
   
   useEffect(() => {
     const target = endTimeData ? Number(endTimeData as bigint) * 1000 : Date.now() + 1000 * 60 * 60 * 24;
@@ -181,7 +193,7 @@ const PresaleCard: React.FC = () => {
     if (!usdAmount || isNaN(val) || val <= 0) return alert("Enter a valid amount.");
 
     if (selectedToken.address) {
-        alert("ERC20 token purchase requires a different flow. This is a mockup.");
+        alert("ERC20 token purchase requires a different flow with token approval. This UI currently supports native ETH/BNB/POL etc.");
         return;
     }
 
@@ -193,7 +205,10 @@ const PresaleCard: React.FC = () => {
 
     sendTx(tx, {
       onSuccess: () => alert("Purchase successful! Your Fluid tokens have been allocated."),
-      onError: (err) => console.error("Presale Error:", err),
+      onError: (err) => {
+        console.error("Presale Error:", err);
+        alert("Transaction failed. Ensure you are on the correct network and have sufficient balance.");
+      },
     });
   };
 
@@ -208,7 +223,7 @@ const PresaleCard: React.FC = () => {
     setShowTokenSelector(false);
   };
 
-  const isDataLoading = isLoadingPrice || isLoadingSold;
+  const isDataLoading = isLoadingPrice || isLoadingSold || isLoadingCap;
 
   return (
     <div className="w-full max-w-lg bg-slate-900 border border-white/5 rounded-[3rem] p-8 md:p-10 shadow-2xl relative overflow-hidden animate-fade-in-up">
@@ -225,7 +240,9 @@ const PresaleCard: React.FC = () => {
               <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse"></div>
               <span className="text-[8px] font-nebula font-black text-emerald-500 uppercase tracking-widest">Live</span>
             </div>
-            <span className="text-[9px] font-nebula font-black text-white/40 uppercase tracking-widest">1 FLD = ${fldUsdPrice.toFixed(2)} USD</span>
+            <span className="text-[9px] font-nebula font-black text-white/40 uppercase tracking-widest">
+                {isLoadingPrice ? <Loader2 size={10} className="animate-spin inline" /> : `1 FLD = $${fldUsdPrice.toFixed(2)} USD`}
+            </span>
           </div>
         </div>
 
@@ -383,7 +400,9 @@ const PresaleCard: React.FC = () => {
           <div className="bg-black/20 border border-white/10 rounded-[2rem] p-6 focus-within:border-indigo-500/50 transition-colors">
             <div className="flex justify-between mb-2">
               <span className="text-[8px] font-nebula font-black text-slate-500 uppercase tracking-widest">You Receive (FLD)</span>
-              <span className="text-[8px] font-nebula font-black text-indigo-400 uppercase tracking-widest">Price: ${fldUsdPrice.toFixed(2)} USD</span>
+              <span className="text-[8px] font-nebula font-black text-indigo-400 uppercase tracking-widest">
+                {isLoadingPrice ? <Loader2 size={10} className="animate-spin" /> : `Price: $${fldUsdPrice.toFixed(2)} USD`}
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <input 
@@ -405,7 +424,7 @@ const PresaleCard: React.FC = () => {
           <div className="flex justify-between items-center mb-2">
             <span className="text-[8px] font-nebula font-black text-slate-500 uppercase tracking-widest">Allocation Progress</span>
             <span className="text-[8px] font-nebula font-black text-white uppercase tracking-widest">
-              {progress}%
+              {isDataLoading ? <Loader2 size={10} className="animate-spin inline mr-1" /> : `${progress}%`}
             </span>
           </div>
           <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
@@ -413,6 +432,14 @@ const PresaleCard: React.FC = () => {
               className="h-full bg-fluid-gradient rounded-full transition-all duration-1000 ease-out"
               style={{ width: `${progress}%` }}
             ></div>
+          </div>
+          <div className="flex justify-between mt-2">
+             <span className="text-[7px] font-nebula font-black text-slate-500 uppercase tracking-widest">
+                {isLoadingSold ? '...' : sold.toLocaleString()} FLD Sold
+             </span>
+             <span className="text-[7px] font-nebula font-black text-slate-500 uppercase tracking-widest">
+                Hard Cap: {isLoadingCap ? '...' : cap.toLocaleString()} FLD
+             </span>
           </div>
         </div>
 

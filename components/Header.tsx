@@ -3,11 +3,11 @@ import { Menu, X, Activity } from 'lucide-react';
 import { ConnectButton } from "thirdweb/react";
 import { client, wallets } from "../client";
 import {
-  ethereum, polygon, bsc, arbitrum, optimism, base, avalanche, fantom, gnosis, celo, moonbeam, moonriver, cronos, metis, kava, core, klaytn, linea, scroll
+  ethereum, polygon, bsc, arbitrum, optimism, base, avalanche, linea, scroll
 } from "thirdweb/chains";
 
 const ALL_CHAINS = [
-  ethereum, polygon, bsc, arbitrum, optimism, base, avalanche, fantom, gnosis, celo, moonbeam, moonriver, cronos, metis, kava, core, klaytn, linea, scroll
+  ethereum, polygon, bsc, arbitrum, optimism, base, avalanche, linea, scroll
 ];
 
 interface HeaderProps {
