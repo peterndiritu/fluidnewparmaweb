@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { Coins, Zap, ShieldCheck, Timer, ChevronDown, TrendingUp, ArrowRight, Loader2, Globe, AlertCircle, DollarSign, Gift, Briefcase } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { Coins, Zap, ShieldCheck, Timer, ChevronDown, TrendingUp, ArrowRight, Loader2, Globe, AlertCircle, DollarSign, Gift, Briefcase, ChevronRight } from 'lucide-react';
 import { useReadContract, useSendTransaction, useActiveAccount, useActiveWalletChain, useSwitchActiveWalletChain, ConnectButton } from "thirdweb/react";
 import { prepareContractCall, toEther, toWei } from "thirdweb";
 import { client, wallets } from "../client";
-import { presaleContract, fluidTokenContract, chain as presaleChain, SUPPORTED_NETWORKS } from "../contracts/presale";
+import { presaleContract, fluidTokenContract, chain as presaleChain, SUPPORTED_NETWORKS, TokenInfo, NetworkInfo } from "../contracts/presale";
 
 const PresaleCard: React.FC = () => {
   const account = useActiveAccount();
@@ -13,25 +13,42 @@ const PresaleCard: React.FC = () => {
   // State for dual-way inputs
   const [usdAmount, setUsdAmount] = useState('100');
   const [fldAmount, setFldAmount] = useState('100');
-  const [showNetworkSelector, setShowNetworkSelector] = useState(false);
   
-  // Mock asset prices for UI estimation relative to USD
-  const [selectedPayAsset, setSelectedPayAsset] = useState({ 
-    symbol: 'ETH', 
-    name: 'Ethereum', 
-    ethPrice: 2450 
-  });
+  // Selectors visibility
+  const [showNetworkSelector, setShowNetworkSelector] = useState(false);
+  const [showTokenSelector, setShowTokenSelector] = useState(false);
+  
+  // Ref for handling clicks outside
+  const networkRef = useRef<HTMLDivElement>(null);
+  const tokenRef = useRef<HTMLDivElement>(null);
+
+  // Default to first network and its first token (Ethereum -> ETH)
+  const [selectedNetwork, setSelectedNetwork] = useState<NetworkInfo>(SUPPORTED_NETWORKS[0]);
+  const [selectedToken, setSelectedToken] = useState<TokenInfo>(SUPPORTED_NETWORKS[0].tokens[0]);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (networkRef.current && !networkRef.current.contains(event.target as Node)) {
+        setShowNetworkSelector(false);
+      }
+      if (tokenRef.current && !tokenRef.current.contains(event.target as Node)) {
+        setShowTokenSelector(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   // --- Contract Data Fetching ---
 
-  // 1. FLUID Balance (Tokens already purchased/minted)
+  // 1. FLUID Balance
   const { data: fluidBalanceData, isLoading: isLoadingBalance } = useReadContract({
     contract: fluidTokenContract,
     method: "function balanceOf(address) view returns (uint256)",
     params: [account?.address || "0x0000000000000000000000000000000000000000"],
   });
 
-  // 2. Token Price in USD (Assuming 18 decimals from contract)
+  // 2. Token Price in USD
   const { data: priceData, isLoading: isLoadingPrice } = useReadContract({
     contract: presaleContract,
     method: "function tokenPrice() view returns (uint256)",
@@ -61,7 +78,6 @@ const PresaleCard: React.FC = () => {
 
   // --- Derived State & Formatting ---
 
-  // Price of 1 FLD in USD. Default is 1.00 USD if not found.
   const fldUsdPrice = useMemo(() => {
     if (!priceData || priceData === 0n) return 1.00; 
     try {
@@ -71,7 +87,6 @@ const PresaleCard: React.FC = () => {
     }
   }, [priceData]);
 
-  // Sync inputs whenever price or other input changes
   const handleUsdChange = (val: string) => {
     setUsdAmount(val);
     const num = parseFloat(val) || 0;
@@ -86,19 +101,16 @@ const PresaleCard: React.FC = () => {
     setUsdAmount((num * fldUsdPrice).toFixed(2));
   };
 
-  // Sync FLD when price data arrives initially or when fldUsdPrice updates
   useEffect(() => {
     const num = parseFloat(usdAmount) || 0;
     setFldAmount((num / fldUsdPrice).toFixed(2));
   }, [fldUsdPrice, usdAmount]);
 
-  // Purchased Balance
   const purchasedBalance = useMemo(() => {
     if (!fluidBalanceData) return 0;
     return parseFloat(toEther(fluidBalanceData as bigint));
   }, [fluidBalanceData]);
 
-  // Airdrop is 50% of purchased
   const airdropAllocation = useMemo(() => {
     return purchasedBalance * 0.5;
   }, [purchasedBalance]);
@@ -107,11 +119,11 @@ const PresaleCard: React.FC = () => {
   const cap = useMemo(() => (capData ? Number(toEther(capData as bigint)) : 1000000), [capData]);
   const progress = useMemo(() => Math.min(Math.round((sold / cap) * 100), 100), [sold, cap]);
   
-  // Calculate native amount to send (e.g. ETH) based on USD input
-  const nativeAmountToSend = useMemo(() => {
+  // Calculate amount of selected token to send based on USD input
+  const tokenAmountToSend = useMemo(() => {
     const usd = parseFloat(usdAmount) || 0;
-    return (usd / selectedPayAsset.ethPrice).toFixed(18);
-  }, [usdAmount, selectedPayAsset.ethPrice]);
+    return (usd / selectedToken.priceUsd).toFixed(selectedToken.address ? 6 : 18);
+  }, [usdAmount, selectedToken]);
 
   // --- Timer Logic ---
   const [timeLeft, setTimeLeft] = useState({ h: 0, m: 0, s: 0 });
@@ -141,13 +153,32 @@ const PresaleCard: React.FC = () => {
   const handleBuy = async () => {
     if (!account) return; 
     
-    const val = parseFloat(nativeAmountToSend);
+    // Check if network matches
+    if (activeChain?.id !== selectedNetwork.id) {
+        try {
+            await switchChain(selectedNetwork.chain);
+        } catch (e) {
+            console.error("Failed to switch chain", e);
+            return;
+        }
+    }
+
+    const val = parseFloat(tokenAmountToSend);
     if (!usdAmount || isNaN(val) || val <= 0) return alert("Enter a valid amount.");
+
+    // Logic for buy tokens
+    // Note: If selectedToken.address exists, it's an ERC20. 
+    // Usually requires approve() and a different contract call.
+    // For now, we assume native token purchase as per existing logic.
+    if (selectedToken.address) {
+        alert("ERC20 token purchase requires contract support for that specific token. This is an estimation.");
+        return;
+    }
 
     const tx = prepareContractCall({
       contract: presaleContract,
       method: "function buyTokens() payable",
-      value: toWei(nativeAmountToSend),
+      value: toWei(tokenAmountToSend),
     });
 
     sendTx(tx, {
@@ -156,15 +187,15 @@ const PresaleCard: React.FC = () => {
     });
   };
 
-  const handleNetworkSelect = (network: any) => {
-    switchChain(network.chain);
-    const prices: Record<string, number> = { 'Ethereum': 2450, 'BSC': 600, 'Polygon': 0.50, 'Base': 2450, 'Arbitrum': 2450 };
-    setSelectedPayAsset({ 
-        symbol: network.name === 'BSC' ? 'BNB' : network.name === 'Polygon' ? 'MATIC' : 'ETH', 
-        name: network.name,
-        ethPrice: prices[network.name] || 2450
-    });
+  const handleNetworkSelect = (network: NetworkInfo) => {
+    setSelectedNetwork(network);
+    setSelectedToken(network.tokens[0]); // Reset token to network default
     setShowNetworkSelector(false);
+  };
+
+  const handleTokenSelect = (token: TokenInfo) => {
+    setSelectedToken(token);
+    setShowTokenSelector(false);
   };
 
   const isDataLoading = isLoadingPrice || isLoadingSold;
@@ -220,6 +251,68 @@ const PresaleCard: React.FC = () => {
           </p>
         </div>
 
+        {/* Selection Row */}
+        <div className="flex gap-2 mb-6">
+            {/* Network Selector */}
+            <div className="relative flex-1" ref={networkRef}>
+                <button 
+                    onClick={() => setShowNetworkSelector(!showNetworkSelector)}
+                    className="w-full flex items-center justify-between bg-black/20 border border-white/10 rounded-2xl px-4 py-3 hover:border-indigo-500/50 transition-all"
+                >
+                    <div className="flex items-center gap-2">
+                        <img src={selectedNetwork.icon} alt={selectedNetwork.name} className="w-4 h-4 rounded-full" />
+                        <span className="text-[9px] font-nebula font-black text-white uppercase tracking-widest truncate">{selectedNetwork.name}</span>
+                    </div>
+                    <ChevronDown size={10} className={`text-slate-500 transition-transform ${showNetworkSelector ? 'rotate-180' : ''}`} />
+                </button>
+                {showNetworkSelector && (
+                    <div className="absolute left-0 right-0 top-12 bg-slate-800 border border-white/10 rounded-2xl shadow-2xl z-[60] p-1 animate-fade-in-up">
+                        {SUPPORTED_NETWORKS.map((net) => (
+                            <button
+                                key={net.id}
+                                onClick={() => handleNetworkSelect(net)}
+                                className="w-full flex items-center gap-3 p-2.5 hover:bg-white/5 rounded-xl transition-all group"
+                            >
+                                <img src={net.icon} alt={net.name} className="w-4 h-4 rounded-full" />
+                                <span className="text-[9px] font-nebula font-black text-white uppercase tracking-widest group-hover:text-indigo-400">{net.name}</span>
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+
+            {/* Token Selector */}
+            <div className="relative flex-1" ref={tokenRef}>
+                <button 
+                    onClick={() => setShowTokenSelector(!showTokenSelector)}
+                    className="w-full flex items-center justify-between bg-black/20 border border-white/10 rounded-2xl px-4 py-3 hover:border-indigo-500/50 transition-all"
+                >
+                    <div className="flex items-center gap-2">
+                        <img src={selectedToken.icon} alt={selectedToken.symbol} className="w-4 h-4 rounded-full" />
+                        <span className="text-[9px] font-nebula font-black text-white uppercase tracking-widest">{selectedToken.symbol}</span>
+                    </div>
+                    <ChevronDown size={10} className={`text-slate-500 transition-transform ${showTokenSelector ? 'rotate-180' : ''}`} />
+                </button>
+                {showTokenSelector && (
+                    <div className="absolute left-0 right-0 top-12 bg-slate-800 border border-white/10 rounded-2xl shadow-2xl z-[60] p-1 animate-fade-in-up">
+                        {selectedNetwork.tokens.map((token) => (
+                            <button
+                                key={token.symbol}
+                                onClick={() => handleTokenSelect(token)}
+                                className="w-full flex items-center gap-3 p-2.5 hover:bg-white/5 rounded-xl transition-all group"
+                            >
+                                <img src={token.icon} alt={token.symbol} className="w-4 h-4 rounded-full" />
+                                <div className="text-left">
+                                    <div className="text-[9px] font-nebula font-black text-white uppercase tracking-widest group-hover:text-indigo-400">{token.symbol}</div>
+                                    <div className="text-[7px] text-slate-500 font-bold uppercase tracking-widest">{token.name}</div>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </div>
+
         {/* Timer */}
         <div className="bg-black/40 border border-white/5 rounded-2xl p-4 flex justify-between items-center mb-6">
           <div className="flex items-center gap-2">
@@ -239,11 +332,11 @@ const PresaleCard: React.FC = () => {
             <div className="flex justify-between mb-2">
               <span className="text-[8px] font-nebula font-black text-slate-500 uppercase tracking-widest">You Pay (USD)</span>
               <span className="text-[8px] font-nebula font-black text-slate-400 uppercase tracking-widest flex items-center gap-1">
-                ≈ {parseFloat(nativeAmountToSend).toLocaleString(undefined, { maximumFractionDigits: 6 })} {selectedPayAsset.symbol}
+                ≈ {parseFloat(tokenAmountToSend).toLocaleString(undefined, { maximumFractionDigits: 6 })} {selectedToken.symbol}
               </span>
             </div>
             <div className="flex justify-between items-center">
-              <div className="flex items-center gap-2 w-1/2">
+              <div className="flex items-center gap-2 w-full">
                 <span className="text-xl font-nebula font-black text-white/50">$</span>
                 <input 
                   type="number" 
@@ -253,31 +346,7 @@ const PresaleCard: React.FC = () => {
                   placeholder="0.0"
                 />
               </div>
-              <button 
-                onClick={() => setShowNetworkSelector(!showNetworkSelector)}
-                className="flex items-center gap-2.5 bg-slate-800/80 border border-white/10 rounded-xl px-4 py-2 hover:bg-slate-700 transition-colors"
-              >
-                <div className="w-5 h-5 bg-blue-500 rounded-lg flex items-center justify-center text-white"><Globe size={10}/></div>
-                <span className="text-[10px] font-nebula font-black text-white uppercase tracking-widest">{selectedPayAsset.symbol}</span>
-                <ChevronDown size={10} className={`text-slate-500 transition-transform ${showNetworkSelector ? 'rotate-180' : ''}`} />
-              </button>
             </div>
-
-            {showNetworkSelector && (
-              <div className="absolute right-6 top-20 w-48 bg-slate-800 border border-white/10 rounded-2xl shadow-2xl z-50 p-2 animate-fade-in-up">
-                <div className="text-[7px] font-nebula font-black text-slate-500 uppercase tracking-[0.2em] p-2 mb-1">Select Network</div>
-                {SUPPORTED_NETWORKS.map((net) => (
-                  <button
-                    key={net.id}
-                    onClick={() => handleNetworkSelect(net)}
-                    className="w-full flex items-center gap-3 p-2.5 hover:bg-white/5 rounded-xl transition-all group"
-                  >
-                    <img src={net.icon} alt={net.name} className="w-5 h-5" />
-                    <span className="text-[9px] font-nebula font-black text-white uppercase tracking-widest group-hover:text-indigo-400">{net.name}</span>
-                  </button>
-                ))}
-              </div>
-            )}
           </div>
 
           <div className="flex justify-center -my-6 relative z-20">
