@@ -5,6 +5,14 @@ import { prepareContractCall, toEther, toWei } from "thirdweb";
 import { client, wallets } from "../client";
 import { presaleContract, fluidTokenContract, chain as presaleChain, SUPPORTED_NETWORKS, TokenInfo, NetworkInfo } from "../contracts/presale";
 
+const FluidLogo = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 100 100" fill="currentColor" className={className} xmlns="http://www.w3.org/2000/svg">
+    <path d="M55 20 H90 A5 5 0 0 1 90 35 H55 A5 5 0 0 1 55 20 Z" transform="skewX(-20)" />
+    <path d="M40 42 H85 A5 5 0 0 1 85 57 H40 A5 5 0 0 1 40 42 Z" transform="skewX(-20)" />
+    <path d="M25 64 H60 A5 5 0 0 1 60 79 H25 A5 5 0 0 1 25 64 Z" transform="skewX(-20)" />
+  </svg>
+);
+
 const PresaleCard: React.FC = () => {
   const account = useActiveAccount();
   const activeChain = useActiveWalletChain();
@@ -369,7 +377,7 @@ const PresaleCard: React.FC = () => {
                 placeholder="0.0"
               />
               <div className="flex items-center gap-2.5 bg-indigo-500/10 border border-indigo-500/20 rounded-xl px-4 py-2">
-                <Zap size={12} className="text-indigo-400" />
+                <FluidLogo className="w-3.5 h-3.5 text-indigo-400" />
                 <span className="text-[10px] font-nebula font-black text-indigo-400">FLD</span>
               </div>
             </div>
