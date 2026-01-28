@@ -48,7 +48,7 @@ const data = [
     vesting: '10 Year Vesting' 
   },
   { 
-    name: 'Ecosystem Growth', 
+    name: 'Growth', 
     value: 10, 
     color: '#f43f5e', 
     amount: '1,000,000', 
@@ -60,56 +60,41 @@ const data = [
 
 const Tokenomics: React.FC = () => {
   return (
-    <section id="tokenomics" className="py-8 bg-transparent relative overflow-hidden transition-colors duration-300">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-        
-        <div className="text-center mb-8">
-          <h2 className="text-3xl md:text-5xl font-extrabold mb-4 text-slate-900 dark:text-white uppercase tracking-tighter italic">Tokenomics</h2>
-          <p className="text-slate-700 dark:text-slate-300 max-w-2xl mx-auto text-lg font-medium">
-            A balanced model for long-term sustainability.
-          </p>
-        </div>
-
-        <div className="max-w-4xl mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              {data.map((item, index) => (
-                  <div 
-                    key={item.name} 
-                    className={`scroll-card bg-white/10 dark:bg-slate-900/40 backdrop-blur-md border border-slate-200/50 dark:border-slate-800/50 rounded-2xl p-5 hover:border-opacity-50 transition-all hover:-translate-y-1 duration-300 group shadow-sm dark:shadow-none`}
-                    style={{ borderColor: `${item.color}40` }}
-                  >
-                      <div className="flex items-start justify-between mb-4">
-                          <div className="flex items-center gap-3">
-                              <div className="p-2.5 rounded-xl bg-opacity-20 text-white" style={{ backgroundColor: `${item.color}20`, color: item.color }}>
-                                  <item.icon size={20} />
-                              </div>
-                              <div>
-                                  <h4 className="text-slate-900 dark:text-white font-bold text-lg uppercase italic">{item.name}</h4>
-                                  <p className="text-xs text-slate-600 dark:text-slate-400 font-medium">{item.desc}</p>
-                              </div>
-                          </div>
-                          <span className="text-xl font-bold" style={{ color: item.color }}>{item.value}%</span>
-                      </div>
-                      
-                      <div className="space-y-2">
-                          <div className="w-full h-1.5 bg-slate-200/50 dark:bg-slate-800/50 rounded-full overflow-hidden">
-                              <div className="h-full rounded-full" style={{ width: `${item.value}%`, backgroundColor: item.color }}></div>
-                          </div>
-                          <div className="flex justify-between items-center text-xs">
-                              <span className="text-slate-700 dark:text-slate-200 font-bold">{item.amount} FLUID</span>
-                              {item.vesting && (
-                                  <span className="flex items-center gap-1 text-slate-600 dark:text-slate-400 bg-slate-200/50 dark:bg-slate-800/50 px-2 py-0.5 rounded text-[10px] font-bold">
-                                      <Clock size={10} /> {item.vesting}
-                                  </span>
-                              )}
-                          </div>
-                      </div>
-                  </div>
-              ))}
-          </div>
-        </div>
-      </div>
-    </section>
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {data.map((item, index) => (
+            <div 
+              key={item.name} 
+              className={`bg-white/5 dark:bg-slate-900/40 backdrop-blur-md border border-white/5 rounded-2xl p-4 hover:border-white/10 transition-all group shadow-sm`}
+            >
+                <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-xl bg-opacity-10 text-white" style={{ backgroundColor: `${item.color}20`, color: item.color }}>
+                            <item.icon size={18} />
+                        </div>
+                        <div>
+                            <h4 className="text-white font-nebula font-black text-[12px] uppercase italic leading-none mb-1">{item.name}</h4>
+                            <p className="text-[10px] text-slate-500 font-bold uppercase tracking-tight">{item.desc}</p>
+                        </div>
+                    </div>
+                    <span className="text-lg font-nebula font-black italic" style={{ color: item.color }}>{item.value}%</span>
+                </div>
+                
+                <div className="space-y-1.5">
+                    <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden">
+                        <div className="h-full rounded-full" style={{ width: `${item.value}%`, backgroundColor: item.color }}></div>
+                    </div>
+                    <div className="flex justify-between items-center">
+                        <span className="text-[10px] text-slate-400 font-nebula font-black uppercase italic">{item.amount} FLD</span>
+                        {item.vesting && (
+                            <span className="flex items-center gap-1 text-slate-500 bg-white/5 px-2 py-0.5 rounded text-[8px] font-bold uppercase">
+                                <Clock size={8} /> {item.vesting}
+                            </span>
+                        )}
+                    </div>
+                </div>
+            </div>
+        ))}
+    </div>
   );
 };
 

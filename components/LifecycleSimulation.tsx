@@ -1,186 +1,146 @@
-
-import React, { useState, useEffect } from 'react';
-import { Coins, Landmark, Server, Database, Pickaxe, Zap, TrendingUp, ArrowDown } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { Coins, Landmark, Server, Database, Pickaxe, Zap, ArrowDown } from 'lucide-react';
 
 const LifecycleSimulation: React.FC = () => {
-  // Steps: 0:Idle, 1:UserPay, 2:EndowmentGrow, 3:BlockMining(Mint), 4:Distribution, 5:HalvingCheck
   const [step, setStep] = useState(0); 
-  
-  // Economy States
-  const [treasury, setTreasury] = useState(5000000); // Endowment Pool
+  const [treasury, setTreasury] = useState(5000000); 
   const [circulatingSupply, setCirculatingSupply] = useState(10000000);
-  const [blockReward, setBlockReward] = useState(50); // Starts high, halves
-  const [halvingCounter, setHalvingCounter] = useState(0); // Counts cycles until halving
+  const [blockReward, setBlockReward] = useState(50); 
+  const [halvingCounter, setHalvingCounter] = useState(0); 
   const [isHalving, setIsHalving] = useState(false);
+  
+  const cycleRef = useRef<number>(0);
 
   useEffect(() => {
     const runCycle = async () => {
-        // Step 1: User pays One-Time Fee
         setStep(1); 
         await new Promise(r => setTimeout(r, 1500));
         
-        // Step 2: Payment enters Endowment (Yield Source)
         setStep(2); 
         setTreasury(prev => prev + 1000); 
         await new Promise(r => setTimeout(r, 1000));
         
-        // Step 3: Block Generation (PoS + PoStorage)
         setStep(3); 
-        setCirculatingSupply(prev => prev + blockReward); // Minting new tokens
+        setCirculatingSupply(prev => prev + blockReward); 
         await new Promise(r => setTimeout(r, 1500));
 
-        // Step 4: Distribution (Yield + Reward) -> Nodes
         setStep(4);
-        setTreasury(prev => prev + 100); // Yield generated from Endowment
+        setTreasury(prev => prev + 100); 
         await new Promise(r => setTimeout(r, 1500));
 
-        // Step 5: Halving Logic (Every 3 cycles for demo purposes)
-        setHalvingCounter(prev => {
-            const next = prev + 1;
-            if (next >= 3) {
-                setIsHalving(true);
-                setTimeout(() => {
-                    setBlockReward(r => Math.max(1, Math.floor(r / 2)));
-                    setIsHalving(false);
-                }, 2000);
-                return 0;
-            }
-            return next;
-        });
-
-        if (halvingCounter >= 2) {
-             setStep(5); // Show Halving Visual
-             await new Promise(r => setTimeout(r, 2000));
+        cycleRef.current += 1;
+        if (cycleRef.current >= 3) {
+            setIsHalving(true);
+            setStep(5);
+            await new Promise(r => setTimeout(r, 2000));
+            setBlockReward(prev => Math.max(1, Math.floor(prev / 2)));
+            setIsHalving(false);
+            cycleRef.current = 0;
+            setHalvingCounter(0);
+        } else {
+            setHalvingCounter(cycleRef.current);
         }
 
-        setStep(0); // Reset
+        setStep(0); 
     };
     
-    runCycle();
-    const interval = setInterval(runCycle, 8000); // Loop
+    const interval = setInterval(runCycle, 8500);
+    runCycle(); // Initial run
     
     return () => clearInterval(interval);
-  }, [halvingCounter, blockReward]);
+  }, [blockReward]); // Only depends on blockReward to re-init if needed, but runCycle handles its own logic
 
   return (
-    <div className="w-full max-w-6xl mx-auto mb-24">
-        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 px-4">
+    <div className="w-full max-w-6xl mx-auto mb-24 px-4">
+        <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4">
             <div>
-                <h2 className="text-3xl font-black text-slate-900 dark:text-white">Endowment & Halving Engine</h2>
-                <p className="text-slate-600 dark:text-slate-400">PoS Consensus • Proof of Storage • Deflationary Emission</p>
+                <h2 className="text-3xl font-nebula font-black text-white italic uppercase tracking-tighter">Economic Engine</h2>
+                <p className="text-slate-500 font-bold uppercase text-[10px] tracking-widest">Protocol Lifecycle • Real-time Sharding Simulation</p>
             </div>
             
-            {/* Halving Indicator */}
-            <div className="flex items-center gap-4 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-4 py-3 shadow-sm">
+            <div className="flex items-center gap-6 bg-slate-900/50 border border-white/5 rounded-3xl px-6 py-4 backdrop-blur-md">
                 <div className="text-right">
-                    <div className="text-[10px] text-slate-500 font-bold uppercase">Next Halving</div>
-                    <div className="flex gap-1 justify-end mt-1">
+                    <div className="text-[8px] text-slate-500 font-black uppercase tracking-[0.2em] mb-1">Next Halving</div>
+                    <div className="flex gap-1.5 justify-end">
                         {[1, 2, 3].map(i => (
-                            <div key={i} className={`w-2 h-2 rounded-full ${i <= (3 - halvingCounter) ? 'bg-orange-500' : 'bg-slate-300 dark:bg-slate-700'}`}></div>
+                            <div key={i} className={`w-1.5 h-1.5 rounded-full transition-colors duration-500 ${i <= (3 - halvingCounter) ? 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.8)]' : 'bg-slate-800'}`}></div>
                         ))}
                     </div>
                 </div>
-                <div className="h-8 w-px bg-slate-200 dark:bg-slate-700"></div>
+                <div className="h-8 w-px bg-white/5"></div>
                 <div>
-                     <div className="text-[10px] text-slate-500 font-bold uppercase">Block Reward</div>
-                     <div className="text-xl font-bold text-slate-900 dark:text-white leading-none">{blockReward} FLD</div>
+                     <div className="text-[8px] text-slate-500 font-black uppercase tracking-[0.2em] mb-1">Block Reward</div>
+                     <div className="text-xl font-nebula font-black text-white italic leading-none">{blockReward} <span className="text-indigo-400">FLD</span></div>
                 </div>
             </div>
         </div>
 
-        <div className="bg-white/80 dark:bg-slate-950/50 backdrop-blur-sm rounded-[3rem] border border-slate-200 dark:border-slate-800 p-8 md:p-12 relative overflow-hidden shadow-2xl md:min-h-[400px]">
-            {/* Background Track */}
-            <div className="absolute top-1/2 left-16 right-16 h-1 bg-slate-100 dark:bg-slate-800 -translate-y-1/2 rounded-full hidden md:block"></div>
+        <div className="bg-slate-900/30 border border-white/5 rounded-[3rem] p-8 md:p-12 relative overflow-hidden shadow-2xl min-h-[450px] flex flex-col justify-center">
+            {/* Background Data Stream Track */}
+            <div className="absolute top-1/2 left-20 right-20 h-px bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-y-1/2 hidden md:block"></div>
 
-            {/* --- ANIMATED PARTICLES (Desktop Only) --- */}
+            {/* --- ANIMATED PARTICLES --- */}
+            <div className={`absolute top-1/2 -translate-y-1/2 w-10 h-10 bg-indigo-600 rounded-2xl shadow-[0_0_30px_rgba(99,102,241,0.5)] z-20 transition-all duration-[1200ms] ease-in-out hidden md:flex items-center justify-center border border-white/20
+                ${step === 1 ? 'left-[35%] opacity-100 scale-110' : 'left-16 opacity-0 scale-50'}
+            `}><Coins size={18} className="text-white" /></div>
 
-            {/* 1. User Fee (Blue) */}
-            <div 
-                className={`absolute top-1/2 -translate-y-1/2 w-8 h-8 bg-blue-500 rounded-full shadow-[0_0_20px_rgba(59,130,246,0.6)] z-20 transition-all duration-[1500ms] ease-in-out hidden md:flex items-center justify-center text-[10px] text-white font-bold border-2 border-white dark:border-slate-900
-                ${step === 0 ? 'left-16 opacity-0' : ''}
-                ${step === 1 ? 'left-[35%] opacity-100' : ''}
-                ${step >= 2 ? 'left-[35%] opacity-0 scale-50' : ''} 
-                `} 
-            ><Coins size={14} /></div>
+            <div className={`absolute top-1/2 -translate-y-1/2 w-6 h-6 bg-emerald-500 rounded-full shadow-[0_0_20px_rgba(16,185,129,0.5)] z-20 transition-all duration-[1200ms] ease-in-out hidden md:block border border-white/20
+                ${step === 4 ? 'left-[90%] opacity-100' : 'left-[35%] opacity-0'}
+            `}></div>
 
-            {/* 2. Endowment Yield (Green) */}
-             <div 
-                className={`absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-emerald-500 rounded-full shadow-lg z-20 transition-all duration-[1500ms] ease-in-out hidden md:block border-2 border-white dark:border-slate-900
-                ${step < 4 ? 'left-[35%] opacity-0' : ''}
-                ${step === 4 ? 'left-[90%] opacity-100' : ''}
-                ${step > 4 ? 'opacity-0' : ''}
-                `}
-            ></div>
-
-            {/* 3. Block Reward Minted (Orange) */}
-             <div 
-                className={`absolute top-1/2 -translate-y-1/2 w-10 h-10 bg-orange-500 rounded-full shadow-[0_0_20px_rgba(249,115,22,0.6)] z-20 transition-all duration-[1500ms] ease-in-out hidden md:flex items-center justify-center border-2 border-white dark:border-slate-900
-                ${step < 3 ? 'left-[60%] opacity-0 scale-0' : ''}
-                ${step === 3 ? 'left-[60%] opacity-100 scale-125' : ''}
-                ${step === 4 ? 'left-[90%] opacity-0 scale-50' : ''}
-                `}
-            ><Pickaxe size={18} className="text-white" /></div>
+            <div className={`absolute top-1/2 -translate-y-1/2 w-12 h-12 bg-purple-600 rounded-3xl shadow-[0_0_40px_rgba(168,85,247,0.5)] z-20 transition-all duration-[1200ms] ease-in-out hidden md:flex items-center justify-center border border-white/20
+                ${step === 3 ? 'left-[60%] opacity-100 scale-125 rotate-12' : step === 4 ? 'left-[90%] opacity-0 scale-50' : 'left-[35%] opacity-0 scale-50'}
+            `}><Pickaxe size={20} className="text-white" /></div>
 
 
-            {/* --- NODES GRID --- */}
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative z-10 h-full items-center">
-                
-                {/* 1. User */}
-                <div className={`relative p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl flex flex-col items-center gap-4 transition-all duration-500 ${step === 1 ? 'border-blue-500 shadow-[0_0_30px_rgba(59,130,246,0.2)] scale-105' : ''}`}>
-                    <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center text-blue-500">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 relative z-10 items-center">
+                <div className={`p-8 bg-black/40 border border-white/5 rounded-[2.5rem] flex flex-col items-center gap-4 transition-all duration-500 ${step === 1 ? 'border-indigo-500/50 bg-indigo-500/5 scale-105 shadow-2xl shadow-indigo-500/10' : ''}`}>
+                    <div className="w-16 h-16 bg-indigo-500/10 rounded-2xl flex items-center justify-center text-indigo-400">
                         <Coins size={32} />
                     </div>
                     <div className="text-center">
-                        <div className="font-bold text-slate-900 dark:text-white text-lg">User</div>
-                        <div className="text-xs text-slate-500">One-Time Payment</div>
+                        <div className="font-nebula font-black text-white uppercase italic text-sm mb-1">User</div>
+                        <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Entry Fee</div>
                     </div>
                 </div>
 
-                {/* 2. Endowment */}
-                <div className={`relative p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl flex flex-col items-center gap-4 transition-all duration-500 ${step === 2 || step === 4 ? 'border-emerald-500 shadow-[0_0_30px_rgba(16,185,129,0.2)] scale-105' : ''}`}>
-                    <div className="w-16 h-16 bg-emerald-500/10 rounded-full flex items-center justify-center text-emerald-500">
+                <div className={`p-8 bg-black/40 border border-white/5 rounded-[2.5rem] flex flex-col items-center gap-4 transition-all duration-500 ${step === 2 || step === 4 ? 'border-emerald-500/50 bg-emerald-500/5 scale-105 shadow-2xl shadow-emerald-500/10' : ''}`}>
+                    <div className="w-16 h-16 bg-emerald-500/10 rounded-2xl flex items-center justify-center text-emerald-400">
                         <Landmark size={32} />
                     </div>
                     <div className="text-center">
-                        <div className="font-bold text-slate-900 dark:text-white text-lg">Endowment</div>
-                        <div className="text-xs text-slate-500 font-mono text-emerald-600 dark:text-emerald-400">${treasury.toLocaleString()}</div>
-                        <div className={`text-[10px] font-bold mt-1 transition-opacity ${step === 2 ? 'text-emerald-500 opacity-100' : 'opacity-0'}`}>Generating Yield...</div>
+                        <div className="font-nebula font-black text-white uppercase italic text-sm mb-1">Treasury</div>
+                        <div className="text-[10px] text-emerald-400 font-mono mb-1">${treasury.toLocaleString()}</div>
+                        <div className={`text-[8px] font-black uppercase text-emerald-500 tracking-widest transition-opacity duration-300 ${step === 2 ? 'opacity-100' : 'opacity-0'}`}>Accumulating...</div>
                     </div>
                 </div>
 
-                {/* 3. Consensus (PoS / Mining) */}
-                <div className={`relative p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl flex flex-col items-center gap-4 transition-all duration-500 
-                    ${step === 3 ? 'border-orange-500 shadow-[0_0_30px_rgba(249,115,22,0.2)] scale-105' : ''}
-                    ${isHalving ? 'ring-4 ring-red-500 ring-opacity-50' : ''}
-                `}>
-                    <div className="w-16 h-16 bg-orange-500/10 rounded-full flex items-center justify-center text-orange-500 relative">
+                <div className={`p-8 bg-black/40 border border-white/5 rounded-[2.5rem] flex flex-col items-center gap-4 transition-all duration-500 ${step === 3 ? 'border-purple-500/50 bg-purple-500/5 scale-105 shadow-2xl shadow-purple-500/10' : ''} ${isHalving ? 'ring-2 ring-red-500 ring-offset-4 ring-offset-slate-950' : ''}`}>
+                    <div className="w-16 h-16 bg-purple-500/10 rounded-2xl flex items-center justify-center text-purple-400 relative">
                         {isHalving ? <ArrowDown size={32} className="animate-bounce text-red-500" /> : <Zap size={32} />}
                     </div>
                     <div className="text-center">
-                        <div className="font-bold text-slate-900 dark:text-white text-lg">{isHalving ? 'HALVING!' : 'PoS Consensus'}</div>
-                        <div className="text-xs text-slate-500 font-mono">{circulatingSupply.toLocaleString()} FLD</div>
-                        <div className={`text-[10px] font-bold mt-1 transition-opacity ${step === 3 ? 'text-orange-500 opacity-100' : 'opacity-0'}`}>
-                            {isHalving ? 'Rewards Slashed' : `Minting +${blockReward}`}
+                        <div className="font-nebula font-black text-white uppercase italic text-sm mb-1">{isHalving ? 'HALVING' : 'Consensus'}</div>
+                        <div className="text-[10px] text-slate-400 font-mono mb-1">{circulatingSupply.toLocaleString()} FLD</div>
+                        <div className={`text-[8px] font-black uppercase tracking-widest transition-opacity duration-300 ${step === 3 ? 'opacity-100 text-purple-400' : 'opacity-0'}`}>
+                            {isHalving ? 'Slashed' : 'Mining +50'}
                         </div>
                     </div>
                 </div>
 
-                {/* 4. Nodes (Storage) */}
-                <div className={`relative p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-3xl flex flex-col items-center gap-4 transition-all duration-500 ${step === 4 ? 'border-purple-500 shadow-[0_0_30px_rgba(168,85,247,0.2)] scale-105' : ''}`}>
-                    <div className="w-16 h-16 bg-purple-500/10 rounded-full flex items-center justify-center text-purple-500">
+                <div className={`p-8 bg-black/40 border border-white/5 rounded-[2.5rem] flex flex-col items-center gap-4 transition-all duration-500 ${step === 4 ? 'border-indigo-400/50 bg-indigo-400/5 scale-105 shadow-2xl shadow-indigo-400/10' : ''}`}>
+                    <div className="w-16 h-16 bg-indigo-400/10 rounded-2xl flex items-center justify-center text-indigo-300">
                         <div className="flex -space-x-2">
                             <Server size={24} />
                             <Database size={24} />
                         </div>
                     </div>
                     <div className="text-center">
-                        <div className="font-bold text-slate-900 dark:text-white text-lg">Nodes</div>
-                        <div className="text-xs text-slate-500">PoS + PoStorage</div>
-                        <div className={`text-[10px] font-bold mt-1 transition-opacity ${step === 4 ? 'text-purple-500 opacity-100' : 'opacity-0'}`}>Earns Yield + Rewards</div>
+                        <div className="font-nebula font-black text-white uppercase italic text-sm mb-1">Nodes</div>
+                        <div className="text-[9px] text-slate-500 font-bold uppercase tracking-widest mb-1">Validators</div>
+                        <div className={`text-[8px] font-black uppercase text-indigo-400 tracking-widest transition-opacity duration-300 ${step === 4 ? 'opacity-100' : 'opacity-0'}`}>Rewarding...</div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
