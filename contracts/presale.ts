@@ -9,7 +9,6 @@ import {
   arbitrum, 
   avalanche, 
   optimism, 
-  zksync, 
   linea, 
   scroll, 
   blast 
@@ -124,16 +123,6 @@ export const SUPPORTED_NETWORKS: NetworkInfo[] = [
     tokens: [
       { symbol: "ETH", name: "Ethereum", icon: "https://cryptologos.cc/logos/ethereum-eth-logo.png", priceUsd: 2450 },
       { symbol: "OP", name: "Optimism", icon: "https://cryptologos.cc/logos/optimism-ethereum-op-logo.png", priceUsd: 3.5 },
-    ]
-  },
-  { 
-    id: zksync.id, 
-    name: "zkSync", 
-    chain: zksync, 
-    icon: "https://cryptologos.cc/logos/zksync-era-logo.png",
-    tokens: [
-      { symbol: "ETH", name: "Ethereum", icon: "https://cryptologos.cc/logos/ethereum-eth-logo.png", priceUsd: 2450 },
-      { symbol: "USDC", name: "USD Coin", icon: "https://cryptologos.cc/logos/usd-coin-usdc-logo.png", address: "0x3355df6D4c9C3035744d0160243B98A0b1eaE493", priceUsd: 1 },
     ]
   },
   { 
