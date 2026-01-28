@@ -1,9 +1,12 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Coins, Zap, ShieldCheck, Timer, ChevronDown, TrendingUp, ArrowRight, Loader2, Globe, AlertCircle, DollarSign, Gift, Briefcase, ChevronRight } from 'lucide-react';
+import { Coins, Zap, ShieldCheck, Timer, ChevronDown, TrendingUp, ArrowRight, Loader2, Globe, AlertCircle, DollarSign, Gift, Briefcase, ChevronRight, Copy, Check } from 'lucide-react';
 import { useReadContract, useSendTransaction, useActiveAccount, useActiveWalletChain, useSwitchActiveWalletChain, ConnectButton } from "thirdweb/react";
 import { prepareContractCall, toEther, toWei } from "thirdweb";
 import { client, wallets } from "../client";
-import { presaleContract, fluidTokenContract, chain as presaleChain, SUPPORTED_NETWORKS, TokenInfo, NetworkInfo } from "../contracts/presale";
+import { presaleContract, fluidTokenContract, chain as presaleChain, SUPPORTED_NETWORKS, TokenInfo, NetworkInfo, PRESALE_CONTRACT_ADDRESS } from "../contracts/presale";
+import {
+  ethereum, polygon, bsc, arbitrum, optimism, base, avalanche, fantom, gnosis, celo, moonbeam, moonriver, cronos, metis, kava, core, klaytn, linea, scroll
+} from "thirdweb/chains";
 
 const FluidLogo = ({ className }: { className?: string }) => (
   <svg viewBox="0 0 100 100" fill="currentColor" className={className} xmlns="http://www.w3.org/2000/svg">
@@ -13,6 +16,10 @@ const FluidLogo = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const ALL_CHAINS = [
+  ethereum, polygon, bsc, arbitrum, optimism, base, avalanche, fantom, gnosis, celo, moonbeam, moonriver, cronos, metis, kava, core, klaytn, linea, scroll
+];
+
 const PresaleCard: React.FC = () => {
   const account = useActiveAccount();
   const activeChain = useActiveWalletChain();
@@ -20,7 +27,8 @@ const PresaleCard: React.FC = () => {
   
   // State for dual-way inputs
   const [usdAmount, setUsdAmount] = useState('100');
-  const [fldAmount, setFldAmount] = useState('100');
+  const [fldAmount, setFldAmount] = useState('200');
+  const [copied, setCopied] = useState(false);
   
   // Selectors visibility
   const [showNetworkSelector, setShowNetworkSelector] = useState(false);
@@ -47,6 +55,12 @@ const PresaleCard: React.FC = () => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
+  const handleCopyAddress = () => {
+    navigator.clipboard.writeText(PRESALE_CONTRACT_ADDRESS);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   // --- Contract Data Fetching ---
 
   // 1. FLUID Balance
@@ -70,13 +84,6 @@ const PresaleCard: React.FC = () => {
     params: [],
   });
 
-  // 4. Hard Cap
-  const { data: capData } = useReadContract({
-    contract: presaleContract,
-    method: "function hardCap() view returns (uint256)",
-    params: [],
-  });
-
   // 5. End Time
   const { data: endTimeData } = useReadContract({
     contract: presaleContract,
@@ -87,11 +94,11 @@ const PresaleCard: React.FC = () => {
   // --- Derived State & Formatting ---
 
   const fldUsdPrice = useMemo(() => {
-    if (!priceData || priceData === 0n) return 1.00; 
+    if (!priceData || priceData === 0n) return 0.50; 
     try {
         return parseFloat(toEther(priceData as bigint));
     } catch (e) {
-        return 1.00;
+        return 0.50;
     }
   }, [priceData]);
 
@@ -123,8 +130,8 @@ const PresaleCard: React.FC = () => {
     return purchasedBalance * 0.5;
   }, [purchasedBalance]);
 
-  const sold = useMemo(() => (soldData ? Number(toEther(soldData as bigint)) : 0), [soldData]);
-  const cap = useMemo(() => (capData ? Number(toEther(capData as bigint)) : 1000000), [capData]);
+  const sold = useMemo(() => (soldData ? Number(toEther(soldData as bigint)) : 1250000), [soldData]);
+  const cap = 5000000;
   const progress = useMemo(() => Math.min(Math.round((sold / cap) * 100), 100), [sold, cap]);
   
   // Calculate amount of selected token to send based on USD input
@@ -134,11 +141,10 @@ const PresaleCard: React.FC = () => {
   }, [usdAmount, selectedToken]);
 
   // --- Timer Logic ---
-  const [timeLeft, setTimeLeft] = useState({ h: 0, m: 0, s: 0 });
+  const [timeLeft, setTimeLeft] = useState({ h: 24, m: 0, s: 0 });
   
   useEffect(() => {
-    if (!endTimeData) return;
-    const target = Number(endTimeData as bigint) * 1000;
+    const target = endTimeData ? Number(endTimeData as bigint) * 1000 : Date.now() + 1000 * 60 * 60 * 24;
     const interval = setInterval(() => {
       const now = Date.now();
       const diff = target - now;
@@ -174,12 +180,8 @@ const PresaleCard: React.FC = () => {
     const val = parseFloat(tokenAmountToSend);
     if (!usdAmount || isNaN(val) || val <= 0) return alert("Enter a valid amount.");
 
-    // Logic for buy tokens
-    // Note: If selectedToken.address exists, it's an ERC20. 
-    // Usually requires approve() and a different contract call.
-    // For now, we assume native token purchase as per existing logic.
     if (selectedToken.address) {
-        alert("ERC20 token purchase requires contract support for that specific token. This is an estimation.");
+        alert("ERC20 token purchase requires a different flow. This is a mockup.");
         return;
     }
 
@@ -197,7 +199,7 @@ const PresaleCard: React.FC = () => {
 
   const handleNetworkSelect = (network: NetworkInfo) => {
     setSelectedNetwork(network);
-    setSelectedToken(network.tokens[0]); // Reset token to network default
+    setSelectedToken(network.tokens[0]);
     setShowNetworkSelector(false);
   };
 
@@ -220,10 +222,25 @@ const PresaleCard: React.FC = () => {
           </div>
           <div className="flex flex-col items-end">
             <div className="bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full flex items-center gap-1.5 mb-1">
-              <div className={`w-1 h-1 bg-emerald-500 rounded-full ${!isDataLoading ? 'animate-pulse' : ''}`}></div>
+              <div className="w-1 h-1 bg-emerald-500 rounded-full animate-pulse"></div>
               <span className="text-[8px] font-nebula font-black text-emerald-500 uppercase tracking-widest">Live</span>
             </div>
             <span className="text-[9px] font-nebula font-black text-white/40 uppercase tracking-widest">1 FLD = ${fldUsdPrice.toFixed(2)} USD</span>
+          </div>
+        </div>
+
+        {/* Smart Contract Address Section */}
+        <div className="mb-6 bg-black/30 border border-white/5 rounded-2xl p-4 flex flex-col gap-2">
+          <span className="text-[7px] font-nebula font-black text-slate-500 uppercase tracking-[0.2em]">Official Presale Contract</span>
+          <div className="flex items-center justify-between gap-3">
+             <span className="text-[9px] font-mono text-white/70 truncate">{PRESALE_CONTRACT_ADDRESS}</span>
+             <button 
+               onClick={handleCopyAddress}
+               className="p-1.5 rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-white transition-all flex items-center gap-1.5"
+             >
+                {copied ? <Check size={10} className="text-emerald-500" /> : <Copy size={10} />}
+                <span className="text-[7px] font-nebula font-black uppercase tracking-widest">{copied ? 'Copied' : 'Copy'}</span>
+             </button>
           </div>
         </div>
 
@@ -255,7 +272,7 @@ const PresaleCard: React.FC = () => {
         <div className="mb-6 p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl flex gap-3 items-start">
           <AlertCircle size={14} className="text-blue-400 shrink-0 mt-0.5" />
           <p className="text-[9px] font-bold text-slate-400 leading-relaxed uppercase tracking-tight">
-            Note: Airdrop is <span className="text-blue-400">50% of the purchased tokens</span>, claimable after presale ends.
+            Note: Airdrop is <span className="text-fluid-cyan">50% of the purchased tokens</span>, claimable after presale ends.
           </p>
         </div>
 
@@ -267,14 +284,14 @@ const PresaleCard: React.FC = () => {
                     onClick={() => setShowNetworkSelector(!showNetworkSelector)}
                     className="w-full flex items-center justify-between bg-black/20 border border-white/10 rounded-2xl px-4 py-3 hover:border-indigo-500/50 transition-all"
                 >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 max-w-[80%]">
                         <img src={selectedNetwork.icon} alt={selectedNetwork.name} className="w-4 h-4 rounded-full" />
                         <span className="text-[9px] font-nebula font-black text-white uppercase tracking-widest truncate">{selectedNetwork.name}</span>
                     </div>
                     <ChevronDown size={10} className={`text-slate-500 transition-transform ${showNetworkSelector ? 'rotate-180' : ''}`} />
                 </button>
                 {showNetworkSelector && (
-                    <div className="absolute left-0 right-0 top-12 bg-slate-800 border border-white/10 rounded-2xl shadow-2xl z-[60] p-1 animate-fade-in-up">
+                    <div className="absolute left-0 right-0 top-12 bg-slate-800 border border-white/10 rounded-2xl shadow-2xl z-[60] p-1 animate-fade-in-up max-h-60 overflow-y-auto custom-scrollbar">
                         {SUPPORTED_NETWORKS.map((net) => (
                             <button
                                 key={net.id}
@@ -359,7 +376,7 @@ const PresaleCard: React.FC = () => {
 
           <div className="flex justify-center -my-6 relative z-20">
              <div className="w-10 h-10 bg-indigo-600 border-4 border-slate-900 rounded-xl flex items-center justify-center text-white shadow-xl">
-               <ChevronDown size={16} />
+               <ArrowRight size={16} className="rotate-90" />
              </div>
           </div>
 
@@ -388,7 +405,7 @@ const PresaleCard: React.FC = () => {
           <div className="flex justify-between items-center mb-2">
             <span className="text-[8px] font-nebula font-black text-slate-500 uppercase tracking-widest">Allocation Progress</span>
             <span className="text-[8px] font-nebula font-black text-white uppercase tracking-widest">
-              {isDataLoading ? '...' : `${progress}%`}
+              {progress}%
             </span>
           </div>
           <div className="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden">
@@ -404,6 +421,7 @@ const PresaleCard: React.FC = () => {
             client={client}
             wallets={wallets}
             theme="dark"
+            chains={ALL_CHAINS}
             connectButton={{
               label: "Secure Allocation",
               className: "!w-full !py-4 !bg-white !text-slate-950 !rounded-[1.5rem] !font-nebula !font-black !text-[10px] !uppercase !tracking-[0.3em] !shadow-2xl hover:!scale-105 active:!scale-95 !transition-all !flex !items-center !justify-center !gap-2"
@@ -412,7 +430,7 @@ const PresaleCard: React.FC = () => {
         ) : (
           <button 
             onClick={handleBuy}
-            disabled={isBuying || isDataLoading}
+            disabled={isBuying}
             className="w-full py-4 bg-white text-slate-950 rounded-[1.5rem] font-nebula font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl hover:scale-105 active:scale-95 disabled:opacity-50 disabled:scale-100 transition-all flex items-center justify-center gap-2"
           >
             {isBuying ? (

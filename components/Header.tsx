@@ -2,6 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Menu, X, Activity } from 'lucide-react';
 import { ConnectButton } from "thirdweb/react";
 import { client, wallets } from "../client";
+import {
+  ethereum, polygon, bsc, arbitrum, optimism, base, avalanche, fantom, gnosis, celo, moonbeam, moonriver, cronos, metis, kava, core, klaytn, linea, scroll
+} from "thirdweb/chains";
+
+const ALL_CHAINS = [
+  ethereum, polygon, bsc, arbitrum, optimism, base, avalanche, fantom, gnosis, celo, moonbeam, moonriver, cronos, metis, kava, core, klaytn, linea, scroll
+];
 
 interface HeaderProps {
   onNavigate: (page: string) => void;
@@ -72,7 +79,9 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
               <button 
                 key={item.label} 
                 onClick={item.action} 
-                className="px-4 py-2 text-[10px] font-nebula font-black text-white/60 hover:text-white hover:text-cyan-400 transition-all uppercase tracking-[0.2em] rounded-lg"
+                className={`px-4 py-2 text-[10px] font-nebula font-black transition-all uppercase tracking-[0.2em] rounded-lg ${
+                  currentPage === item.label.toLowerCase() ? 'text-cyan-400 bg-white/5' : 'text-white/60 hover:text-white hover:text-cyan-400'
+                }`}
               >
                 {item.label}
               </button>
@@ -83,7 +92,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
           <div className="flex items-center gap-2">
             <div className="hidden lg:flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full">
                 <Activity size={10} className="text-emerald-500 animate-pulse" />
-                <span className="text-[8px] font-nebula font-black text-slate-400 uppercase tracking-widest">Mainnet Live</span>
+                <span className="text-[8px] font-nebula font-black text-slate-400 uppercase tracking-widest">Protocol Live</span>
             </div>
             
             <div className="hidden md:block">
@@ -91,6 +100,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
                 client={client}
                 wallets={wallets}
                 theme="dark"
+                chains={ALL_CHAINS}
                 connectButton={{
                   label: "Connect",
                   className: "!py-2.5 !px-6 !rounded-full !text-[10px] !font-nebula !font-black !bg-white !text-slate-950 hover:!bg-cyan-50 !transition-all !uppercase !tracking-[0.2em] !shadow-xl active:!scale-95"
@@ -124,6 +134,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
                   client={client}
                   wallets={wallets}
                   theme="dark"
+                  chains={ALL_CHAINS}
                   connectButton={{ 
                     className: "!w-full !py-4 !rounded-xl !text-xs !font-nebula !font-black !bg-white !text-black !uppercase !tracking-widest",
                     label: "Connect Vault" 
