@@ -61,7 +61,7 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
                 {FLUID_LOGO_SVG}
              </div>
              <div className="flex flex-col">
-                <span className="font-nebula font-black text-lg tracking-tighter text-white uppercase italic leading-none">Fluid</span>
+                <span className="font-nebula font-black text-lg tracking-tighter text-white uppercase leading-none">Fluid</span>
                 <span className="text-[7px] font-nebula font-black uppercase tracking-[0.2em] leading-none mt-1 text-fluid-gradient">Genesis</span>
              </div>
           </div>
