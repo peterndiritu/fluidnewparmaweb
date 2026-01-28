@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Coins, Zap, ShieldCheck, Timer, ChevronDown, TrendingUp, ArrowRight, Loader2, Globe, AlertCircle, DollarSign } from 'lucide-react';
+import { Coins, Zap, ShieldCheck, Timer, ChevronDown, TrendingUp, ArrowRight, Loader2, Globe, AlertCircle, DollarSign, Gift, Briefcase } from 'lucide-react';
 import { useReadContract, useSendTransaction, useActiveAccount, useActiveWalletChain, useSwitchActiveWalletChain, ConnectButton } from "thirdweb/react";
 import { prepareContractCall, toEther, toWei } from "thirdweb";
 import { client, wallets } from "../client";
@@ -22,14 +22,9 @@ const PresaleCard: React.FC = () => {
     ethPrice: 2450 
   });
 
-  const isWrongNetwork = useMemo(() => {
-    if (!account || !activeChain) return false;
-    return activeChain.id !== presaleChain.id;
-  }, [account, activeChain]);
-
   // --- Contract Data Fetching ---
 
-  // 1. FLUID Balance
+  // 1. FLUID Balance (Tokens already purchased/minted)
   const { data: fluidBalanceData, isLoading: isLoadingBalance } = useReadContract({
     contract: fluidTokenContract,
     method: "function balanceOf(address) view returns (uint256)",
@@ -95,12 +90,18 @@ const PresaleCard: React.FC = () => {
   useEffect(() => {
     const num = parseFloat(usdAmount) || 0;
     setFldAmount((num / fldUsdPrice).toFixed(2));
-  }, [fldUsdPrice]);
+  }, [fldUsdPrice, usdAmount]);
 
-  const fluidBalance = useMemo(() => {
-    if (!fluidBalanceData) return "0";
-    return parseFloat(toEther(fluidBalanceData as bigint)).toLocaleString(undefined, { maximumFractionDigits: 2 });
+  // Purchased Balance
+  const purchasedBalance = useMemo(() => {
+    if (!fluidBalanceData) return 0;
+    return parseFloat(toEther(fluidBalanceData as bigint));
   }, [fluidBalanceData]);
+
+  // Airdrop is 50% of purchased
+  const airdropAllocation = useMemo(() => {
+    return purchasedBalance * 0.5;
+  }, [purchasedBalance]);
 
   const sold = useMemo(() => (soldData ? Number(toEther(soldData as bigint)) : 0), [soldData]);
   const cap = useMemo(() => (capData ? Number(toEther(capData as bigint)) : 1000000), [capData]);
@@ -138,15 +139,8 @@ const PresaleCard: React.FC = () => {
   const { mutate: sendTx, isPending: isBuying } = useSendTransaction();
 
   const handleBuy = async () => {
-    if (!account) return; // Managed by ConnectButton now
-    if (isWrongNetwork) {
-      try {
-        await switchChain(presaleChain);
-      } catch (e) {
-        console.error("Failed to switch chain", e);
-      }
-      return;
-    }
+    if (!account) return; 
+    
     const val = parseFloat(nativeAmountToSend);
     if (!usdAmount || isNaN(val) || val <= 0) return alert("Enter a valid amount.");
 
@@ -194,36 +188,37 @@ const PresaleCard: React.FC = () => {
           </div>
         </div>
 
-        {/* Fluid Balance Display */}
+        {/* Enhanced Balance Display */}
         {account && (
-          <div className="mb-6 p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-[2rem] flex justify-between items-center group hover:bg-indigo-500/20 transition-all">
-            <div className="flex items-center gap-3">
-              <div className="p-2 bg-indigo-500/20 rounded-xl text-indigo-400 group-hover:scale-110 transition-transform">
-                <Zap size={14} />
+          <div className="grid grid-cols-2 gap-3 mb-6">
+            <div className="p-4 bg-indigo-500/10 border border-indigo-500/20 rounded-[2rem] flex flex-col gap-1 transition-all hover:bg-indigo-500/15">
+              <div className="flex items-center gap-2 mb-1">
+                <Briefcase size={10} className="text-indigo-400" />
+                <span className="text-[7px] font-nebula font-black text-slate-400 uppercase tracking-widest">Purchased</span>
               </div>
-              <span className="text-[10px] font-nebula font-black text-slate-400 uppercase tracking-widest">My Fluid Balance</span>
+              <div className="text-white font-nebula font-black text-xs">
+                {isLoadingBalance ? <Loader2 size={12} className="animate-spin" /> : `${purchasedBalance.toLocaleString()} FLD`}
+              </div>
             </div>
-            <div className="text-white font-nebula font-black text-xs">
-              {isLoadingBalance ? <Loader2 size={12} className="animate-spin" /> : `${fluidBalance} FLD`}
+            <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-[2rem] flex flex-col gap-1 transition-all hover:bg-purple-500/15">
+              <div className="flex items-center gap-2 mb-1">
+                <Gift size={10} className="text-purple-400" />
+                <span className="text-[7px] font-nebula font-black text-slate-400 uppercase tracking-widest">Airdrop Bonus</span>
+              </div>
+              <div className="text-white font-nebula font-black text-xs">
+                {isLoadingBalance ? <Loader2 size={12} className="animate-spin" /> : `${airdropAllocation.toLocaleString()} FLD`}
+              </div>
             </div>
           </div>
         )}
 
-        {/* Network Warning */}
-        {account && isWrongNetwork && (
-          <div className="mb-6 p-4 bg-amber-500/10 border border-amber-500/20 rounded-2xl flex flex-col gap-3">
-            <div className="flex items-center gap-2 text-amber-500">
-              <AlertCircle size={16} />
-              <span className="text-[9px] font-nebula font-black uppercase tracking-widest">Wrong Network</span>
-            </div>
-            <button 
-              onClick={() => switchChain(presaleChain)}
-              className="w-full py-2 bg-amber-500 text-black text-[9px] font-nebula font-black uppercase rounded-xl hover:bg-amber-400 transition-colors"
-            >
-              Switch to {presaleChain.name || 'Fluid Network'}
-            </button>
-          </div>
-        )}
+        {/* Note about Airdrop */}
+        <div className="mb-6 p-4 bg-blue-500/5 border border-blue-500/10 rounded-2xl flex gap-3 items-start">
+          <AlertCircle size={14} className="text-blue-400 shrink-0 mt-0.5" />
+          <p className="text-[9px] font-bold text-slate-400 leading-relaxed uppercase tracking-tight">
+            Note: Airdrop is <span className="text-blue-400">50% of the purchased tokens</span>, claimable after presale ends.
+          </p>
+        </div>
 
         {/* Timer */}
         <div className="bg-black/40 border border-white/5 rounded-2xl p-4 flex justify-between items-center mb-6">
@@ -240,7 +235,6 @@ const PresaleCard: React.FC = () => {
 
         {/* Swap Inputs */}
         <div className="space-y-3 mb-6">
-          {/* USD PAY INPUT */}
           <div className="bg-black/20 border border-white/10 rounded-[2rem] p-6 focus-within:border-indigo-500/50 transition-colors relative">
             <div className="flex justify-between mb-2">
               <span className="text-[8px] font-nebula font-black text-slate-500 uppercase tracking-widest">You Pay (USD)</span>
@@ -269,7 +263,6 @@ const PresaleCard: React.FC = () => {
               </button>
             </div>
 
-            {/* Network Selector Dropdown */}
             {showNetworkSelector && (
               <div className="absolute right-6 top-20 w-48 bg-slate-800 border border-white/10 rounded-2xl shadow-2xl z-50 p-2 animate-fade-in-up">
                 <div className="text-[7px] font-nebula font-black text-slate-500 uppercase tracking-[0.2em] p-2 mb-1">Select Network</div>
@@ -293,7 +286,6 @@ const PresaleCard: React.FC = () => {
              </div>
           </div>
 
-          {/* FLUID RECEIVE INPUT */}
           <div className="bg-black/20 border border-white/10 rounded-[2rem] p-6 focus-within:border-indigo-500/50 transition-colors">
             <div className="flex justify-between mb-2">
               <span className="text-[8px] font-nebula font-black text-slate-500 uppercase tracking-widest">You Receive (FLD)</span>
@@ -315,7 +307,6 @@ const PresaleCard: React.FC = () => {
           </div>
         </div>
 
-        {/* Progress */}
         <div className="mb-6">
           <div className="flex justify-between items-center mb-2">
             <span className="text-[8px] font-nebula font-black text-slate-500 uppercase tracking-widest">Allocation Progress</span>
@@ -331,7 +322,6 @@ const PresaleCard: React.FC = () => {
           </div>
         </div>
 
-        {/* Dynamic Action Button */}
         {!account ? (
           <ConnectButton
             client={client}
@@ -350,8 +340,6 @@ const PresaleCard: React.FC = () => {
           >
             {isBuying ? (
               <>Processing <Loader2 size={12} className="animate-spin" /></>
-            ) : isWrongNetwork ? (
-              <>Switch Network <ArrowRight size={12} /></>
             ) : (
               <>Secure Allocation <ArrowRight size={12} /></>
             )}
