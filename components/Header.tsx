@@ -1,6 +1,7 @@
+
 import React, { useState, useEffect } from 'react';
-import { Menu, X, Activity } from 'lucide-react';
-import { ConnectButton } from "thirdweb/react";
+import { Menu, X, Activity, ShieldCheck } from 'lucide-react';
+import { ConnectButton, useActiveAccount } from "thirdweb/react";
 import { client, wallets } from "../client";
 import {
   ethereum, polygon, bsc, arbitrum, optimism, base, avalanche, linea, scroll
@@ -26,6 +27,7 @@ const FLUID_LOGO_SVG = (
 const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const account = useActiveAccount();
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 20);
@@ -86,6 +88,16 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
                 {item.label}
               </button>
             ))}
+            {/* Conditional Admin Tab (In a real app, we'd check against contract owner address) */}
+            <button 
+                onClick={() => handleLinkClick('admin')}
+                className={`px-4 py-2 text-[10px] font-nebula font-black transition-all uppercase tracking-[0.2em] rounded-lg flex items-center gap-2 ${
+                  currentPage === 'admin' ? 'text-amber-400 bg-amber-500/5' : 'text-slate-500 hover:text-amber-400'
+                }`}
+              >
+                <ShieldCheck size={12} />
+                Admin
+              </button>
           </div>
 
           {/* Connect & Status */}
@@ -129,6 +141,12 @@ const Header: React.FC<HeaderProps> = ({ onNavigate, currentPage }) => {
                   {item.label}
                 </button>
               ))}
+              <button 
+                  onClick={() => handleLinkClick('admin')} 
+                  className="text-left text-xs font-nebula font-black text-amber-500/60 p-3 rounded-xl hover:bg-white/5 hover:text-amber-400 transition-all uppercase tracking-[0.2em] flex items-center gap-2"
+                >
+                  <ShieldCheck size={14} /> Admin Genesis
+                </button>
               <div className="pt-4 mt-2 border-t border-white/10">
                  <ConnectButton 
                   client={client}

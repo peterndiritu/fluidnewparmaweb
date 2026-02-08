@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import Header from './components/Header';
 import Footer from './components/Footer';
@@ -9,6 +10,7 @@ import TermsPage from './pages/TermsPage';
 import PrivacyPage from './pages/PrivacyPage';
 import BlockchainPage from './pages/BlockchainPage';
 import WhitepaperPage from './pages/WhitepaperPage';
+import AdminDashboard from './pages/AdminDashboard';
 
 function App() {
   const [currentPage, setCurrentPage] = useState('home');
@@ -23,6 +25,7 @@ function App() {
       case 'faq': return <FaqPage />;
       case 'terms': return <TermsPage />;
       case 'privacy': return <PrivacyPage />;
+      case 'admin': return <AdminDashboard />;
       default: return <Home onNavigate={setCurrentPage} />;
     }
   };
