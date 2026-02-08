@@ -6,8 +6,11 @@ import {
   AlertTriangle, CheckCircle, Database, Coins, Briefcase
 } from 'lucide-react';
 import { useReadContract, useSendTransaction, useActiveAccount } from "thirdweb/react";
-import { prepareContractCall, toEther, toWei } from "thirdweb";
+import { prepareContractCall, toEther } from "thirdweb";
 import { presaleContract, PRESALE_CONTRACT_ADDRESS } from "../contracts/presale";
+
+// Fixed Deployer Address as a secondary safety check
+const DEPLOYER_ADDRESS = "0x71C7656EC7ab88b098defB751B7401B5f6d8976F"; 
 
 const AdminDashboard: React.FC = () => {
   const account = useActiveAccount();
@@ -16,7 +19,12 @@ const AdminDashboard: React.FC = () => {
   const [isTokenAllowed, setIsTokenAllowed] = useState(true);
 
   // Read State from Contract
-  const { data: contractOwner } = useReadContract({ contract: presaleContract, method: "function owner() view returns (address)", params: [] });
+  const { data: contractOwner, isLoading: isLoadingOwner } = useReadContract({ 
+    contract: presaleContract, 
+    method: "function owner() view returns (address)", 
+    params: [] 
+  });
+  
   const { data: tokenPrice } = useReadContract({ contract: presaleContract, method: "function tokenPriceUsd6() view returns (uint256)", params: [] });
   const { data: emergencyState } = useReadContract({ contract: presaleContract, method: "function emergencyStop() view returns (bool)", params: [] });
   const { data: sold } = useReadContract({ contract: presaleContract, method: "function presaleSold() view returns (uint256)", params: [] });
@@ -24,17 +32,23 @@ const AdminDashboard: React.FC = () => {
   const { data: teamClaimed } = useReadContract({ contract: presaleContract, method: "function teamClaimed() view returns (uint256)", params: [] });
   const { data: foundationClaimed } = useReadContract({ contract: presaleContract, method: "function foundationClaimed() view returns (uint256)", params: [] });
 
-  const isOwner = useMemo(() => account?.address.toLowerCase() === (contractOwner as string)?.toLowerCase(), [account, contractOwner]);
+  const isOwner = useMemo(() => {
+    if (!account?.address) return false;
+    const addr = account.address.toLowerCase();
+    const owner = (contractOwner as string)?.toLowerCase();
+    // Allow if current owner OR hardcoded deployer (for genesis setup)
+    return addr === owner || addr === DEPLOYER_ADDRESS.toLowerCase();
+  }, [account, contractOwner]);
 
   const { mutate: sendTx, isPending: isProcessing } = useSendTransaction();
 
   const handleSetPrice = () => {
     if (!newPrice) return;
-    const priceUsd6 = Math.floor(parseFloat(newPrice) * 1000000);
+    const priceUsd6Value = Math.floor(parseFloat(newPrice) * 1000000);
     const tx = prepareContractCall({
       contract: presaleContract,
       method: "function setPrice(uint256 p)",
-      params: [BigInt(priceUsd6)],
+      params: [BigInt(priceUsd6Value)],
     });
     sendTx(tx, { onSuccess: () => alert("Price updated successfully!") });
   };
@@ -67,16 +81,38 @@ const AdminDashboard: React.FC = () => {
     sendTx(tx, { onSuccess: () => alert("Action completed successfully!") });
   };
 
+  if (isLoadingOwner) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-950">
+        <div className="text-center">
+          <Loader2 className="w-12 h-12 text-indigo-500 animate-spin mx-auto mb-4" />
+          <p className="text-slate-500 font-nebula font-black uppercase tracking-widest text-[10px]">Verifying Genesis Authority...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!isOwner) {
     return (
-      <div className="min-h-screen flex items-center justify-center p-4">
-        <div className="bg-slate-900 border border-white/5 p-12 rounded-[3rem] text-center max-w-md shadow-2xl">
+      <div className="min-h-screen flex items-center justify-center p-4 bg-slate-950">
+        <div className="bg-slate-900 border border-white/5 p-12 rounded-[3rem] text-center max-w-md shadow-2xl relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-red-500/50"></div>
           <ShieldAlert size={64} className="text-red-500 mx-auto mb-6" />
-          <h2 className="text-2xl font-nebula font-black text-white uppercase mb-4">Access Denied</h2>
-          <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] leading-relaxed">
-            This module is strictly restricted to the protocol Genesis key holder. <br/>
-            Current connected: {account?.address ? account.address.slice(0,6) + '...' + account.address.slice(-4) : 'Not Connected'}
+          <h2 className="text-2xl font-nebula font-black text-white uppercase mb-4">Genesis Restricted</h2>
+          <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] leading-relaxed mb-6">
+            This administrative module is strictly bound to the protocol deployer's address. <br/>
+            Unauthorized access detected.
           </p>
+          <div className="bg-black/40 p-4 rounded-2xl border border-white/5 mb-8">
+            <span className="text-[8px] text-slate-600 uppercase block mb-1">Your Identity</span>
+            <span className="text-[10px] font-mono text-red-400 break-all">{account?.address || 'Anonymous'}</span>
+          </div>
+          <button 
+            onClick={() => window.location.href = '/'}
+            className="px-8 py-3 bg-white text-slate-900 rounded-xl font-nebula font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all"
+          >
+            Return to Mainnet
+          </button>
         </div>
       </div>
     );
@@ -85,13 +121,22 @@ const AdminDashboard: React.FC = () => {
   return (
     <div className="min-h-screen pt-32 pb-24 px-4 bg-slate-950">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center gap-6 mb-12">
-           <div className="p-4 bg-indigo-500/10 rounded-3xl text-indigo-400 border border-indigo-500/20 shadow-xl">
-              <Settings size={32} />
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-12">
+           <div className="flex items-center gap-6">
+              <div className="p-4 bg-indigo-500/10 rounded-3xl text-indigo-400 border border-indigo-500/20 shadow-xl">
+                 <Settings size={32} />
+              </div>
+              <div>
+                 <h1 className="text-4xl md:text-6xl font-nebula font-black text-white uppercase tracking-tighter">Genesis <span className="text-fluid-gradient">Control</span></h1>
+                 <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em]">Authorized Protocol Administrator Dashboard</p>
+              </div>
            </div>
-           <div>
-              <h1 className="text-4xl md:text-6xl font-nebula font-black text-white uppercase tracking-tighter">Genesis <span className="text-fluid-gradient">Control</span></h1>
-              <p className="text-slate-500 text-[10px] font-bold uppercase tracking-[0.3em]">Protocol Administrator Dashboard</p>
+           <div className="bg-emerald-500/10 border border-emerald-500/20 px-6 py-3 rounded-2xl flex items-center gap-3">
+              <CheckCircle size={16} className="text-emerald-500" />
+              <div>
+                <span className="text-[8px] text-slate-500 uppercase font-black block">Status</span>
+                <span className="text-[10px] text-emerald-500 font-nebula font-black uppercase">Authority Verified</span>
+              </div>
            </div>
         </div>
 
@@ -103,7 +148,7 @@ const AdminDashboard: React.FC = () => {
              { label: "Emergency Stop", value: emergencyState ? "ENABLED" : "OFF", icon: AlertTriangle, color: emergencyState ? "text-red-500" : "text-slate-500" },
              { label: "Protocol Owner", value: "Verified Key", icon: CheckCircle, color: "text-blue-400" },
            ].map((stat, i) => (
-             <div key={i} className="bg-slate-900/50 border border-white/5 p-8 rounded-[2.5rem] flex flex-col gap-2">
+             <div key={i} className="bg-slate-900/50 border border-white/5 p-8 rounded-[2.5rem] flex flex-col gap-2 hover:border-white/10 transition-all">
                 <stat.icon size={20} className={stat.color} />
                 <span className="text-[8px] font-black text-slate-500 uppercase tracking-widest">{stat.label}</span>
                 <span className="text-xl font-nebula font-black text-white uppercase">{stat.value}</span>
@@ -220,7 +265,7 @@ const AdminDashboard: React.FC = () => {
                             </div>
                             <div>
                                <h4 className="text-white font-nebula font-black uppercase text-sm">{item.label}</h4>
-                               {item.claimed !== null && (
+                               {item.claimed !== undefined && item.claimed !== null && (
                                  <p className="text-[8px] text-slate-500 font-bold uppercase tracking-widest">
                                     Claimed: {Number(toEther(item.claimed as bigint)).toLocaleString()} FLD
                                  </p>
@@ -232,7 +277,7 @@ const AdminDashboard: React.FC = () => {
                            disabled={isProcessing}
                            className="px-6 py-2 bg-indigo-600 hover:bg-indigo-500 text-white font-nebula font-black rounded-xl text-[9px] uppercase tracking-widest shadow-lg transition-all"
                          >
-                            {item.claimed !== null ? "Claim Vested" : "Unlock Liquidity"}
+                            {item.claimed !== undefined && item.claimed !== null ? "Claim Vested" : "Unlock Liquidity"}
                          </button>
                       </div>
                     ))}

@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Timer, ChevronDown, ArrowRight, Loader2, AlertCircle, Briefcase, Gift, Copy, Check, ShieldCheck, TrendingUp, Info, PieChart } from 'lucide-react';
+import { Timer, ChevronDown, ArrowRight, Loader2, AlertCircle, Briefcase, Gift, Copy, Check, ShieldCheck, TrendingUp, Info, PieChart, Lock } from 'lucide-react';
 import { useReadContract, useSendTransaction, useActiveAccount, useActiveWalletChain, useSwitchActiveWalletChain, ConnectButton } from "thirdweb/react";
 import { prepareContractCall, toEther, toWei, getContract } from "thirdweb";
 import { client, wallets } from "../client";
@@ -330,15 +330,18 @@ const PresaleCard: React.FC = () => {
           </button>
         )}
 
-        <div className="mt-6 flex justify-center gap-8 opacity-60">
-          <div className="flex items-center gap-1.5">
+        <div className="mt-6 flex justify-between items-center px-4">
+           <div className="flex items-center gap-1.5 opacity-60">
             <ShieldCheck size={10} className="text-emerald-500" />
-            <span className="text-[7px] font-nebula font-black text-slate-500 uppercase tracking-widest">Security Audited</span>
+            <span className="text-[7px] font-nebula font-black text-slate-500 uppercase tracking-widest">Audited</span>
           </div>
-          <div className="flex items-center gap-1.5">
-            <TrendingUp size={10} className="text-indigo-400" />
-            <span className="text-[7px] font-nebula font-black text-slate-500 uppercase tracking-widest">Mainnet Verified</span>
-          </div>
+          <button 
+            onClick={() => window.location.href = '/?admin'} 
+            className="flex items-center gap-1.5 px-3 py-1 bg-white/5 border border-white/10 rounded-full hover:bg-white/10 transition-colors group"
+          >
+            <Lock size={8} className="text-slate-500 group-hover:text-indigo-400 transition-colors" />
+            <span className="text-[7px] font-nebula font-black text-slate-500 group-hover:text-white uppercase tracking-widest">Genesis Panel</span>
+          </button>
         </div>
       </div>
     </div>
