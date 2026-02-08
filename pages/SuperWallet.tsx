@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   Wallet, ArrowRightLeft, CreditCard, Globe, 
@@ -12,8 +13,10 @@ import {
   QrCode, ChevronDown, Repeat, Settings, User, Mail, 
   FileText, HelpCircle, Edit3, Camera, ToggleLeft, ToggleRight,
   Eye, EyeOff, Timer, KeyRound, Map, Palette, Trash2, Snowflake,
-  Coffee, Car, Tv, ShoppingBag, ArrowDownCircle, Sparkles, Maximize2
+  Coffee, Car, Tv, ShoppingBag, ArrowDownCircle, Sparkles, Maximize2,
+  Building2, University
 } from 'lucide-react';
+import { analyzeTransactionRisk, TransactionRiskAnalysis } from '../services/geminiService';
 
 // --- Components ---
 
@@ -30,7 +33,8 @@ const INITIAL_ASSETS = [
   { id: 'btc', symbol: 'BTC', name: 'Bitcoin', balance: 0.42, price: 68500.00, color: 'text-orange-500', bg: 'bg-orange-500/10', border: 'border-orange-500/20', type: 'crypto', visible: true },
   { id: 'eth', symbol: 'ETH', name: 'Ethereum', balance: 12.5, price: 2450.00, color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20', type: 'crypto', visible: true },
   { id: 'usdt', symbol: 'USDT', name: 'Tether', balance: 5000, price: 1.00, color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20', type: 'crypto', visible: true },
-  { id: 'usd', symbol: 'USD', name: 'Dollar', balance: 1250.75, price: 1.00, color: 'text-slate-400', bg: 'bg-slate-500/10', border: 'border-slate-500/20', type: 'fiat', visible: true, flag: '🇺🇸' },
+  { id: 'usd', symbol: 'USD', name: 'US Dollar', balance: 12500.75, price: 1.00, color: 'text-slate-400', bg: 'bg-slate-500/10', border: 'border-slate-500/20', type: 'fiat', visible: true, flag: '🇺🇸' },
+  { id: 'eur', symbol: 'EUR', name: 'Euro', balance: 450.00, price: 1.08, color: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/20', type: 'fiat', visible: true, flag: '🇪🇺' },
 ];
 
 const MOCK_CARDS = [
@@ -43,11 +47,33 @@ interface FluidWalletAppProps {
 }
 
 const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'swap' | 'cards' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'swap' | 'cards' | 'fiat' | 'settings'>('dashboard');
   const [balanceVisible, setBalanceVisible] = useState(true);
   const [assets, setAssets] = useState(INITIAL_ASSETS);
+  const [filterType, setFilterType] = useState<'all' | 'crypto' | 'fiat'>('all');
+  const [isAuditing, setIsAuditing] = useState(false);
+  const [auditResult, setAuditResult] = useState<TransactionRiskAnalysis | null>(null);
 
   const totalBalance = assets.reduce((acc, asset) => acc + (asset.balance * asset.price), 0);
+  const fiatBalance = assets.filter(a => a.type === 'fiat').reduce((acc, asset) => acc + (asset.balance * asset.price), 0);
+  const cryptoBalance = assets.filter(a => a.type === 'crypto').reduce((acc, asset) => acc + (asset.balance * asset.price), 0);
+
+  const filteredAssets = assets.filter(asset => {
+    if (filterType === 'all') return true;
+    return asset.type === filterType;
+  });
+
+  const runGeminiAudit = async () => {
+    setIsAuditing(true);
+    try {
+      const result = await analyzeTransactionRisk("1000", "FLD", "0xae28...495a", "Fluid Chain");
+      setAuditResult(result);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsAuditing(false);
+    }
+  };
 
   const renderContent = () => {
     switch (activeTab) {
@@ -59,7 +85,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
               <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-3xl -mr-20 -mt-20"></div>
               <div className="flex justify-between items-start mb-10 relative z-10">
                 <div>
-                  <p className="text-indigo-200 font-nebula font-black uppercase text-[10px] tracking-widest mb-2">Total Combined Value</p>
+                  <p className="text-indigo-200 font-nebula font-black uppercase text-[10px] tracking-widest mb-2">Total Combined Portfolio</p>
                   <div className="flex items-center gap-4">
                     <h2 className="text-4xl md:text-6xl font-nebula font-black text-white">
                       {balanceVisible ? `$${totalBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : '••••••••'}
@@ -80,7 +106,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
                   { icon: ArrowUpRight, label: 'Send', color: 'bg-white/10' },
                   { icon: ArrowDownLeft, label: 'Receive', color: 'bg-white/10' },
                   { icon: Repeat, label: 'Swap', color: 'bg-white/10' },
-                  { icon: Plus, label: 'Buy', color: 'bg-white/20' }
+                  { icon: Plus, label: 'Top Up', color: 'bg-white/20' }
                 ].map((action, i) => (
                   <button key={i} className="flex flex-col items-center gap-2 group">
                     <div className={`w-14 h-14 ${action.color} backdrop-blur-md rounded-2xl flex items-center justify-center text-white border border-white/10 transition-transform group-hover:-translate-y-1`}>
@@ -92,17 +118,80 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
               </div>
             </div>
 
+            {/* AI Auditor CTA */}
+            <div className="bg-indigo-950/40 border border-indigo-500/30 rounded-[2rem] p-6 flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-indigo-500/20 rounded-2xl flex items-center justify-center text-indigo-400">
+                        <Sparkles size={24} className="animate-pulse" />
+                    </div>
+                    <div>
+                        <h4 className="text-white font-nebula font-black uppercase text-sm">Gemini AI Risk Auditor</h4>
+                        <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider">Simulate any transaction before signing</p>
+                    </div>
+                </div>
+                <button 
+                  onClick={runGeminiAudit}
+                  disabled={isAuditing}
+                  className="px-6 py-3 bg-indigo-600 text-white font-nebula font-black rounded-xl text-[10px] uppercase tracking-widest hover:bg-indigo-500 transition-all flex items-center gap-2"
+                >
+                    {isAuditing ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
+                    Scan Protocol Risk
+                </button>
+            </div>
+
+            {auditResult && (
+               <div className="bg-slate-900 border border-white/5 rounded-[2rem] p-6 animate-fade-in-up">
+                  <div className="flex justify-between items-center mb-4">
+                     <span className="text-[10px] font-nebula font-black text-slate-500 uppercase tracking-widest">Audit Report</span>
+                     <button onClick={() => setAuditResult(null)} className="text-slate-500 hover:text-white"><X size={16}/></button>
+                  </div>
+                  <div className="flex items-center gap-4 mb-4">
+                     <div className={`px-4 py-2 rounded-xl font-nebula font-black text-xs uppercase ${auditResult.riskLevel === 'LOW' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-500'}`}>
+                        {auditResult.riskLevel} RISK
+                     </div>
+                     <span className="text-2xl font-nebula font-black text-white">{auditResult.score}/100 Safety</span>
+                  </div>
+                  <p className="text-slate-400 text-xs mb-4">{auditResult.summary}</p>
+                  <div className="space-y-2">
+                     {auditResult.warnings.map((w, i) => (
+                        <div key={i} className="flex items-center gap-2 text-[10px] text-amber-500/80 font-bold uppercase">
+                           <AlertTriangle size={12} /> {w}
+                        </div>
+                     ))}
+                  </div>
+               </div>
+            )}
+
+            {/* Portfolio Summary Row */}
+            <div className="grid grid-cols-2 gap-4">
+               <div className="bg-slate-900/40 border border-white/5 p-6 rounded-[2.5rem] flex flex-col gap-1">
+                  <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Crypto Value</span>
+                  <span className="text-xl font-nebula font-black text-white">${cryptoBalance.toLocaleString()}</span>
+               </div>
+               <div className="bg-slate-900/40 border border-white/5 p-6 rounded-[2.5rem] flex flex-col gap-1">
+                  <span className="text-[8px] font-black text-slate-600 uppercase tracking-widest">Fiat Balance</span>
+                  <span className="text-xl font-nebula font-black text-indigo-400">${fiatBalance.toLocaleString()}</span>
+               </div>
+            </div>
+
             {/* Assets List */}
             <div className="bg-slate-900/50 backdrop-blur-xl border border-white/5 rounded-[3rem] overflow-hidden">
-               <div className="p-8 border-b border-white/5 flex justify-between items-center">
+               <div className="p-8 border-b border-white/5 flex flex-col sm:flex-row justify-between items-center gap-4">
                   <h3 className="text-lg font-nebula font-black text-white uppercase">Portfolio Assets</h3>
-                  <div className="flex gap-2">
-                    <button className="px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-[10px] font-nebula font-black uppercase tracking-widest text-slate-400">Crypto</button>
-                    <button className="px-4 py-2 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-[10px] font-nebula font-black uppercase tracking-widest text-indigo-400">Fiat</button>
+                  <div className="flex gap-2 bg-black/40 p-1 rounded-2xl border border-white/5">
+                    {['all', 'crypto', 'fiat'].map((type) => (
+                      <button 
+                        key={type}
+                        onClick={() => setFilterType(type as any)}
+                        className={`px-4 py-2 rounded-xl text-[8px] font-nebula font-black uppercase tracking-widest transition-all ${filterType === type ? 'bg-indigo-500 text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                      >
+                        {type}
+                      </button>
+                    ))}
                   </div>
                </div>
                <div className="p-2">
-                  {assets.map((asset) => (
+                  {filteredAssets.map((asset) => (
                     <div key={asset.id} className="flex items-center justify-between p-6 hover:bg-white/5 rounded-[2rem] transition-all group">
                        <div className="flex items-center gap-4">
                           <div className={`w-12 h-12 rounded-2xl ${asset.bg} border ${asset.border} flex items-center justify-center ${asset.color}`}>
@@ -125,6 +214,67 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
                             {balanceVisible ? `$${(asset.balance * asset.price).toLocaleString(undefined, { minimumFractionDigits: 2 })}` : '••••'}
                           </div>
                        </div>
+                    </div>
+                  ))}
+               </div>
+            </div>
+          </div>
+        );
+      case 'fiat':
+        return (
+          <div className="space-y-8 animate-fade-in-up">
+            <div className="bg-slate-900 border border-white/5 rounded-[3rem] p-10 shadow-2xl relative overflow-hidden">
+               <div className="absolute top-0 left-0 w-full h-1 bg-indigo-500"></div>
+               <div className="flex justify-between items-start mb-12">
+                  <div>
+                    <h2 className="text-3xl font-nebula font-black text-white uppercase mb-2">Fiat Services</h2>
+                    <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest">Connect to institutional bank rails</p>
+                  </div>
+                  <div className="p-4 bg-indigo-500/10 rounded-3xl text-indigo-400">
+                    <University size={32} />
+                  </div>
+               </div>
+
+               <div className="grid md:grid-cols-2 gap-6 mb-12">
+                  <div className="bg-black/30 border border-white/10 p-8 rounded-[2.5rem] flex flex-col justify-between">
+                     <div>
+                        <span className="text-[8px] font-black text-slate-600 uppercase tracking-[0.3em] block mb-4">Linked Bank</span>
+                        <div className="flex items-center gap-4 mb-2">
+                           <div className="w-10 h-10 bg-white rounded-lg flex items-center justify-center text-slate-900"><Building2 size={24}/></div>
+                           <div>
+                              <div className="text-white font-nebula font-black text-sm uppercase">Fluid Global Reserve</div>
+                              <div className="text-[10px] text-slate-500 font-mono">**** 9012</div>
+                           </div>
+                        </div>
+                     </div>
+                     <button className="w-full mt-8 py-3 border border-white/10 rounded-xl text-[10px] font-nebula font-black uppercase tracking-widest text-slate-400 hover:bg-white hover:text-slate-950 transition-all">Manage Connection</button>
+                  </div>
+                  <div className="bg-indigo-500 border border-indigo-400 p-8 rounded-[2.5rem] flex flex-col justify-between text-white shadow-xl shadow-indigo-500/20">
+                     <div>
+                        <span className="text-[8px] font-black text-white/60 uppercase tracking-[0.3em] block mb-4">Settled Balance</span>
+                        <div className="text-4xl font-nebula font-black">${fiatBalance.toLocaleString()}</div>
+                     </div>
+                     <button className="w-full mt-8 py-3 bg-white text-indigo-900 rounded-xl text-[10px] font-nebula font-black uppercase tracking-widest shadow-lg">Instant Withdraw</button>
+                  </div>
+               </div>
+
+               <div className="space-y-4">
+                  <h4 className="text-white font-nebula font-black uppercase text-xs">Recent Transfers</h4>
+                  {[
+                    { type: 'Deposit', bank: 'HSBC Savings', amount: '+ $12,500.00', date: 'Oct 24, 2024' },
+                    { type: 'Withdraw', bank: 'Chase Checkings', amount: '- $1,200.00', date: 'Oct 20, 2024' }
+                  ].map((t, i) => (
+                    <div key={i} className="flex items-center justify-between p-6 bg-white/5 rounded-2xl border border-white/5">
+                       <div className="flex items-center gap-4">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${t.type === 'Deposit' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-800 text-slate-400'}`}>
+                             {t.type === 'Deposit' ? <ArrowDownCircle size={20} /> : <ArrowUpRight size={20} />}
+                          </div>
+                          <div>
+                             <div className="text-white font-nebula font-black text-xs uppercase">{t.type} via {t.bank}</div>
+                             <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">{t.date}</div>
+                          </div>
+                       </div>
+                       <span className={`text-sm font-nebula font-black ${t.type === 'Deposit' ? 'text-emerald-400' : 'text-white'}`}>{t.amount}</span>
                     </div>
                   ))}
                </div>
@@ -179,7 +329,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
 
                <div className="mt-8">
                   <button className="w-full py-5 bg-white text-slate-950 rounded-[1.5rem] font-nebula font-black text-sm uppercase tracking-widest shadow-xl hover:brightness-90 transition-all">
-                    Unlock Assets
+                    Finalize Swap
                   </button>
                </div>
             </div>
@@ -188,10 +338,13 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
       case 'cards':
         return (
           <div className="space-y-8 animate-fade-in-up">
-            <h2 className="text-2xl font-nebula font-black text-white uppercase">My Fluid Cards</h2>
+            <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-nebula font-black text-white uppercase">My Fluid Cards</h2>
+                <div className="px-4 py-1 bg-indigo-500/10 border border-indigo-500/20 rounded-full text-[8px] font-nebula font-black text-indigo-400 uppercase tracking-widest">Non-Custodial Debit</div>
+            </div>
             <div className="grid gap-6">
                {MOCK_CARDS.map((card) => (
-                  <div key={card.id} className={`${card.color} border border-white/10 rounded-[2.5rem] p-8 aspect-[1.6/1] relative overflow-hidden group shadow-2xl`}>
+                  <div key={card.id} className={`${card.color} border border-white/10 rounded-[2.5rem] p-8 aspect-[1.6/1] relative overflow-hidden group shadow-2xl transition-all hover:scale-[1.01]`}>
                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full blur-3xl -mr-20 -mt-20"></div>
                     <FluidLogo className="absolute -bottom-20 -left-20 w-80 h-80 text-white opacity-5 pointer-events-none" />
                     <div className="flex justify-between items-start relative z-10">
@@ -213,9 +366,9 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
                     </div>
                   </div>
                ))}
-               <button className="w-full py-8 border-2 border-dashed border-white/10 rounded-[2.5rem] text-slate-500 flex flex-col items-center gap-2 hover:bg-white/5 transition-colors">
+               <button className="w-full py-8 border-2 border-dashed border-white/10 rounded-[2.5rem] text-slate-500 flex flex-col items-center gap-2 hover:bg-white/5 hover:text-white transition-all">
                   <Plus size={32} />
-                  <span className="text-xs font-nebula font-black uppercase tracking-widest">Apply for New Card</span>
+                  <span className="text-xs font-nebula font-black uppercase tracking-widest">Apply for New Genesis Card</span>
                </button>
             </div>
           </div>
@@ -243,6 +396,12 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
                       </div>
                    </div>
                 </div>
+                <div>
+                   <h3 className="text-xs font-nebula font-black text-slate-500 uppercase tracking-widest mb-4">Protocol Version</h3>
+                   <div className="p-4 bg-black/40 rounded-2xl border border-white/5 text-[10px] font-mono text-slate-500">
+                      Fluid_Genesis_v1.0.4_Stable
+                   </div>
+                </div>
              </div>
           </div>
         );
@@ -263,6 +422,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
         <nav className="space-y-4 flex-grow">
           {[
             { id: 'dashboard', icon: LayoutDashboard, label: 'Vault' },
+            { id: 'fiat', icon: Banknote, label: 'Fiat Bank' },
             { id: 'swap', icon: ArrowRightLeft, label: 'Swap' },
             { id: 'cards', icon: CreditCard, label: 'Cards' },
             { id: 'settings', icon: Settings, label: 'Settings' }
@@ -272,19 +432,19 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
               onClick={() => setActiveTab(item.id as any)}
               className={`w-full flex items-center gap-4 px-6 py-4 rounded-2xl transition-all ${
                 activeTab === item.id 
-                ? 'bg-indigo-500 text-white shadow-lg' 
+                ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-500/20' 
                 : 'text-slate-500 hover:text-white hover:bg-white/5'
               }`}
             >
               <item.icon size={20} />
-              <span className="text-xs font-nebula font-black uppercase tracking-widest">{item.label}</span>
+              <span className="text-[10px] font-nebula font-black uppercase tracking-widest">{item.label}</span>
             </button>
           ))}
         </nav>
 
         <button onClick={() => onNavigate('home')} className="flex items-center gap-4 px-6 py-4 text-slate-500 hover:text-red-400 transition-colors">
           <LogOut size={20} />
-          <span className="text-xs font-nebula font-black uppercase tracking-widest">Sign Out</span>
+          <span className="text-[10px] font-nebula font-black uppercase tracking-widest">Sign Out</span>
         </button>
       </div>
 
@@ -292,19 +452,22 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
       <div className="flex-1 lg:ml-72 p-6 md:p-12">
         <div className="max-w-4xl mx-auto">
           <header className="flex justify-between items-center mb-12">
-             <h1 className="text-4xl font-nebula font-black text-white uppercase tracking-tighter">
-                {activeTab === 'dashboard' ? 'My Vault' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
-             </h1>
+             <div className="flex flex-col">
+                <h1 className="text-4xl font-nebula font-black text-white uppercase tracking-tighter">
+                    {activeTab === 'dashboard' ? 'My Vault' : activeTab === 'fiat' ? 'Fiat Bank' : activeTab.charAt(0).toUpperCase() + activeTab.slice(1)}
+                </h1>
+                <p className="text-slate-500 text-[8px] font-bold uppercase tracking-[0.3em] mt-1">Multi-Chain Institutional Interface</p>
+             </div>
              <div className="flex items-center gap-4">
-                <button className="p-3 bg-white/5 border border-white/5 rounded-2xl text-slate-400">
+                <button className="p-3 bg-white/5 border border-white/5 rounded-2xl text-slate-400 hover:text-white transition-all">
                   <Bell size={20} />
                 </button>
                 <div className="hidden sm:flex items-center gap-3 pl-4 border-l border-white/5">
                    <div className="text-right">
-                      <div className="text-[10px] font-nebula font-black text-white uppercase">Alexander Fluid</div>
-                      <div className="text-[8px] font-bold text-slate-500 uppercase tracking-widest">Tier 1 Genesis</div>
+                      <div className="text-[10px] font-nebula font-black text-white uppercase tracking-tight">Alexander Fluid</div>
+                      <div className="text-[8px] font-bold text-indigo-400 uppercase tracking-widest">Tier 1 Genesis</div>
                    </div>
-                   <div className="w-10 h-10 bg-slate-800 rounded-xl"></div>
+                   <div className="w-10 h-10 bg-gradient-to-tr from-indigo-500 to-purple-600 rounded-xl shadow-lg shadow-indigo-500/10"></div>
                 </div>
              </div>
           </header>
@@ -317,6 +480,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
       <div className="lg:hidden fixed bottom-0 left-0 right-0 bg-slate-900/90 backdrop-blur-xl border-t border-white/5 p-4 flex justify-between items-center z-50">
         {[
           { id: 'dashboard', icon: LayoutDashboard },
+          { id: 'fiat', icon: Banknote },
           { id: 'swap', icon: ArrowRightLeft },
           { id: 'cards', icon: CreditCard },
           { id: 'settings', icon: Settings }
@@ -324,7 +488,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
           <button
             key={item.id}
             onClick={() => setActiveTab(item.id as any)}
-            className={`p-4 rounded-2xl ${activeTab === item.id ? 'bg-indigo-500 text-white' : 'text-slate-500'}`}
+            className={`p-4 rounded-2xl transition-all ${activeTab === item.id ? 'bg-indigo-500 text-white shadow-lg' : 'text-slate-500'}`}
           >
             <item.icon size={20} />
           </button>
@@ -334,7 +498,7 @@ const FluidWalletApp: React.FC<FluidWalletAppProps> = ({ onNavigate }) => {
   );
 };
 
-// Re-defining layout icon since it was missing in original imports
+// Re-defining layout icon
 const LayoutDashboard = (props: any) => (
   <svg 
     {...props} 
